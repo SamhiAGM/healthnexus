@@ -123,7 +123,8 @@ export default function PatientRegisterPage() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Registration could not be completed. Please verify your details.");
+        const detailedMsg = errorData.error || errorData.message || (errorData.errors && errorData.errors[0]?.defaultMessage) || "Registration could not be completed. Please verify your details.";
+        throw new Error(detailedMsg);
       }
 
       const data = await response.json();

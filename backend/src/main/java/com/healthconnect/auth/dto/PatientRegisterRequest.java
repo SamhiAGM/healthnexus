@@ -19,8 +19,8 @@ public class PatientRegisterRequest {
 
     @NotBlank(message = "Phone number is required")
     @Pattern(
-        regexp = "^(0|\\+94)?[7][0-9]{8}$",
-        message = "Must be a valid Sri Lankan mobile number (e.g., 0771234567)"
+        regexp = "^(0|\\+94)?[0-9]{9}$",
+        message = "Must be a valid Sri Lankan phone number (e.g., 0771234567 or 0453999958)"
     )
     private String phone;
 

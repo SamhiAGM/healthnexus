@@ -101,4 +101,13 @@ public class AuthController {
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> err.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation error in request parameters");
+        return ResponseEntity.badRequest().body(Map.of("error", errorMessage));
+    }
 }
