@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
@@ -15,7 +15,8 @@ import {
   PlusCircle, 
   Clock,
   Thermometer,
-  ShieldCheck
+  ShieldCheck,
+  RefreshCw
 } from "lucide-react";
 
 interface TriagePatient {
@@ -32,6 +33,7 @@ interface TriagePatient {
 
 export default function NurseDashboard() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const [patients, setPatients] = useState<TriagePatient[]>([
     {
@@ -76,8 +78,71 @@ export default function NurseDashboard() {
   const [spo2Input, setSpo2Input] = useState("98");
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const handleSaveVitals = (e: React.FormEvent) => {
+  // Fetch live triage queue from Spring Boot backend
+  const fetchLiveTriage = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("hc_token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch("http://localhost:8080/api/nurse/queue?facilityId=NHSL", {
+        headers,
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: TriagePatient[] = data.map((d: any, idx: number) => ({
+            id: d.id || `P-${100 + idx}`,
+            name: d.patientName || "Clinic Citizen",
+            token: d.ticketNumber || `C-02${idx}`,
+            bp: d.vitalsSummary?.match(/BP: ([\d/]+)/)?.[1] || "",
+            pulse: d.vitalsSummary?.match(/HR: (\d+)/)?.[1] || "",
+            temp: d.vitalsSummary?.match(/Temp: ([\d.]+)/)?.[1] || "",
+            spo2: d.vitalsSummary?.match(/SpO2: (\d+)/)?.[1] || "",
+            urgency: d.priorityTag === "URGENT" ? "URGENT" : d.priorityTag === "ELDERLY" ? "PRIORITY" : "ROUTINE",
+            status: d.vitalsSummary ? "VITALS_RECORDED" : "PENDING_VITALS",
+          }));
+          setPatients(mapped);
+          if (mapped[0]) setSelectedPatient(mapped[0]);
+        }
+      }
+    } catch (e) {
+      // Retain fallback list
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveTriage();
+  }, []);
+
+  const handleSaveVitals = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    try {
+      const token = localStorage.getItem("hc_token");
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      await fetch("http://localhost:8080/api/nurse/vitals", {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: JSON.stringify({
+          token: selectedPatient.token,
+          bp: bpInput,
+          pulse: pulseInput,
+          temp: tempInput,
+          spo2: spo2Input,
+          urgency: selectedPatient.urgency,
+        }),
+      });
+    } catch (e) {}
+
     const updated = patients.map((p) => {
       if (p.id === selectedPatient.id) {
         return {
@@ -96,8 +161,15 @@ export default function NurseDashboard() {
     setTimeout(() => setSavedSuccess(false), 1500);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8080/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (e) {}
     localStorage.removeItem("hc_staff_user");
+    localStorage.removeItem("hc_token");
     router.push("/auth/staff-login");
   };
 
@@ -113,7 +185,7 @@ export default function NurseDashboard() {
                 Nursing Station & Triage
               </span>
               <span className="hidden md:inline-block text-xs text-slate-400">
-                Outpatient Clinic Station A
+                Outpatient Clinic Station A • NHSL
               </span>
             </div>
           </div>
@@ -141,17 +213,28 @@ export default function NurseDashboard() {
           
           {/* Left Column: Triage Patient Queue */}
           <div className="lg:col-span-5 space-y-4">
-            <div>
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <ClipboardList className="w-4 h-4 text-purple-400" />
-                Arrived Patients for Triage Vitals
-              </h2>
-              <p className="text-xs text-slate-400">Log patient vitals before physician consultation</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <ClipboardList className="w-4 h-4 text-purple-400" />
+                  Arrived Patients for Triage Vitals
+                </h2>
+                <p className="text-xs text-slate-400">Log patient vitals before physician consultation</p>
+              </div>
+
+              <button
+                onClick={fetchLiveTriage}
+                disabled={loading}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-400 border border-slate-700 transition-colors"
+                title="Refresh Triage Queue"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+              </button>
             </div>
 
             <div className="space-y-3">
               {patients.map((p) => {
-                const isSelected = p.id === selectedPatient.id;
+                const isSelected = p.id === selectedPatient?.id;
                 return (
                   <div
                     key={p.id}
@@ -202,7 +285,7 @@ export default function NurseDashboard() {
                   Vitals Measurement Station
                 </span>
                 <h3 className="text-lg font-bold text-white mt-1">
-                  Recording for {selectedPatient.name} ({selectedPatient.token})
+                  Recording for {selectedPatient?.name} ({selectedPatient?.token})
                 </h3>
               </div>
 
