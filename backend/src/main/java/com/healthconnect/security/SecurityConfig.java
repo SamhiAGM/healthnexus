@@ -49,7 +49,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/doctor/**").hasRole("DOCTOR")
                         .requestMatchers("/api/nurse/**").hasRole("NURSE")
                         .requestMatchers("/api/reception/**").hasAnyRole("RECEPTIONIST", "HOSPITAL_ADMIN")
-                        .requestMatchers("/api/supervisor/**").hasRole("FIELD_SUPERVISOR")
+                        .requestMatchers("/api/supervisor/**").hasAnyRole("FIELD_SUPERVISOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN")
                         .requestMatchers("/api/patient/**").hasRole("PATIENT")
                         // Any other request must be authenticated
                         .anyRequest().authenticated()
