@@ -34,7 +34,14 @@
 - [x] **Step 17:** Implemented `JwtService`, `JwtAuthenticationFilter`, `SecurityConfig` with stateless session management, BCrypt hashing, and role-based endpoint mapping.
 - [x] **Step 18:** Implemented `AuthService` with salted NIC hashing, Sri Lankan NIC regex validation, and `AuthController` (`/api/auth/patients/register`, `/api/auth/login`, `/api/auth/me`).
 - [x] **Step 19:** Implemented frontend authentication pages (`/auth/patient-register`, `/auth/patient-login`, `/auth/staff-login`) with validated forms, accessible error states, and session persistence (build verified).
-- [x] **Step 19.1:** Enhanced Patient Authentication System with Desktop Split-Screen UI, multi-identification selector (`Sri Lankan NIC`, `Passport`, `Assisted/Guardian`), password visibility toggles, phone OTP verification endpoint (`/api/auth/phone/verify`), HttpOnly session cookies (`hc_session`), and server-side `/api/auth/logout`.
+- [x] **Step 19.2:** Implemented Healthcare Staff Authentication & Approval Architecture:
+  - `StaffApprovalStatus` lifecycle (`PENDING_APPROVAL`, `APPROVED`, `REJECTED`, `SUSPENDED`).
+  - `StaffAccessRequest` MongoDB entity and repository for credentials/council indexing.
+  - `StaffService` and `StaffController` (`POST /api/staff/access-requests`, `GET /api/staff/access-requests/status`).
+  - `AdminStaffController` (`GET /api/admin/staff/requests`, `POST /api/admin/staff/requests/{id}/approve`, `POST /api/admin/staff/requests/{id}/reject`).
+  - Multi-step Healthcare Staff Registration UI (`/auth/staff-register`) for Sri Lankan Medical Council (SLMC), Nursing (SLNC), Pharmacy, and administrative staff onboarding.
+  - Upgraded Staff Sign In (`/auth/staff-login`) with backend credentials authentication and SL-CERT compliant Multifactor Authentication (MFA) challenge before routing to role workspaces.
+  - Connected Hospital Administrator Portal (`/portal/admin`) to live review and authorization APIs.
 
 ### Phase 4: Patient Dashboard & Digital Clinic Services
 - [x] **Step 20:** Implemented Patient Portal workspace (`/portal/patient`) with clinic appointment booking, live digital queue ticket tracker (`C-024`), visit history, and prescription follow-up reminders (build verified).
