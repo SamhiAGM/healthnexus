@@ -11,13 +11,11 @@ public class PatientRegisterRequest {
     @Size(min = 3, max = 100, message = "Full name must be between 3 and 100 characters")
     private String fullName;
 
-    // Sri Lankan NIC regex: Old format (9 digits + V/X) or New format (12 digits)
-    @NotBlank(message = "NIC is required")
-    @Pattern(
-        regexp = "^([0-9]{9}[vVxX]|[0-9]{12})$",
-        message = "Must be a valid Sri Lankan NIC (9 digits ending with V/X, or 12 digits)"
-    )
-    private String nic;
+    // Identification type: NIC, PASSPORT, ASSISTED_GUARDIAN
+    private String identificationType = "NIC";
+
+    // Identification number when applicable
+    private String idNumber;
 
     @NotBlank(message = "Phone number is required")
     @Pattern(
@@ -41,8 +39,11 @@ public class PatientRegisterRequest {
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
-    public String getNic() { return nic; }
-    public void setNic(String nic) { this.nic = nic; }
+    public String getIdentificationType() { return identificationType; }
+    public void setIdentificationType(String identificationType) { this.identificationType = identificationType; }
+
+    public String getIdNumber() { return idNumber; }
+    public void setIdNumber(String idNumber) { this.idNumber = idNumber; }
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
