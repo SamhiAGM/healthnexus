@@ -5,6 +5,7 @@ import { ServicesSection } from "@/components/home/ServicesSection";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { FacilityDirectory } from "@/components/home/FacilityDirectory";
 import { OperationalMetrics } from "@/components/home/OperationalMetrics";
+import { DashboardPreview } from "@/components/home/DashboardPreview";
 import { FAQSection } from "@/components/home/FAQSection";
 import { ContactSection } from "@/components/home/ContactSection";
 
@@ -27,6 +28,9 @@ export default function HomePage() {
 
         {/* Hospital & Active Clinics Directory */}
         <FacilityDirectory />
+
+        {/* Interactive Multi-Role Platform Preview */}
+        <DashboardPreview />
 
         {/* Real-time Data Visualization & Operational Charts */}
         <OperationalMetrics />
