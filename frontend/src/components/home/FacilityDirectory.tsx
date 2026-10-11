@@ -9,13 +9,16 @@ import {
   Search, 
   Filter,
   CheckCircle,
-  Calendar
+  Calendar,
+  Sparkles,
+  ArrowRight
 } from "lucide-react";
 
 interface Facility {
   id: string;
   name: string;
   district: string;
+  province: string;
   type: "National Teaching Hospital" | "Provincial General Hospital" | "District General Hospital" | "Base Hospital";
   beds: number;
   phone: string;
@@ -28,6 +31,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "nhsl-colombo",
     name: "National Hospital of Sri Lanka (NHSL)",
     district: "Colombo",
+    province: "Western Province",
     type: "National Teaching Hospital",
     beds: 3400,
     phone: "011-2691111",
@@ -38,6 +42,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "cshw-colombo",
     name: "Castle Street Hospital for Women",
     district: "Colombo",
+    province: "Western Province",
     type: "National Teaching Hospital",
     beds: 850,
     phone: "011-2696225",
@@ -48,6 +53,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "th-kandy",
     name: "National Hospital Kandy",
     district: "Kandy",
+    province: "Central Province",
     type: "National Teaching Hospital",
     beds: 2290,
     phone: "081-2222261",
@@ -58,6 +64,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "th-karapitiya",
     name: "Teaching Hospital Karapitiya",
     district: "Galle",
+    province: "Southern Province",
     type: "National Teaching Hospital",
     beds: 1800,
     phone: "091-2232176",
@@ -68,6 +75,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "th-jaffna",
     name: "Teaching Hospital Jaffna",
     district: "Jaffna",
+    province: "Northern Province",
     type: "National Teaching Hospital",
     beds: 1350,
     phone: "021-2222261",
@@ -78,6 +86,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "pgh-badulla",
     name: "Provincial General Hospital Badulla",
     district: "Badulla",
+    province: "Uva Province",
     type: "Provincial General Hospital",
     beds: 1200,
     phone: "055-2222261",
@@ -88,6 +97,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "dgh-gampaha",
     name: "District General Hospital Gampaha",
     district: "Gampaha",
+    province: "Western Province",
     type: "District General Hospital",
     beds: 950,
     phone: "033-2222261",
@@ -98,6 +108,7 @@ const SRI_LANKA_FACILITIES: Facility[] = [
     id: "bh-homagama",
     name: "Base Hospital Homagama",
     district: "Colombo",
+    province: "Western Province",
     type: "Base Hospital",
     beds: 420,
     phone: "011-2855261",
@@ -121,24 +132,29 @@ export function FacilityDirectory() {
   });
 
   return (
-    <section id="facilities" className="py-24 bg-[#081225] text-white relative">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="facilities" className="py-24 bg-[#081225] text-white relative overflow-hidden">
+      
+      {/* Background Lighting Accents */}
+      <div className="absolute top-1/2 right-0 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <span className="text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
-            Accredited Public Directory
-          </span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-xs font-bold uppercase tracking-widest text-teal-400">
+            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            Accredited Public Hospital Directory
+          </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Find Hospitals & Active Clinics in Sri Lanka
+            Find Public Hospitals & Active Clinic Sessions
           </h2>
           <p className="text-slate-400 text-base sm:text-lg">
-            Directly search hospitals, available clinic sessions, and contact emergency triage desks across provinces.
+            Directly search hospitals, discover specialized outpatient clinics, and connect with local clinical desks across Sri Lanka.
           </p>
         </div>
 
         {/* Filter & Search Bar */}
-        <div className="bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-4 sm:p-6 mb-10 shadow-xl">
+        <div className="bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-4 sm:p-6 mb-10 shadow-2xl backdrop-blur-xl">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
             
             {/* Search Input */}
@@ -148,8 +164,8 @@ export function FacilityDirectory() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search hospital name or specialty (e.g. Cardiology, NHSL, Galle)..."
-                className="w-full pl-12 pr-4 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="Search hospital name or specialty (e.g. Cardiology, NHSL, Galle, Badulla)..."
+                className="w-full pl-12 pr-4 py-3 bg-slate-900/90 border border-slate-700 rounded-xl text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
 
@@ -159,7 +175,7 @@ export function FacilityDirectory() {
               <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
-                className="w-full pl-11 pr-8 py-3 bg-slate-900/80 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none cursor-pointer"
+                className="w-full pl-11 pr-8 py-3 bg-slate-900/90 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 appearance-none cursor-pointer"
               >
                 {districts.map((d) => (
                   <option key={d} value={d} className="bg-slate-900 text-white">
@@ -171,36 +187,38 @@ export function FacilityDirectory() {
 
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-xs text-slate-400 border-t border-slate-800 pt-3">
-            <span>Showing {filteredFacilities.length} public hospitals</span>
-            <span>Verified Ministry Tier Classification</span>
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 border-t border-slate-800 pt-3">
+            <span>Showing <strong>{filteredFacilities.length}</strong> accredited hospital facilities</span>
+            <span className="text-teal-400">Verified Sri Lankan Provincial Healthcare Tier Data</span>
           </div>
         </div>
 
-        {/* Hospital Cards Grid */}
+        {/* Hospital Cards Grid with Elevation Physics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredFacilities.map((fac) => (
             <div
               key={fac.id}
-              className="rounded-2xl bg-[#0F1E36]/70 border border-slate-700/60 p-6 flex flex-col justify-between hover:border-teal-500/50 transition-all hover:shadow-xl"
+              className="group rounded-2xl bg-[#0F1E36]/80 border border-slate-700/60 p-6 flex flex-col justify-between hover:border-teal-500/50 hover:bg-[#0F1E36] transition-all duration-300 hover:shadow-2xl hover:shadow-teal-950/30 hover:-translate-y-1.5"
             >
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-teal-400 bg-teal-950/60 border border-teal-800/40 px-2.5 py-1 rounded">
-                    {fac.district} District
-                  </span>
-                  <span className="text-[11px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2 py-0.5 rounded flex items-center gap-1">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-teal-400 bg-teal-950/60 border border-teal-800/40 px-2.5 py-1 rounded w-fit">
+                      {fac.district} • {fac.province}
+                    </span>
+                  </div>
+                  <span className="text-[11px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 px-2.5 py-0.5 rounded flex items-center gap-1 shrink-0">
                     <CheckCircle className="w-3 h-3" />
                     {fac.status}
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-bold text-white mb-1">
+                  <h3 className="text-lg font-bold text-white mb-1 group-hover:text-teal-300 transition-colors">
                     {fac.name}
                   </h3>
                   <p className="text-xs text-slate-400 font-medium">
-                    {fac.type} • {fac.beds} Bed Capacity
+                    {fac.type} • <strong>{fac.beds}</strong> Inpatient Beds
                   </p>
                 </div>
 
@@ -208,13 +226,13 @@ export function FacilityDirectory() {
                 <div>
                   <div className="text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-teal-400" />
-                    Available Clinics:
+                    Active Outpatient Clinics:
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {fac.clinics.map((c) => (
                       <span
                         key={c}
-                        className="text-[11px] px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700"
+                        className="text-[11px] px-2.5 py-1 rounded bg-slate-900/80 text-slate-300 border border-slate-700/80"
                       >
                         {c}
                       </span>
@@ -230,14 +248,15 @@ export function FacilityDirectory() {
                   className="flex items-center gap-1.5 text-slate-300 hover:text-white transition-colors"
                 >
                   <Phone className="w-3.5 h-3.5 text-teal-400" />
-                  {fac.phone}
+                  <span>{fac.phone}</span>
                 </a>
 
                 <a
                   href="/auth/patient-register"
-                  className="px-3 py-1.5 rounded-lg bg-teal-600/90 hover:bg-teal-500 text-white font-semibold transition-colors"
+                  className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-semibold transition-all shadow-sm"
                 >
-                  Book Clinic
+                  <span>Book Clinic</span>
+                  <ArrowRight className="w-3 h-3" />
                 </a>
               </div>
             </div>
