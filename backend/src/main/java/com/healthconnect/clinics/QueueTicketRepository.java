@@ -18,4 +18,10 @@ public interface QueueTicketRepository extends MongoRepository<QueueTicket, Stri
     Optional<QueueTicket> findByTicketNumber(String ticketNumber);
 
     List<QueueTicket> findByPatientId(String patientId);
+    
+    List<QueueTicket> findByFacilityIdOrderByCreatedAtDesc(String facilityId);
+
+    List<QueueTicket> findAllByOrderByCreatedAtDesc();
+
+    long countByFacilityId(String facilityId);
 }

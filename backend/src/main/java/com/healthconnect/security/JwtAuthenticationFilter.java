@@ -45,6 +45,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (jwtService.isTokenValid(jwt)) {
                 userId = jwtService.extractUserId(jwt);
             }
+        } else if (request.getCookies() != null) {
+            for (jakarta.servlet.http.Cookie c : request.getCookies()) {
+                if ("hc_session".equals(c.getName()) || "hc_token".equals(c.getName())) {
+                    if (jwtService.isTokenValid(c.getValue())) {
+                        jwt = c.getValue();
+                        userId = jwtService.extractUserId(jwt);
+                        break;
+                    }
+                }
+            }
         }
 
         if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {

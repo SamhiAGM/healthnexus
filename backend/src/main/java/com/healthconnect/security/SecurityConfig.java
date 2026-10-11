@@ -48,7 +48,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasAnyRole("HOSPITAL_ADMIN", "SYSTEM_ADMIN")
                         .requestMatchers("/api/doctor/**").hasRole("DOCTOR")
                         .requestMatchers("/api/nurse/**").hasRole("NURSE")
-                        .requestMatchers("/api/reception/**").hasRole("RECEPTIONIST")
+                        .requestMatchers("/api/reception/**").hasAnyRole("RECEPTIONIST", "HOSPITAL_ADMIN")
                         .requestMatchers("/api/supervisor/**").hasRole("FIELD_SUPERVISOR")
                         .requestMatchers("/api/patient/**").hasRole("PATIENT")
                         // Any other request must be authenticated

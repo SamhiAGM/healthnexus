@@ -26,6 +26,8 @@ public class QueueTicket {
 
     private String patientName;
 
+    private String patientNic;
+
     private Integer patientAge;
 
     private String patientGender; // M / F / O
@@ -89,6 +91,9 @@ public class QueueTicket {
 
     public String getPatientName() { return patientName; }
     public void setPatientName(String patientName) { this.patientName = patientName; }
+
+    public String getPatientNic() { return patientNic; }
+    public void setPatientNic(String patientNic) { this.patientNic = patientNic; }
 
     public Integer getPatientAge() { return patientAge; }
     public void setPatientAge(Integer patientAge) { this.patientAge = patientAge; }

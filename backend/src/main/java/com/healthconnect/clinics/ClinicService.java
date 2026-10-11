@@ -97,4 +97,76 @@ public class ClinicService {
         }
         return appointmentRepository.save(appointment);
     }
+
+    public QueueTicket issueQueueTicket(
+            String patientName,
+            String patientNic,
+            String clinicType,
+            String consultationRoom,
+            String facilityId,
+            String facilityName,
+            String priorityTag,
+            String complaint
+    ) {
+        String safeFacilityId = (facilityId != null && !facilityId.isBlank()) ? facilityId : "NHSL";
+        String safeFacilityName = (facilityName != null && !facilityName.isBlank()) ? facilityName : "National Hospital of Sri Lanka (NHSL)";
+        String safeClinic = (clinicType != null && !clinicType.isBlank()) ? clinicType : "General OPD Room 01";
+        String safePriority = (priorityTag != null && !priorityTag.isBlank()) ? priorityTag : "ROUTINE";
+
+        String prefix = "C-";
+        String upperClinic = safeClinic.toUpperCase();
+        if (upperClinic.contains("CARDIO")) {
+            prefix = "C-";
+        } else if (upperClinic.contains("PEDIATRIC")) {
+            prefix = "PED-";
+        } else if (upperClinic.contains("DIABET")) {
+            prefix = "DIA-";
+        } else if (upperClinic.contains("OPD")) {
+            prefix = "OPD-";
+        } else {
+            prefix = "T-";
+        }
+
+        long count = queueTicketRepository.countByFacilityId(safeFacilityId);
+        long nextNum = count + 20;
+        String ticketNumber = prefix + String.format("%03d", nextNum);
+
+        int attempts = 0;
+        while (queueTicketRepository.findByTicketNumber(ticketNumber).isPresent() && attempts < 50) {
+            nextNum++;
+            ticketNumber = prefix + String.format("%03d", nextNum);
+            attempts++;
+        }
+
+        QueueTicket ticket = new QueueTicket();
+        ticket.setTicketNumber(ticketNumber);
+        ticket.setPatientName(patientName != null ? patientName.trim() : "Walk-in Citizen");
+        ticket.setPatientNic(patientNic != null ? patientNic.trim() : "");
+        ticket.setClinicType(safeClinic);
+        ticket.setConsultationRoom(consultationRoom != null ? consultationRoom : "Room 01");
+        ticket.setFacilityId(safeFacilityId);
+        ticket.setFacilityName(safeFacilityName);
+        ticket.setPriorityTag(safePriority);
+        ticket.setComplaint(complaint);
+        ticket.setStatus(QueueTicket.QueueStatus.WAITING);
+        ticket.setCreatedAt(java.time.Instant.now());
+        ticket.setUpdatedAt(java.time.Instant.now());
+
+        return queueTicketRepository.save(ticket);
+    }
+
+    public List<QueueTicket> getRecentTickets(String facilityId) {
+        if (facilityId == null || facilityId.isBlank()) {
+            return queueTicketRepository.findAllByOrderByCreatedAtDesc();
+        }
+        return queueTicketRepository.findByFacilityIdOrderByCreatedAtDesc(facilityId);
+    }
+
+    public QueueTicket cancelTicket(String ticketNumber) {
+        QueueTicket ticket = queueTicketRepository.findByTicketNumber(ticketNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Queue ticket not found: " + ticketNumber));
+        ticket.setStatus(QueueTicket.QueueStatus.SKIPPED);
+        ticket.setUpdatedAt(java.time.Instant.now());
+        return queueTicketRepository.save(ticket);
+    }
 }
