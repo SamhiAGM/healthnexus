@@ -93,10 +93,19 @@ export default function PatientDashboard() {
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("hc_token");
-    localStorage.removeItem("hc_user");
-    router.push("/auth/patient-login");
+  const handleLogout = async () => {
+    try {
+      await fetch("http://localhost:8080/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (e) {
+      // Ignore network errors on logout
+    } finally {
+      localStorage.removeItem("hc_token");
+      localStorage.removeItem("hc_user");
+      router.push("/auth/patient-login");
+    }
   };
 
   const handleBookingSubmit = (e: React.FormEvent) => {
