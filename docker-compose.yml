@@ -1,0 +1,17 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: healthconnect-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: health_admin
+      MONGO_INITDB_ROOT_PASSWORD: health_secure_password_dev
+      MONGO_INITDB_DATABASE: healthconnect_db
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
+    driver: local
