@@ -76,6 +76,17 @@ public class ClinicService {
         return consultationRecordRepository.save(record);
     }
 
+    public QueueTicket updateTicketVitals(String ticketNumber, String vitalsSummary, String urgencyTag) {
+        QueueTicket ticket = queueTicketRepository.findByTicketNumber(ticketNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Queue ticket not found: " + ticketNumber));
+        ticket.setVitalsSummary(vitalsSummary);
+        if (urgencyTag != null && !urgencyTag.isBlank()) {
+            ticket.setPriorityTag(urgencyTag);
+        }
+        ticket.setUpdatedAt(java.time.Instant.now());
+        return queueTicketRepository.save(ticket);
+    }
+
     public List<Appointment> getAppointmentsForPatient(String patientId) {
         return appointmentRepository.findByPatientId(patientId);
     }
