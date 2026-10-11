@@ -83,4 +83,62 @@ public class StaffService {
     public Optional<StaffAccessRequest> getRequestByEmail(String email) {
         return staffAccessRequestRepository.findByWorkEmail(email.trim().toLowerCase());
     }
+
+    public StaffAccessRequest approveStaffRequest(String requestId, String adminId, String adminName, String reviewNotes) {
+        StaffAccessRequest request = staffAccessRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Staff access request not found: " + requestId));
+
+        if (request.getStatus() != StaffApprovalStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only requests in PENDING_APPROVAL status can be approved. Current status: " + request.getStatus());
+        }
+
+        // Check if an active user with this email already exists
+        if (userRepository.existsByEmail(request.getWorkEmail())) {
+            throw new IllegalStateException("An activated user account with this email already exists: " + request.getWorkEmail());
+        }
+
+        // Provision the official User entity with authorized clinical role
+        User user = new User(
+                request.getFullName(),
+                request.getWorkEmail(),
+                request.getContactPhone(),
+                null,
+                null,
+                request.getPasswordHash()
+        );
+
+        user.setRoles(java.util.Set.of(request.getRequestedRole()));
+        user.setAssignedFacilityId(request.getFacilityId());
+        user.setDepartment(request.getDepartment());
+        user.setEnabled(true);
+        user.setVerified(true);
+
+        userRepository.save(user);
+
+        // Update request status and audit metadata
+        request.setStatus(StaffApprovalStatus.APPROVED);
+        request.setReviewedByAdminId(adminId != null ? adminId : "SYSTEM_ADMIN");
+        request.setReviewedByAdminName(adminName != null ? adminName : "Hospital Executive Admin");
+        request.setReviewNotes(reviewNotes != null ? reviewNotes : "Credentials and council registration verified.");
+        request.setReviewedAt(java.time.Instant.now());
+
+        return staffAccessRequestRepository.save(request);
+    }
+
+    public StaffAccessRequest rejectStaffRequest(String requestId, String adminId, String adminName, String rejectionReason) {
+        StaffAccessRequest request = staffAccessRequestRepository.findById(requestId)
+                .orElseThrow(() -> new IllegalArgumentException("Staff access request not found: " + requestId));
+
+        if (request.getStatus() != StaffApprovalStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only requests in PENDING_APPROVAL status can be rejected. Current status: " + request.getStatus());
+        }
+
+        request.setStatus(StaffApprovalStatus.REJECTED);
+        request.setReviewedByAdminId(adminId != null ? adminId : "SYSTEM_ADMIN");
+        request.setReviewedByAdminName(adminName != null ? adminName : "Hospital Executive Admin");
+        request.setReviewNotes(rejectionReason != null ? rejectionReason : "Application did not meet verification criteria.");
+        request.setReviewedAt(java.time.Instant.now());
+
+        return staffAccessRequestRepository.save(request);
+    }
 }
