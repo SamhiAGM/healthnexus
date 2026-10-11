@@ -163,11 +163,19 @@ export default function StaffLoginPage() {
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-800 text-center text-xs text-slate-400">
-            Need public patient services?{" "}
-            <Link href="/auth/patient-login" className="font-semibold text-teal-400 hover:text-teal-300">
-              Go to Patient Portal
-            </Link>
+          <div className="pt-4 border-t border-slate-800 flex flex-col gap-2.5 text-center text-xs text-slate-400">
+            <div>
+              New medical officer or healthcare employee?{" "}
+              <Link href="/auth/staff-register" className="font-semibold text-blue-400 hover:text-blue-300">
+                Request Staff Access
+              </Link>
+            </div>
+            <div>
+              Need public citizen patient services?{" "}
+              <Link href="/auth/patient-login" className="font-semibold text-teal-400 hover:text-teal-300">
+                Go to Patient Portal
+              </Link>
+            </div>
           </div>
 
         </div>
