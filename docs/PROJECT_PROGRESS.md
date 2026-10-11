@@ -43,15 +43,22 @@
   - Upgraded Staff Sign In (`/auth/staff-login`) with backend credentials authentication and SL-CERT compliant Multifactor Authentication (MFA) challenge before routing to role workspaces.
   - Connected Hospital Administrator Portal (`/portal/admin`) to live review and authorization APIs.
 
-### Phase 4: Patient Dashboard & Digital Clinic Services
-- [x] **Step 20:** Implemented Patient Portal workspace (`/portal/patient`) with clinic appointment booking, live digital queue ticket tracker (`C-024`), visit history, and prescription follow-up reminders (build verified).
-- [x] **Step 22:** Implemented Nursing Station & Triage (`/portal/nurse`) with vitals logging station (BP, Pulse, Temperature, SpO2) and physician worklist dispatch (build verified).
-- [x] **Step 23:** Implemented Digital Field Supervision Workspace (`/portal/supervisor`) with institutional checklist audits, facility scores, and corrective-action lifecycle tracking (`OPEN` → `IN_PROGRESS` → `VERIFIED_CLOSED`) (build verified).
-- [x] **Step 24:** Implemented Hospital Reception & Check-In Desk (`/portal/reception`) with walk-in token generation, priority triage tags, and queue manifest (build verified).
-- [x] **Step 25:** Implemented Hospital Administrator Dashboard (`/portal/admin`) with clinic session quota progress bars, staff onboarding verification/rejection controls, and operational overview (build verified).
+### Phase 4: Staff Authentication, Approvals, Clinical Dashboards & Integration
+- [x] **Step 4.1:** Gap analysis and inspection of existing portal components and Spring Boot security models.
+- [x] **Step 4.2:** Staff Onboarding Models (`StaffApprovalStatus`, `StaffAccessRequest`, `StaffAccessRequestRepository`).
+- [x] **Step 4.3:** Staff Intake Service & REST APIs (`StaffService.submitAccessRequest`, `StaffController` `/api/staff/access-requests`).
+- [x] **Step 4.4:** Admin Review & Approval Endpoints (`AdminStaffController` `/api/admin/staff/requests/**`).
+- [x] **Step 4.5:** Staff Registration UI Wizard (`/auth/staff-register`) for SLMC/SLNC/PHSRC credentials.
+- [x] **Step 4.6:** Hospital Admin Portal Live Integration (`/portal/admin`) with real-time request review and approval actions.
+- [x] **Step 4.7:** Staff Login & MFA Challenge (`/auth/staff-login`) with credential validation, role checking, and 6-digit challenge.
+- [x] **Step 4.8:** Doctor EMR Consultation Integration (`/portal/doctor`, `ConsultationRecord`, `DoctorClinicController`).
+- [x] **Step 4.9:** Nursing Triage & Vitals Forwarding (`/portal/nurse`, `NurseTriageController`, `ClinicService.updateTicketVitals`).
+- [x] **Step 4.10:** Hospital Reception Desk & Walk-In Check-In (`/portal/reception`, `ReceptionDeskController`, live queue issuing).
+- [x] **Step 4.11:** Field Supervision & Audit Workspace (`/portal/supervisor`, `FieldSupervisorController`, `InspectionFinding` lifecycle).
+- [x] **Step 4.12:** End-to-End Staff Authorization Lifecycle & Boundary Tests (`StaffAuthorizationLifecycleTest`, 8 tests passed, 0 failures).
 
 ### Phase 5: Verification Walkthrough & End-to-End Delivery
-- [ ] **Step 26:** Comprehensive end-to-end verification walkthrough of all delivered portals and documentation overview.
+- [ ] **Step 5.1:** Comprehensive end-to-end verification walkthrough of all delivered portals and documentation overview.
 
 ---
 
@@ -59,9 +66,33 @@
 ```
 healthconnect-lk/ (d:\LankaCare.me)
 ├── .gitignore
+├── docker-compose.yml
 ├── docs/
 │   └── PROJECT_PROGRESS.md
-├── frontend/             [Pending Step 3]
-├── backend/              [Pending Step 4]
-└── docker/               [Pending Step 5]
+├── frontend/             [Next.js 16.4 Turbopack App Router, TypeScript, Tailwind CSS]
+│   └── src/app/
+│       ├── page.tsx
+│       ├── auth/
+│       │   ├── patient-login/
+│       │   ├── patient-register/
+│       │   ├── staff-login/
+│       │   └── staff-register/
+│       └── portal/
+│           ├── admin/
+│           ├── doctor/
+│           ├── nurse/
+│           ├── patient/
+│           ├── reception/
+│           └── supervisor/
+└── backend/              [Java 21 LTS, Spring Boot 3.4.3, Spring Security, MongoDB Data]
+    └── src/
+        ├── main/java/com/healthconnect/
+        │   ├── auth/
+        │   ├── clinics/
+        │   ├── security/
+        │   ├── supervision/
+        │   └── users/
+        └── test/java/com/healthconnect/
+            ├── BackendApplicationTests.java
+            └── security/StaffAuthorizationLifecycleTest.java
 ```
