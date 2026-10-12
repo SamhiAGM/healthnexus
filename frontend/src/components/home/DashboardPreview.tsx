@@ -116,7 +116,7 @@ export function DashboardPreview() {
   const active = previews[activeTab];
 
   return (
-    <section className="py-24 bg-[#0B1730] text-white relative overflow-hidden">
+    <section className="py-24 bg-[#F8FAFC] text-[#172B4D] relative overflow-hidden">
       
       {/* Ambient Lighting */}
       <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -126,15 +126,15 @@ export function DashboardPreview() {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3.5 py-1 rounded-full">
-            <Sparkles className="w-3 h-3 text-teal-300" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-teal-700 bg-teal-50 border border-teal-200 px-3.5 py-1 rounded-full">
+            <Sparkles className="w-3 h-3 text-teal-600" />
             Interactive Platform Preview
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Tailored Workspaces for Every Healthcare Role
           </h2>
-          <p className="text-slate-400 text-base sm:text-lg">
-            Experience how HealthConnect LK connects citizens, clinicians, and hospital administrators through unified role-based dashboards.
+          <p className="text-slate-600 text-base sm:text-lg">
+            Experience how HealthNexus LK connects citizens, clinicians, and hospital administrators through unified role-based dashboards.
           </p>
         </div>
 
@@ -155,42 +155,42 @@ export function DashboardPreview() {
                 onClick={() => setActiveTab(tab.id as any)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 border ${
                   isCurrent
-                    ? "bg-[#0F1E36] text-white border-teal-500/60 shadow-lg shadow-teal-950/30 ring-1 ring-teal-500/30"
-                    : "bg-slate-900/60 text-slate-400 hover:text-white border-slate-800 hover:border-slate-700"
+                    ? "bg-white text-slate-900 border-teal-500 shadow-sm ring-1 ring-teal-500/20 font-bold"
+                    : "bg-slate-100 text-slate-600 hover:text-slate-900 border-slate-200"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isCurrent ? "text-teal-400" : "text-slate-400"}`} />
+                <Icon className={`w-4 h-4 ${isCurrent ? "text-teal-600" : "text-slate-500"}`} />
                 {tab.label}
               </button>
             );
           })}
         </div>
 
-        {/* Preview Glass Container */}
-        <div className="rounded-2xl bg-[#0F1E36]/90 border border-slate-700/80 p-6 sm:p-10 backdrop-blur-xl shadow-2xl space-y-8 animate-in fade-in-50 duration-200">
+        {/* Preview Container */}
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-10 shadow-sm space-y-8 animate-in fade-in-50 duration-200">
           
           {/* Header Info */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700/60 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-teal-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-teal-700">
                   {active.role}
                 </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
                   Demonstration Preview
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-white tracking-tight">
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
                 {active.title}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
                 {active.description}
               </p>
             </div>
 
             <Link
               href={active.link}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs sm:text-sm font-bold transition-all shadow-md self-start md:self-auto"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs sm:text-sm font-bold transition-all shadow-sm self-start md:self-auto"
             >
               <span>{active.actionText}</span>
               <ArrowRight className="w-4 h-4" />
@@ -202,24 +202,24 @@ export function DashboardPreview() {
             {active.stats.map((stat, idx) => (
               <div
                 key={idx}
-                className="p-5 rounded-xl bg-slate-900/80 border border-slate-700/60 space-y-1"
+                className="p-5 rounded-xl bg-[#F8FAFC] border border-slate-200 space-y-1 shadow-xs"
               >
-                <span className="text-xs font-semibold text-slate-400">{stat.label}</span>
-                <div className="text-2xl font-extrabold text-white mt-1">{stat.value}</div>
-                <span className="text-[11px] text-teal-400 block">{stat.sub}</span>
+                <span className="text-xs font-semibold text-slate-500">{stat.label}</span>
+                <div className="text-2xl font-extrabold text-slate-900 mt-1">{stat.value}</div>
+                <span className="text-[11px] text-teal-700 font-medium block">{stat.sub}</span>
               </div>
             ))}
           </div>
 
           {/* Highlights Checklist */}
-          <div className="p-5 rounded-xl bg-teal-950/30 border border-teal-800/40">
-            <span className="text-xs font-bold text-teal-300 uppercase tracking-wider block mb-3">
+          <div className="p-5 rounded-xl bg-teal-50 border border-teal-200">
+            <span className="text-xs font-bold text-teal-900 uppercase tracking-wider block mb-3">
               Standard Clinical & Governance Capabilities
             </span>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-300">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-700">
               {active.highlights.map((h, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
                   <span>{h}</span>
                 </div>
               ))}

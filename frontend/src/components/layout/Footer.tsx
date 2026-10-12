@@ -9,7 +9,8 @@ import {
   Mail, 
   Phone, 
   MapPin, 
-  ExternalLink 
+  ExternalLink,
+  Building2
 } from "lucide-react";
 
 export function Footer() {
@@ -21,76 +22,77 @@ export function Footer() {
           <div className="lg:col-span-2 space-y-4">
             <Logo variant="light" size="lg" />
             <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-              HealthConnect LK is an intelligent, integrated healthcare management platform uniting patient services, hospital clinic queues, clinical worklists, and field supervision across Sri Lanka.
+              HealthNexus (LankaCare.me) is an intelligent, integrated healthcare management platform uniting patient clinic queues, role-based clinician workflows, and a nationwide Sri Lankan hospital directory.
             </p>
             <div className="flex items-center gap-2 text-xs text-teal-400 font-medium bg-teal-950/40 border border-teal-800/40 px-3 py-1.5 rounded-md w-fit">
               <ShieldCheck className="w-4 h-4" />
-              Independent Educational Prototype • Synthetic Data
+              Verified MoH 2026 Directory • Secure Role-Based Access
             </div>
           </div>
 
           {/* Patient Services */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
-              Patient Care
+              Patient Care & Directory
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
-                <Link href="#facilities" className="hover:text-teal-400 transition-colors">
-                  Find Hospitals & Clinics
+                <Link href="/hospitals" className="hover:text-teal-400 transition-colors flex items-center gap-1.5 font-medium text-teal-300">
+                  <Building2 className="w-3.5 h-3.5" />
+                  Hospital Directory
                 </Link>
               </li>
               <li>
-                <Link href="#schedules" className="hover:text-teal-400 transition-colors">
-                  Clinic Schedules
+                <Link href="/hospitals?q=Kinniya" className="hover:text-teal-400 transition-colors text-slate-400">
+                  Base Hospital Kinniya
                 </Link>
               </li>
               <li>
                 <Link href="/auth/patient-register" className="hover:text-teal-400 transition-colors">
-                  Patient Registration
+                  Patient Registration (OTP)
                 </Link>
               </li>
               <li>
                 <Link href="/auth/patient-login" className="hover:text-teal-400 transition-colors">
-                  Queue Ticket Tracker
+                  Patient Portal Login
                 </Link>
               </li>
               <li>
-                <Link href="#how-it-works" className="hover:text-teal-400 transition-colors">
-                  Appointment Workflow
+                <Link href="/#how-it-works" className="hover:text-teal-400 transition-colors">
+                  How HealthNexus Works
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Healthcare Staff */}
+          {/* Healthcare Staff Workspaces */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
-              Healthcare Workspaces
+              Clinical & Operations
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link href="/auth/staff-login" className="hover:text-teal-400 transition-colors">
-                  Clinician Workspace
+                  Staff Login (Enforced MFA)
                 </Link>
               </li>
               <li>
-                <Link href="/auth/staff-login" className="hover:text-teal-400 transition-colors">
-                  Nursing Care Station
+                <Link href="/auth/staff-register" className="hover:text-teal-400 transition-colors">
+                  Staff Credential Registration
                 </Link>
               </li>
               <li>
-                <Link href="/auth/staff-login" className="hover:text-teal-400 transition-colors">
-                  Reception Desk
+                <Link href="/portal/doctor" className="hover:text-teal-400 transition-colors">
+                  Doctor Consultation Desk
                 </Link>
               </li>
               <li>
-                <Link href="/auth/staff-login" className="hover:text-teal-400 transition-colors">
-                  Field Supervision
+                <Link href="/portal/nurse" className="hover:text-teal-400 transition-colors">
+                  Nursing Triage Station
                 </Link>
               </li>
               <li>
-                <Link href="/auth/staff-login" className="hover:text-teal-400 transition-colors">
+                <Link href="/portal/admin" className="hover:text-teal-400 transition-colors">
                   Hospital Administration
                 </Link>
               </li>
@@ -100,16 +102,16 @@ export function Footer() {
           {/* Contact & Support */}
           <div>
             <h4 className="text-sm font-semibold uppercase tracking-wider text-white mb-4">
-              Emergency & Inquiries
+              Support & Helplines
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-teal-400 shrink-0" />
-                <span>Suwasariya Emergency: <strong>1990</strong></span>
+                <Phone className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>1990 Suwasariya Emergency</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-teal-400 shrink-0" />
-                <span>support@healthconnect.lk</span>
+                <span className="font-mono text-xs text-slate-300">Healthnexus.support@gmail.com</span>
               </li>
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
@@ -121,11 +123,11 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-slate-800/80 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© 2026 HealthConnect LK. All rights reserved.</p>
+          <p>© 2026 HealthNexus (LankaCare.me). All rights reserved.</p>
           <div className="flex items-center gap-6">
-            <Link href="#privacy" className="hover:text-slate-300 transition-colors">Privacy Notice</Link>
-            <Link href="#terms" className="hover:text-slate-300 transition-colors">Terms of Service</Link>
-            <Link href="#accessibility" className="hover:text-slate-300 transition-colors">Accessibility (WCAG AA)</Link>
+            <Link href="/#privacy" className="hover:text-slate-300 transition-colors">Privacy Notice</Link>
+            <Link href="/#terms" className="hover:text-slate-300 transition-colors">Terms of Service</Link>
+            <Link href="/hospitals" className="hover:text-slate-300 transition-colors">Ministry of Health 2026 Registry</Link>
           </div>
         </div>
       </div>

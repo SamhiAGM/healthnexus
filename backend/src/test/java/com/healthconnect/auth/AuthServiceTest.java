@@ -71,13 +71,12 @@ class AuthServiceTest {
         savedUser.setVerified(false);
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
-        when(jwtService.generateToken(eq("USR-PAT-001"), eq("kavinda@example.com"), anyList())).thenReturn("mock_jwt_token");
 
         AuthResponse response = authService.registerPatient(request);
 
         assertNotNull(response);
         assertEquals("USR-PAT-001", response.getUserId());
-        assertEquals("mock_jwt_token", response.getToken());
+        assertNull(response.getToken(), "New registration must not issue session token until verified");
 
         ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userCaptor.capture());
@@ -94,6 +93,7 @@ class AuthServiceTest {
         request.setFullName("Test User");
         request.setIdentificationType("NIC");
         request.setIdNumber("12345"); // Invalid NIC length
+        request.setEmail("test@example.com");
         request.setPhone("0771234567");
         request.setPassword("Password123!");
 
@@ -108,10 +108,12 @@ class AuthServiceTest {
         request.setFullName("Test User");
         request.setIdentificationType("NIC");
         request.setIdNumber("199512345678");
+        request.setEmail("unique@example.com");
         request.setPhone("0771234567");
         request.setPassword("Password123!");
 
         when(userRepository.existsByNicHash(anyString())).thenReturn(false);
+        when(userRepository.existsByEmail("unique@example.com")).thenReturn(false);
         when(userRepository.existsByPhone("0771234567")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> authService.registerPatient(request));
@@ -129,6 +131,7 @@ class AuthServiceTest {
         patient.setId("USR-PAT-002");
         patient.setRoles(Set.of(Role.PATIENT));
         patient.setEnabled(true);
+        patient.setEmailVerified(true);
 
         when(userRepository.findByEmail("0771234567")).thenReturn(Optional.empty());
         when(userRepository.findByPhone("0771234567")).thenReturn(Optional.of(patient));
@@ -225,7 +228,7 @@ class AuthServiceTest {
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
                 authService.verifyMfa(mfaSessionId, "123456")
         );
-        assertTrue(ex.getMessage().contains("Multifactor authentication is required for privileged clinical access"));
+        assertTrue(ex.getMessage().contains("Staff multifactor authentication is unavailable"));
     }
 
     @Test

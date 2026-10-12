@@ -97,6 +97,9 @@ public class AuthService {
             maskedNic = "ASSISTED-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         }
 
+        if (request.getEmail() == null || request.getEmail().trim().isBlank()) {
+            throw new IllegalArgumentException("Email address is required.");
+        }
         String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("An account with this email address already exists.");

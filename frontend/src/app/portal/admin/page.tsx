@@ -157,18 +157,34 @@ export default function AdminDashboard() {
 
   const pendingCount = staffRequests.filter((s) => s.status === "PENDING_APPROVAL").length;
 
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditReport, setAuditReport] = useState<any | null>(null);
+
+  const fetchAuditDryRun = async () => {
+    setAuditLoading(true);
+    try {
+      const data = await apiFetch<any>("/api/admin/database/audit-dry-run");
+      setAuditReport(data);
+      setActionMessage("Database audit dry-run completed successfully (Read-Only).");
+    } catch (err: any) {
+      setActionMessage(`Audit query failed: ${err.message || "Unauthorized or backend offline"}`);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#081225] text-slate-100 flex flex-col selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col selection:bg-teal-500 selection:text-white">
       {/* Header */}
-      <header className="bg-[#0B1730] border-b border-slate-800 sticky top-0 z-40">
+      <header className="bg-white/95 border-b border-[#E2E8F0] sticky top-0 z-40 shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Logo variant="light" size="sm" />
+            <Logo variant="dark" size="sm" />
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                 Hospital Administration
               </span>
-              <span className="hidden md:inline-block text-xs text-slate-400">
+              <span className="hidden md:inline-block text-xs text-slate-500">
                 National Hospital of Sri Lanka (NHSL) Executive Operations
               </span>
             </div>
@@ -176,13 +192,13 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-white">Director Dr. Anura Senanayake</div>
-              <div className="text-[10px] text-teal-400">Hospital Admin Auth</div>
+              <div className="text-xs font-bold text-slate-900">Director Dr. Anura Senanayake</div>
+              <div className="text-[10px] text-teal-600 font-medium">Hospital Admin Auth</div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -196,41 +212,41 @@ export default function AdminDashboard() {
         
         {/* Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 rounded-2xl bg-[#0F1E36] border border-slate-700/60 shadow-lg">
-            <span className="text-xs text-slate-400 font-semibold uppercase">Daily Attendance</span>
-            <div className="text-3xl font-extrabold text-white mt-1">439 Patients</div>
-            <span className="text-xs text-emerald-400 mt-2 block">84% Capacity Utilized</span>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <span className="text-xs text-slate-500 font-semibold uppercase">Daily Attendance</span>
+            <div className="text-3xl font-extrabold text-slate-900 mt-1">439 Patients</div>
+            <span className="text-xs text-emerald-700 mt-2 block font-medium">84% Capacity Utilized</span>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#0F1E36] border border-slate-700/60 shadow-lg">
-            <span className="text-xs text-slate-400 font-semibold uppercase">On-Duty Medical Staff</span>
-            <div className="text-3xl font-extrabold text-teal-400 mt-1">32 Clinicians</div>
-            <span className="text-xs text-slate-400 mt-2 block">Across 6 Outpatient Wings</span>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <span className="text-xs text-slate-500 font-semibold uppercase">On-Duty Medical Staff</span>
+            <div className="text-3xl font-extrabold text-teal-700 mt-1">32 Clinicians</div>
+            <span className="text-xs text-slate-500 mt-2 block">Across 6 Outpatient Wings</span>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#0F1E36] border border-slate-700/60 shadow-lg">
-            <span className="text-xs text-slate-400 font-semibold uppercase">Pending Staff Verifications</span>
-            <div className="text-3xl font-extrabold text-amber-400 mt-1">{pendingCount}</div>
-            <span className="text-xs text-amber-400 mt-2 block">Action Required</span>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <span className="text-xs text-slate-500 font-semibold uppercase">Pending Staff Verifications</span>
+            <div className="text-3xl font-extrabold text-amber-700 mt-1">{pendingCount}</div>
+            <span className="text-xs text-amber-700 mt-2 block font-medium">Action Required</span>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#0F1E36] border border-slate-700/60 shadow-lg">
-            <span className="text-xs text-slate-400 font-semibold uppercase">Quality Audit Status</span>
-            <div className="text-3xl font-extrabold text-blue-400 mt-1">94% Score</div>
-            <span className="text-xs text-teal-400 mt-2 block">Ministry Verified</span>
+          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
+            <span className="text-xs text-slate-500 font-semibold uppercase">Quality Audit Status</span>
+            <div className="text-3xl font-extrabold text-blue-700 mt-1">94% Score</div>
+            <span className="text-xs text-teal-700 mt-2 block font-medium">Ministry Verified</span>
           </div>
         </div>
 
         {/* Action Flash Banner */}
         {actionMessage && (
-          <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-800/70 text-emerald-200 text-xs sm:text-sm flex items-center justify-between shadow-lg">
+          <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs sm:text-sm flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
               <span>{actionMessage}</span>
             </div>
             <button
               onClick={() => setActionMessage(null)}
-              className="text-xs text-emerald-400 hover:text-white"
+              className="text-xs text-teal-700 hover:text-teal-900 font-semibold"
             >
               Dismiss
             </button>
@@ -243,11 +259,11 @@ export default function AdminDashboard() {
           <div className="lg:col-span-7 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
                   Staff Access & Professional Registration Approvals
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Grant or revoke clinical system privileges based on official medical registration verification.
                 </p>
               </div>
@@ -256,7 +272,7 @@ export default function AdminDashboard() {
                 <select
                   value={filterRole}
                   onChange={(e) => setFilterRole(e.target.value)}
-                  className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none"
                 >
                   <option value="ALL">All Roles</option>
                   <option value="DOCTOR">Doctors</option>
@@ -268,7 +284,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={fetchLiveRequests}
                   disabled={loading}
-                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+                  className="p-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 shadow-xs transition-colors"
                   title="Refresh Live Requests"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -278,26 +294,26 @@ export default function AdminDashboard() {
 
             <div className="space-y-3">
               {filteredRequests.length === 0 ? (
-                <div className="p-8 rounded-xl bg-[#0F1E36] border border-slate-800 text-center text-xs text-slate-400">
+                <div className="p-8 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500 shadow-xs">
                   No staff access requests matching the current filter.
                 </div>
               ) : (
                 filteredRequests.map((req) => (
                   <div
                     key={req.id}
-                    className="p-5 rounded-xl bg-[#0F1E36] border border-slate-700/70 space-y-3 shadow-md"
+                    className="p-5 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs"
                   >
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-bold text-white">{req.fullName}</div>
-                        <div className="text-xs text-teal-400 flex items-center gap-2 mt-0.5">
+                        <div className="text-sm font-bold text-slate-900">{req.fullName}</div>
+                        <div className="text-xs text-teal-700 flex items-center gap-2 mt-0.5">
                           <span className="font-semibold">{req.requestedRole}</span>
                           <span>•</span>
-                          <span className="text-slate-300">{req.department}</span>
+                          <span className="text-slate-600">{req.department}</span>
                           {req.employeeId && (
                             <>
                               <span>•</span>
-                              <span className="text-slate-400">{req.employeeId}</span>
+                              <span className="text-slate-500">{req.employeeId}</span>
                             </>
                           )}
                         </div>
@@ -305,39 +321,39 @@ export default function AdminDashboard() {
 
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                         req.status === "APPROVED"
-                          ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
+                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                           : req.status === "REJECTED"
-                          ? "bg-rose-950/60 text-rose-400 border border-rose-800/40"
-                          : "bg-amber-950/60 text-amber-400 border border-amber-800/40"
+                          ? "bg-rose-50 text-rose-800 border border-rose-200"
+                          : "bg-amber-50 text-amber-800 border border-amber-200"
                       }`}>
                         {req.status.replace("_", " ")}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-400 pt-2 border-t border-slate-800">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
                       <div>
                         Council Reg:{" "}
-                        <strong className="text-slate-200">
+                        <strong className="text-slate-800">
                           {req.professionalRegistrationNumber || "N/A"}
                         </strong>
                       </div>
                       <div>
-                        Work Email: <strong className="text-slate-200">{req.workEmail}</strong>
+                        Work Email: <strong className="text-slate-800">{req.workEmail}</strong>
                       </div>
                     </div>
 
                     {req.status === "PENDING_APPROVAL" && (
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800/60">
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                         <button
                           onClick={() => handleReject(req.id)}
-                          className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 text-xs font-semibold border border-rose-600/30 transition-colors flex items-center gap-1"
+                          className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200 transition-colors flex items-center gap-1"
                         >
                           <UserX className="w-3.5 h-3.5" />
                           Reject
                         </button>
                         <button
                           onClick={() => handleApprove(req.id)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors flex items-center gap-1 shadow-sm"
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors flex items-center gap-1 shadow-xs"
                         >
                           <UserCheck className="w-3.5 h-3.5" />
                           Verify & Authorize
@@ -350,47 +366,95 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Right Column: Clinic Session Capacities */}
-          <div className="lg:col-span-5 space-y-4">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-teal-400" />
-                Clinic Session Quota Management
-              </h3>
-              <p className="text-xs text-slate-400">Real-time daily booking quotas per specialized wing</p>
+          {/* Right Column: Clinic Session Capacities & Database Audit */}
+          <div className="lg:col-span-5 space-y-6">
+            
+            {/* Clinic Capacity */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-teal-600" />
+                  Clinic Session Quota Management
+                </h3>
+                <p className="text-xs text-slate-500">Real-time daily booking quotas per specialized wing</p>
+              </div>
+
+              <div className="space-y-3">
+                {clinicCapacity.map((c, idx) => {
+                  const percentage = Math.round((c.booked / c.dailyLimit) * 100);
+                  return (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="text-xs font-bold text-slate-900">{c.clinic}</div>
+                        <span className="text-[11px] font-semibold text-teal-700">
+                          {c.booked} / {c.dailyLimit}
+                        </span>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="bg-teal-600 h-2 rounded-full transition-all"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-500">
+                        <span>{c.allocatedDoctors} Attending Consultants</span>
+                        <span>{percentage}% Booked</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="space-y-3">
-              {clinicCapacity.map((c, idx) => {
-                const percentage = Math.round((c.booked / c.dailyLimit) * 100);
-                return (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-xl bg-[#0F1E36] border border-slate-700/70 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold text-white">{c.clinic}</div>
-                      <span className="text-[11px] font-semibold text-teal-400">
-                        {c.booked} / {c.dailyLimit}
-                      </span>
-                    </div>
+            {/* Database Maintenance & Audit Section */}
+            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-teal-600" />
+                    MongoDB Integrity & Dry-Run Audit
+                  </h4>
+                  <p className="text-[11px] text-slate-500">
+                    Safe read-only audit to distinguish synthetic accounts from real production records.
+                  </p>
+                </div>
+                <button
+                  onClick={fetchAuditDryRun}
+                  disabled={auditLoading}
+                  className="px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 text-xs font-semibold flex items-center gap-1.5 shadow-xs"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${auditLoading ? "animate-spin" : ""}`} />
+                  Run Audit
+                </button>
+              </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="bg-teal-500 h-2 rounded-full transition-all"
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between text-[10px] text-slate-400">
-                      <span>{c.allocatedDoctors} Attending Consultants</span>
-                      <span>{percentage}% Booked</span>
-                    </div>
+              {auditReport && (
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                  <div className="flex justify-between text-slate-700">
+                    <span>Total User Records:</span>
+                    <strong className="text-slate-900">{auditReport.totalUsersScanned}</strong>
                   </div>
-                );
-              })}
+                  <div className="flex justify-between text-emerald-700">
+                    <span>Protected Production Records:</span>
+                    <strong>{auditReport.protectedRealUsers}</strong>
+                  </div>
+                  <div className="flex justify-between text-amber-700">
+                    <span>Synthetic Demo Candidates:</span>
+                    <strong>{auditReport.syntheticDemoAccountsCount}</strong>
+                  </div>
+                  <div className="text-[10px] text-slate-500 border-t border-slate-200 pt-2">
+                    Status: <span className="text-teal-700 font-semibold">{auditReport.status}</span> (Protected by approval lock code)
+                  </div>
+                </div>
+              )}
             </div>
+
           </div>
 
         </div>

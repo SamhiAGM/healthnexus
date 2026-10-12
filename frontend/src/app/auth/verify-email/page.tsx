@@ -210,6 +210,7 @@ function VerifyEmailContent() {
         method: "POST",
         body: JSON.stringify({
           email: email.trim(),
+          code: otpCode,
           otp: otpCode,
         }),
       });

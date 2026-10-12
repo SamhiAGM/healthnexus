@@ -106,14 +106,14 @@ export function Logo({
         <div className="flex flex-col leading-tight">
           <div className="flex items-center gap-1 font-bold tracking-tight">
             <span className={`${textSizes[size]} ${isLight ? "text-white" : "text-[#0B1730]"}`}>
-              Health<span className="text-[#0D9488]">Connect</span>
+              Health<span className="text-[#0F766E]">Nexus</span>
             </span>
-            <span className="text-xs font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#0D9488]/10 text-[#0D9488] border border-[#0D9488]/20">
+            <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#0F766E]/10 text-[#0F766E] border border-[#0F766E]/20">
               LK
             </span>
           </div>
-          <span className={`text-[10px] font-medium tracking-wide uppercase ${isLight ? "text-slate-300" : "text-slate-500"}`}>
-            Intelligent Care Platform
+          <span className={`text-[10px] font-medium tracking-wide ${isLight ? "text-slate-300" : "text-[#52657F]"}`}>
+            Connected Care &bull; LankaCare.me
           </span>
         </div>
       )}

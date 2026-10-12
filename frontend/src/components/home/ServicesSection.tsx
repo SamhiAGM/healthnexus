@@ -25,8 +25,8 @@ export function ServicesSection() {
       description: "Search accredited Sri Lankan tertiary, provincial, and divisional healthcare facilities by district and active clinic sessions.",
       icon: Building2,
       badge: "Public Access",
-      href: "#facilities",
-      color: "from-teal-500/20 to-teal-500/5 text-teal-300 border-teal-500/30",
+      href: "/hospitals",
+      color: "from-teal-50 to-teal-100/60 text-teal-700 border-teal-200",
     },
     {
       id: "appointments",
@@ -35,7 +35,7 @@ export function ServicesSection() {
       icon: Calendar,
       badge: "Patient Portal",
       href: "/auth/patient-register",
-      color: "from-blue-500/20 to-blue-500/5 text-blue-300 border-blue-500/30",
+      color: "from-blue-50 to-blue-100/60 text-blue-700 border-blue-200",
     },
     {
       id: "queues",
@@ -44,7 +44,7 @@ export function ServicesSection() {
       icon: Activity,
       badge: "Real-Time Tracking",
       href: "/auth/patient-login",
-      color: "from-amber-500/20 to-amber-500/5 text-amber-300 border-amber-500/30",
+      color: "from-amber-50 to-amber-100/60 text-amber-700 border-amber-200",
     },
     {
       id: "clinical",
@@ -53,7 +53,7 @@ export function ServicesSection() {
       icon: Stethoscope,
       badge: "Physicians & Consultants",
       href: "/auth/staff-login",
-      color: "from-teal-500/20 to-teal-500/5 text-teal-300 border-teal-500/30",
+      color: "from-teal-50 to-teal-100/60 text-teal-700 border-teal-200",
     },
     {
       id: "nursing-reception",
@@ -62,7 +62,7 @@ export function ServicesSection() {
       icon: UserCheck,
       badge: "Staff Desk & Station",
       href: "/auth/staff-login",
-      color: "from-purple-500/20 to-purple-500/5 text-purple-300 border-purple-500/30",
+      color: "from-purple-50 to-purple-100/60 text-purple-700 border-purple-200",
     },
     {
       id: "supervision",
@@ -71,7 +71,7 @@ export function ServicesSection() {
       icon: ClipboardCheck,
       badge: "Supervisors & Quality",
       href: "/auth/staff-login",
-      color: "from-rose-500/20 to-rose-500/5 text-rose-300 border-rose-500/30",
+      color: "from-rose-50 to-rose-100/60 text-rose-700 border-rose-200",
     },
     {
       id: "pharmacy-lab",
@@ -80,7 +80,7 @@ export function ServicesSection() {
       icon: Pill,
       badge: "Ancillary Healthcare",
       href: "/auth/staff-login",
-      color: "from-emerald-500/20 to-emerald-500/5 text-emerald-300 border-emerald-500/30",
+      color: "from-emerald-50 to-emerald-100/60 text-emerald-700 border-emerald-200",
     },
     {
       id: "issues",
@@ -89,12 +89,12 @@ export function ServicesSection() {
       icon: FileText,
       badge: "Facility Support",
       href: "#contact",
-      color: "from-sky-500/20 to-sky-500/5 text-sky-300 border-sky-500/30",
+      color: "from-sky-500/20 to-sky-500/5 text-sky-700 border-sky-200",
     },
   ];
 
   return (
-    <section id="services" className="py-24 bg-[#081225] text-white relative overflow-hidden">
+    <section id="services" className="py-24 bg-[#F8FAFC] text-[#172B4D] relative overflow-hidden">
       
       {/* Background Lighting Accents */}
       <div className="absolute top-1/2 left-0 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
@@ -104,40 +104,40 @@ export function ServicesSection() {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3.5 py-1 rounded-full">
-            <Sparkles className="w-3 h-3 text-teal-300" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-teal-700 bg-teal-50 border border-teal-200 px-3.5 py-1 rounded-full">
+            <Sparkles className="w-3 h-3 text-teal-600" />
             Comprehensive Healthcare Services
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Designed for Every Stakeholder in Sri Lankan Healthcare
           </h2>
-          <p className="text-slate-400 text-base sm:text-lg">
-            From rural outpatient clinics to major teaching hospitals, HealthConnect LK connects citizens with dedicated healthcare teams.
+          <p className="text-slate-600 text-base sm:text-lg">
+            From rural outpatient clinics to major teaching hospitals, HealthNexus LK connects citizens with dedicated healthcare teams.
           </p>
         </div>
 
         {/* Highlight Feature Showcase Card with Hospital Photography */}
-        <div className="mb-14 rounded-2xl bg-[#0F1E36]/90 border border-slate-700/80 p-6 sm:p-8 backdrop-blur-xl shadow-2xl overflow-hidden">
+        <div className="mb-14 rounded-2xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             <div className="lg:col-span-7 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-950/60 border border-teal-800/40 text-xs font-semibold text-teal-300">
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-400" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200 text-xs font-semibold text-teal-700">
+                <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
                 Collaborative Clinical Workflows
               </div>
 
-              <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                 Streamlined Doctor-Patient Consultations & Hospital Triage
               </h3>
 
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-sm text-slate-600 leading-relaxed">
                 Empowering healthcare practitioners with instant visibility into patient queue tickets, logged vital measurements, medication dispenses, and specialized departmental referrals.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <Link
                   href="/auth/staff-login"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-md"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold transition-all shadow-sm"
                 >
                   Enter Clinician Workspace
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -145,23 +145,23 @@ export function ServicesSection() {
 
                 <Link
                   href="/auth/patient-register"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold border border-slate-200 transition-colors"
                 >
                   Patient Online Registration
                 </Link>
               </div>
             </div>
 
-            <div className="lg:col-span-5 relative h-64 sm:h-72 rounded-xl overflow-hidden border border-slate-700/60 shadow-xl">
+            <div className="lg:col-span-5 relative h-64 sm:h-72 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
               <Image
                 src="/images/doctor_consult_card.jpg"
                 alt="Healthcare Professionals Collaborating in Clinical Workspace"
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover object-center filter brightness-[0.9] contrast-[1.05] hover:scale-105 transition-transform duration-500"
+                className="object-cover object-center filter brightness-[0.95] contrast-[1.05] hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0F1E36]/80 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 left-3 right-3 text-[11px] font-medium text-slate-200 bg-slate-900/80 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-800">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-3 left-3 right-3 text-[11px] font-medium text-slate-800 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-slate-200 shadow-xs">
                 Connected Clinical Station • Teaching & Base Hospitals
               </div>
             </div>
@@ -176,34 +176,31 @@ export function ServicesSection() {
             return (
               <div
                 key={item.id}
-                className="group relative rounded-2xl bg-[#0F1E36]/80 hover:bg-[#0F1E36] border border-slate-700/60 hover:border-teal-500/50 p-6 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:shadow-teal-950/40 hover:-translate-y-1.5"
+                className="group relative rounded-2xl bg-white hover:bg-[#F6F9FC] border border-slate-200 hover:border-teal-400 p-6 flex flex-col justify-between transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-1"
               >
-                {/* Subtle top card glow */}
-                <div className="absolute -top-px left-6 right-6 h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} border flex items-center justify-center transform group-hover:scale-105 transition-transform`}>
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-700/80">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                       {item.badge}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white group-hover:text-teal-300 transition-colors">
+                  <h3 className="text-lg font-bold text-slate-900 group-hover:text-teal-700 transition-colors">
                     {item.title}
                   </h3>
 
-                  <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                     {item.description}
                   </p>
                 </div>
 
-                <div className="pt-6 mt-4 border-t border-slate-800/80">
+                <div className="pt-6 mt-4 border-t border-slate-100">
                   <Link
                     href={item.href}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-400 group-hover:text-teal-300 transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 group-hover:text-teal-800 transition-colors"
                   >
                     <span>Open Service</span>
                     <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1.5 transition-transform" />

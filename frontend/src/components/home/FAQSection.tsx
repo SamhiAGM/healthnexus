@@ -45,18 +45,18 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" className="py-24 bg-[#081225] text-white relative">
+    <section id="faq" className="py-24 bg-[#F8FAFC] text-[#172B4D] relative">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center space-y-4 mb-16">
-          <span className="text-xs font-bold uppercase tracking-widest text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold uppercase tracking-widest text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1 rounded-full">
             Frequently Asked Questions
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Common Inquiries & Guidelines
           </h2>
-          <p className="text-slate-400 text-base">
+          <p className="text-slate-600 text-base">
             Everything you need to know about navigating appointments, queues, and clinical workflows.
           </p>
         </div>
@@ -68,7 +68,7 @@ export function FAQSection() {
             return (
               <div
                 key={index}
-                className="rounded-2xl bg-[#0F1E36] border border-slate-700/70 overflow-hidden transition-colors"
+                className="rounded-2xl bg-white border border-slate-200 overflow-hidden shadow-xs hover:border-slate-300 transition-colors"
               >
                 <button
                   onClick={() => toggle(index)}
@@ -76,22 +76,22 @@ export function FAQSection() {
                   aria-expanded={isOpen}
                 >
                   <div className="flex items-center gap-3 pr-4">
-                    <HelpCircle className="w-5 h-5 text-teal-400 shrink-0" />
-                    <span className="font-semibold text-white text-base">
+                    <HelpCircle className="w-5 h-5 text-teal-600 shrink-0" />
+                    <span className="font-semibold text-slate-900 text-base">
                       {item.question}
                     </span>
                   </div>
                   <ChevronDown
                     className={`w-5 h-5 text-slate-400 shrink-0 transition-transform duration-200 ${
-                      isOpen ? "transform rotate-180 text-teal-400" : ""
+                      isOpen ? "transform rotate-180 text-teal-600" : ""
                     }`}
                   />
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-6 pt-2 text-sm text-slate-300 leading-relaxed border-t border-slate-800/80 bg-slate-900/40">
+                  <div className="px-6 pb-6 pt-2 text-sm text-slate-600 leading-relaxed border-t border-slate-100 bg-[#F8FAFC]">
                     <p>{item.answer}</p>
-                    <span className="inline-block mt-3 text-[11px] font-semibold text-teal-400 uppercase tracking-wider">
+                    <span className="inline-block mt-3 text-[11px] font-semibold text-teal-700 uppercase tracking-wider">
                       Category: {item.category}
                     </span>
                   </div>

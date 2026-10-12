@@ -17,7 +17,7 @@ import {
   PhoneCall,
   Activity,
   ArrowRight,
-  Sparkles
+  Compass
 } from "lucide-react";
 
 export function Navbar() {
@@ -25,6 +25,8 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loginDropdownOpen, setLoginDropdownOpen] = useState(false);
   const pathname = usePathname();
+
+  const isLightNav = pathname !== "/" || isScrolled;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,45 +41,57 @@ export function Navbar() {
   }, []);
 
   const navLinks = [
-    { name: "Services", href: "#services", icon: Stethoscope },
-    { name: "Hospitals", href: "#facilities", icon: Building2 },
-    { name: "Schedules", href: "#facilities", icon: Calendar },
-    { name: "How It Works", href: "#how-it-works", icon: Activity },
-    { name: "FAQ", href: "#faq", icon: HelpCircle },
-    { name: "Contact", href: "#contact", icon: PhoneCall },
+    { name: "Services", href: "/#services", icon: Stethoscope },
+    { name: "Hospital Directory", href: "/hospitals", icon: Building2 },
+    { name: "How It Works", href: "/#how-it-works", icon: Activity },
+    { name: "FAQ", href: "/#faq", icon: HelpCircle },
+    { name: "Contact", href: "/#contact", icon: PhoneCall },
   ];
 
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-[#0B1730]/92 backdrop-blur-xl border-b border-slate-700/60 shadow-xl shadow-slate-950/20 py-2.5"
-          : "bg-transparent border-b border-slate-800/40 py-4"
+        isLightNav
+          ? "bg-white/95 backdrop-blur-xl border-b border-[#E2E8F0] shadow-sm py-2.5"
+          : "bg-transparent border-b border-white/10 py-4"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between">
           
-          {/* Brand Logo with subtle hover glow */}
+          {/* Brand Logo */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-teal-500/20 to-blue-600/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Logo variant="light" size="md" className="relative z-10" />
+            <Logo variant={isLightNav ? "dark" : "light"} size="md" className="relative z-10" />
           </div>
 
-          {/* Desktop Navigation Links with animated indicator */}
+          {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
             {navLinks.map((item) => {
               const Icon = item.icon;
+              const isHospitals = item.href === "/hospitals";
+              const isCurrent = pathname === "/hospitals" && isHospitals;
+
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="group relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-300 hover:text-white rounded-lg transition-colors"
+                  className={`group relative flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isCurrent
+                      ? "text-[#0F766E] font-semibold bg-teal-50"
+                      : isLightNav
+                        ? "text-[#52657F] hover:text-[#172B4D] hover:bg-slate-100"
+                        : "text-slate-300 hover:text-white"
+                  }`}
                 >
-                  <Icon className="w-4 h-4 text-teal-400/80 group-hover:text-teal-300 transition-colors" />
+                  <Icon className={`w-4 h-4 transition-colors ${
+                    isCurrent ? "text-[#0F766E]" : isLightNav ? "text-slate-500 group-hover:text-[#0F766E]" : "text-teal-400 group-hover:text-teal-300"
+                  }`} />
                   <span>{item.name}</span>
-                  {/* Subtle animated bottom highlight bar */}
-                  <span className="absolute bottom-0 left-3 right-3 h-[2px] bg-gradient-to-r from-teal-400 to-blue-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left rounded-full" />
+                  {isHospitals && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-teal-100 text-teal-800 ml-0.5">
+                      2026
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -92,52 +106,54 @@ export function Navbar() {
                 onClick={() => setLoginDropdownOpen(!loginDropdownOpen)}
                 className={`flex items-center gap-2 px-3.5 py-2 text-sm font-semibold rounded-xl transition-all duration-200 border ${
                   loginDropdownOpen
-                    ? "bg-slate-800 text-white border-teal-500/50 shadow-md ring-1 ring-teal-500/30"
-                    : "text-slate-200 bg-slate-900/80 hover:bg-slate-800 hover:text-white border-slate-700/80 backdrop-blur-md"
+                    ? "bg-slate-100 text-[#172B4D] border-teal-500 shadow-sm"
+                    : isLightNav
+                      ? "text-[#172B4D] bg-white hover:bg-slate-50 border-[#E2E8F0] shadow-sm"
+                      : "text-white bg-slate-900/80 hover:bg-slate-800 border-slate-700/80 backdrop-blur-md"
                 }`}
                 aria-expanded={loginDropdownOpen}
               >
-                <User className="w-4 h-4 text-teal-400" />
-                Sign In
+                <User className="w-4 h-4 text-[#0F766E]" />
+                <span>Sign In</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${loginDropdownOpen ? "rotate-180" : ""}`} />
               </button>
 
               {loginDropdownOpen && (
                 <div 
-                  className="absolute right-0 mt-2.5 w-60 bg-[#0F1E36]/95 backdrop-blur-2xl border border-slate-700/90 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in-50 zoom-in-95 duration-150"
+                  className="absolute right-0 mt-2.5 w-64 bg-white border border-[#E2E8F0] rounded-2xl shadow-xl p-2 z-50 animate-in fade-in-50 zoom-in-95 duration-150"
                   onMouseLeave={() => setLoginDropdownOpen(false)}
                 >
-                  <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-700/60 mb-1">
-                    Select Your Workspace
+                  <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-100 mb-1">
+                    Select Your Portal
                   </div>
 
                   <Link
                     href="/auth/patient-login"
                     onClick={() => setLoginDropdownOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-200 hover:bg-teal-500/10 hover:text-teal-300 transition-colors group"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#172B4D] hover:bg-teal-50 hover:text-[#0F766E] transition-colors group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 flex items-center justify-center text-[#0F766E] shrink-0 group-hover:scale-105 transition-transform">
                       <User className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-semibold text-white leading-snug">Patient Portal</div>
-                      <div className="text-[11px] text-slate-400">Book visits & live queue ticket</div>
+                      <div className="font-semibold text-[#172B4D] leading-snug">Patient Portal</div>
+                      <div className="text-[11px] text-[#52657F]">Book clinic visits & queue tickets</div>
                     </div>
                   </Link>
 
-                  <div className="border-t border-slate-800/80 my-1" />
+                  <div className="border-t border-slate-100 my-1" />
 
                   <Link
                     href="/auth/staff-login"
                     onClick={() => setLoginDropdownOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-slate-200 hover:bg-blue-500/10 hover:text-blue-300 transition-colors group"
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-[#172B4D] hover:bg-blue-50 hover:text-blue-700 transition-colors group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 shrink-0 group-hover:scale-105 transition-transform">
                       <ShieldAlert className="w-4 h-4" />
                     </div>
                     <div>
-                      <div className="font-semibold text-white leading-snug">Healthcare Staff</div>
-                      <div className="text-[11px] text-slate-400">Clinicians, nurses, officers</div>
+                      <div className="font-semibold text-[#172B4D] leading-snug">Healthcare Staff</div>
+                      <div className="text-[11px] text-[#52657F]">Clinicians, nurses, coordinators</div>
                     </div>
                   </Link>
                 </div>
@@ -147,9 +163,9 @@ export function Navbar() {
             {/* Patient Register CTA */}
             <Link
               href="/auth/patient-register"
-              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-md shadow-teal-950/30 hover:shadow-teal-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-[#0F766E] hover:bg-[#0d645e] rounded-xl shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5 active:translate-y-0"
             >
-              <span>Patient Register</span>
+              <span>Register Patient</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -158,7 +174,9 @@ export function Navbar() {
           <div className="lg:hidden flex items-center gap-2">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-300 hover:text-white rounded-xl hover:bg-slate-800/80 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-colors"
+              className={`p-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0F766E] transition-colors ${
+                isLightNav ? "text-slate-700 hover:bg-slate-100" : "text-slate-300 hover:text-white hover:bg-slate-800"
+              }`}
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -170,7 +188,7 @@ export function Navbar() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="lg:hidden bg-[#0B1730]/98 backdrop-blur-2xl border-b border-slate-800 px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top-4 duration-200">
+        <div className="lg:hidden bg-white border-b border-[#E2E8F0] px-4 pt-3 pb-6 space-y-4 shadow-xl animate-in slide-in-from-top-4 duration-200">
           <div className="space-y-1">
             {navLinks.map((item) => {
               const Icon = item.icon;
@@ -179,38 +197,40 @@ export function Navbar() {
                   key={item.name}
                   href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3.5 py-2.5 text-base font-medium text-slate-200 hover:bg-slate-800/80 rounded-xl transition-colors"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#172B4D] hover:bg-teal-50 hover:text-[#0F766E] transition-colors"
                 >
-                  <Icon className="w-5 h-5 text-teal-400" />
-                  {item.name}
+                  <Icon className="w-4 h-4 text-[#0F766E]" />
+                  <span>{item.name}</span>
                 </Link>
               );
             })}
           </div>
 
-          <div className="border-t border-slate-800/80 pt-4 space-y-2.5">
+          <div className="pt-3 border-t border-slate-100 space-y-2">
             <Link
               href="/auth/patient-login"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-200 bg-slate-900/80 hover:bg-slate-800 rounded-xl border border-slate-700/80 transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#172B4D] font-semibold text-sm transition-colors"
             >
-              <User className="w-4 h-4 text-teal-400" />
-              Patient Login
+              <User className="w-4 h-4 text-[#0F766E]" />
+              <span>Patient Sign In</span>
             </Link>
+
             <Link
               href="/auth/staff-login"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-200 bg-slate-900/60 hover:bg-slate-800 rounded-xl border border-slate-700/80 transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold text-sm transition-colors border border-blue-200"
             >
-              <ShieldAlert className="w-4 h-4 text-blue-400" />
-              Staff Portal Login
+              <ShieldAlert className="w-4 h-4" />
+              <span>Healthcare Staff Sign In</span>
             </Link>
+
             <Link
               href="/auth/patient-register"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-md transition-colors"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-[#0F766E] hover:bg-[#0d645e] text-white font-semibold text-sm transition-all shadow-md"
             >
-              <span>Patient Registration</span>
+              <span>Register Patient Account</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>

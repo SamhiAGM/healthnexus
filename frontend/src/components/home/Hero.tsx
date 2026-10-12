@@ -13,7 +13,8 @@ import {
   Sparkles,
   ChevronRight,
   Activity,
-  CheckCircle2
+  CheckCircle2,
+  Compass
 } from "lucide-react";
 
 export function Hero() {
@@ -42,11 +43,13 @@ export function Hero() {
   };
 
   const headlineWords = [
-    { text: "Connecting", highlight: false },
-    { text: "People,", highlight: false },
-    { text: "Care", highlight: true },
-    { text: "&", highlight: true },
-    { text: "Technology.", highlight: true },
+    { text: "Connected", highlight: false },
+    { text: "Care.", highlight: false },
+    { text: "Better", highlight: true },
+    { text: "Healthcare.", highlight: true },
+    { text: "For", highlight: false },
+    { text: "Sri", highlight: true },
+    { text: "Lanka.", highlight: true },
   ];
 
   return (
@@ -118,7 +121,7 @@ export function Hero() {
               className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-teal-500/30 text-xs font-semibold text-teal-300 shadow-lg shadow-teal-950/20"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>National Digital Healthcare Platform LK</span>
+              <span>HealthNexus &bull; LankaCare.me National Healthcare</span>
               <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
             </motion.div>
 
@@ -151,7 +154,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="text-lg sm:text-xl text-slate-200 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal"
             >
-              Making public healthcare services more accessible, coordinated, and connected across Sri Lanka through one intelligent digital platform.
+              Discover hospitals, manage healthcare services, and experience a more connected digital healthcare journey with HealthNexus.
             </motion.p>
 
             {/* Primary Action Buttons with Micro-elevation */}
@@ -165,23 +168,23 @@ export function Hero() {
                 href="/auth/patient-register"
                 className="group inline-flex items-center gap-2.5 px-6 py-3.5 text-base font-semibold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-lg shadow-teal-900/40 hover:shadow-teal-500/30 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0"
               >
-                Patient Portal
+                Register Patient
                 <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </Link>
 
               <Link
-                href="/auth/staff-login"
-                className="group inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-slate-200 bg-slate-900/80 hover:bg-slate-800 hover:text-white border border-slate-700/80 hover:border-slate-600 rounded-xl transition-all duration-200 backdrop-blur-md transform hover:-translate-y-0.5 active:translate-y-0"
+                href="/hospitals"
+                className="group inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-teal-300 bg-teal-950/70 hover:bg-teal-900/80 border border-teal-500/40 rounded-xl transition-all duration-200 backdrop-blur-md transform hover:-translate-y-0.5 active:translate-y-0"
               >
-                Healthcare Staff Portal
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+                Explore Hospitals Directory
+                <Compass className="w-4 h-4 text-teal-400 group-hover:rotate-45 transition-transform" />
               </Link>
 
               <Link
-                href="#services"
-                className="inline-flex items-center gap-1.5 px-5 py-3.5 text-base font-medium text-slate-300 hover:text-teal-400 transition-colors"
+                href="/auth/staff-login"
+                className="inline-flex items-center gap-1.5 px-5 py-3.5 text-base font-medium text-slate-300 hover:text-white transition-colors"
               >
-                Explore Services
+                Staff Sign In
               </Link>
             </motion.div>
 

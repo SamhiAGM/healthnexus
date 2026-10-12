@@ -132,35 +132,35 @@ export default function PatientDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#081225] text-slate-100 flex flex-col selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col selection:bg-teal-500 selection:text-white">
       {/* Top Patient Header */}
-      <header className="bg-[#0B1730] border-b border-slate-800 sticky top-0 z-40">
+      <header className="bg-white/95 border-b border-[#E2E8F0] sticky top-0 z-40 shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Logo variant="light" size="sm" />
-            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-950/60 text-teal-400 border border-teal-800/40">
+            <Logo variant="dark" size="sm" />
+            <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
               Patient Portal
             </span>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2.5 text-xs">
-              <div className="w-8 h-8 rounded-full bg-teal-600/30 border border-teal-500/40 flex items-center justify-center text-teal-300 font-bold">
+              <div className="w-8 h-8 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-700 font-bold">
                 <User className="w-4 h-4" />
               </div>
               <div className="hidden sm:block text-left">
-                <div className="font-semibold text-white leading-tight flex items-center gap-1.5">
+                <div className="font-semibold text-slate-900 leading-tight flex items-center gap-1.5">
                   <span>{userName}</span>
                   {userEmail && emailVerified && (
-                    <span title="Email Address Verified" className="text-teal-400">
+                    <span title="Email Address Verified" className="text-teal-600">
                       <CheckCircle className="w-3.5 h-3.5" />
                     </span>
                   )}
                 </div>
-                <div className="text-slate-400 text-[10px] flex items-center gap-1.5">
+                <div className="text-slate-500 text-[10px] flex items-center gap-1.5">
                   <span>NIC Verified Citizen</span>
                   {userEmail && !emailVerified && (
-                    <span className="text-amber-400 font-medium">&bull; Email Unverified</span>
+                    <span className="text-amber-600 font-medium">&bull; Email Unverified</span>
                   )}
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function PatientDashboard() {
 
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -182,21 +182,21 @@ export default function PatientDashboard() {
         
         {/* Email Verification Action Banner if Unverified */}
         {userEmail && !emailVerified && (
-          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-600/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg animate-in fade-in">
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-sm animate-in fade-in">
             <div className="flex items-start sm:items-center gap-3">
-              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 shrink-0">
+              <div className="p-2 rounded-xl bg-amber-100 text-amber-700 shrink-0">
                 <Mail className="w-4 h-4" />
               </div>
               <div>
-                <div className="font-bold text-amber-200">Email Verification Pending</div>
-                <div className="text-slate-300 text-[11px] mt-0.5">
+                <div className="font-bold text-amber-900">Email Verification Pending</div>
+                <div className="text-amber-800 text-[11px] mt-0.5">
                   Confirm your email ({userEmail}) to activate instant clinic notifications and digital medical receipts.
                 </div>
               </div>
             </div>
             <Link
               href={`/auth/verify-email?email=${encodeURIComponent(userEmail)}`}
-              className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-xs transition-colors shrink-0 text-center"
+              className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-xs transition-colors shrink-0 text-center shadow-xs"
             >
               Verify Email Now &rarr;
             </Link>
@@ -204,14 +204,14 @@ export default function PatientDashboard() {
         )}
         
         {/* Navigation Tabs */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <div className="flex items-center gap-2 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between border-b border-[#E2E8F0] pb-4">
+          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveTab("overview")}
               className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
                 activeTab === "overview"
-                  ? "bg-teal-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               My Care & Live Queue
@@ -220,8 +220,8 @@ export default function PatientDashboard() {
               onClick={() => setActiveTab("book")}
               className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
                 activeTab === "book"
-                  ? "bg-teal-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Request Appointment
@@ -230,8 +230,8 @@ export default function PatientDashboard() {
               onClick={() => setActiveTab("history")}
               className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
                 activeTab === "history"
-                  ? "bg-teal-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white"
+                  ? "bg-white text-slate-900 shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Visit Records
@@ -252,28 +252,28 @@ export default function PatientDashboard() {
           <div className="space-y-8 animate-in fade-in-50 duration-200">
             
             {/* Live Queue Ticket Card */}
-            <div className="relative rounded-2xl bg-gradient-to-br from-[#0F1E36] to-[#0A162B] border border-teal-500/30 p-6 sm:p-8 shadow-2xl overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="relative rounded-2xl bg-gradient-to-br from-white to-[#F0FDFA] border border-teal-200 p-6 sm:p-8 shadow-sm overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-800/80 pb-6">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-200 pb-6">
                 <div>
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-400 mb-1">
-                    <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal-700 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
                     Active Live Queue Ticket
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-extrabold text-white">
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
                     {queueData.clinic}
                   </h2>
-                  <p className="text-xs sm:text-sm text-slate-400 flex items-center gap-1.5 mt-1">
-                    <Building2 className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                  <p className="text-xs sm:text-sm text-slate-500 flex items-center gap-1.5 mt-1">
+                    <Building2 className="w-3.5 h-3.5 text-teal-600 shrink-0" />
                     {queueData.hospital} • {queueData.room}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 bg-slate-900/80 border border-slate-800 px-6 py-4 rounded-2xl">
+                <div className="flex items-center gap-4 bg-white border border-slate-200 px-6 py-4 rounded-2xl shadow-xs">
                   <div className="text-right">
-                    <div className="text-[10px] font-semibold text-slate-400 uppercase">Your Token</div>
-                    <div className="text-3xl sm:text-4xl font-extrabold text-teal-400">
+                    <div className="text-[10px] font-semibold text-slate-500 uppercase">Your Token</div>
+                    <div className="text-3xl sm:text-4xl font-extrabold text-teal-600">
                       {queueData.ticketNumber}
                     </div>
                   </div>
@@ -282,29 +282,29 @@ export default function PatientDashboard() {
 
               {/* Progress Flow Metrics */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-6">
-                <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                  <span className="text-xs text-slate-400">Current Token Serving</span>
-                  <div className="text-2xl font-bold text-white mt-1">{queueData.servingToken}</div>
-                  <span className="text-[11px] text-teal-400">Consultation In Progress</span>
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                  <span className="text-xs text-slate-500">Current Token Serving</span>
+                  <div className="text-2xl font-bold text-slate-900 mt-1">{queueData.servingToken}</div>
+                  <span className="text-[11px] text-teal-700 font-medium">Consultation In Progress</span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                  <span className="text-xs text-slate-400">Patients Ahead of You</span>
-                  <div className="text-2xl font-bold text-white mt-1">{queueData.patientsAhead}</div>
-                  <span className="text-[11px] text-blue-400">Steady clinic flow</span>
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                  <span className="text-xs text-slate-500">Patients Ahead of You</span>
+                  <div className="text-2xl font-bold text-slate-900 mt-1">{queueData.patientsAhead}</div>
+                  <span className="text-[11px] text-blue-600 font-medium">Steady clinic flow</span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/40">
-                  <span className="text-xs text-slate-400">Estimated Waiting Time</span>
-                  <div className="text-2xl font-bold text-amber-400 mt-1">
+                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs">
+                  <span className="text-xs text-slate-500">Estimated Waiting Time</span>
+                  <div className="text-2xl font-bold text-amber-700 mt-1">
                     ~{queueData.estimatedWaitMinutes} mins
                   </div>
-                  <span className="text-[11px] text-slate-400">Automated queue prediction</span>
+                  <span className="text-[11px] text-slate-500">Automated queue prediction</span>
                 </div>
               </div>
 
-              <div className="mt-6 p-3.5 rounded-xl bg-teal-950/40 border border-teal-800/40 flex items-center gap-3 text-xs text-slate-300">
-                <ShieldCheck className="w-5 h-5 text-teal-400 shrink-0" />
+              <div className="mt-6 p-3.5 rounded-xl bg-teal-50 border border-teal-200 flex items-center gap-3 text-xs text-teal-800">
+                <ShieldCheck className="w-5 h-5 text-teal-600 shrink-0" />
                 <span>You will receive an automated alert when your token is within 2 positions of call-in.</span>
               </div>
             </div>
@@ -312,44 +312,44 @@ export default function PatientDashboard() {
             {/* Upcoming Appointments List */}
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-teal-400" />
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-teal-600" />
                   Your Scheduled Clinic Visits
                 </h3>
-                <span className="text-xs text-slate-400">{appointments.length} active records</span>
+                <span className="text-xs text-slate-500">{appointments.length} active records</span>
               </div>
 
               <div className="space-y-3">
                 {appointments.map((apt) => (
                   <div
                     key={apt.id}
-                    className="p-5 rounded-2xl bg-[#0F1E36] border border-slate-700/70 hover:border-teal-500/40 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
+                    className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-teal-400 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-teal-400">{apt.id}</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950/60 text-emerald-400 border border-emerald-800/40">
+                        <span className="text-xs font-bold text-teal-700">{apt.id}</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {apt.status}
                         </span>
                         {apt.queueTicket && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-950/60 text-teal-400 border border-teal-800/40">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200">
                             Ticket #{apt.queueTicket}
                           </span>
                         )}
                       </div>
-                      <h4 className="text-base font-bold text-white">{apt.clinic}</h4>
-                      <p className="text-xs text-slate-400">{apt.facilityName} • {apt.doctorName}</p>
+                      <h4 className="text-base font-bold text-slate-900">{apt.clinic}</h4>
+                      <p className="text-xs text-slate-500">{apt.facilityName} • {apt.doctorName}</p>
                     </div>
 
-                    <div className="flex items-center justify-between md:justify-end gap-6 text-xs text-slate-300">
+                    <div className="flex items-center justify-between md:justify-end gap-6 text-xs text-slate-600">
                       <div>
-                        <div className="font-semibold text-white">{apt.date}</div>
-                        <div className="text-slate-400 text-[11px]">{apt.timeSlot}</div>
+                        <div className="font-semibold text-slate-900">{apt.date}</div>
+                        <div className="text-slate-500 text-[11px]">{apt.timeSlot}</div>
                       </div>
 
                       <button
                         onClick={() => alert(`Showing digital confirmation details for ${apt.id}`)}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 font-semibold border border-slate-700 transition-colors"
+                        className="px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-teal-700 font-semibold border border-slate-200 transition-colors"
                       >
                         View Ticket
                       </button>
@@ -364,30 +364,30 @@ export default function PatientDashboard() {
 
         {/* TAB 2: REQUEST APPOINTMENT */}
         {activeTab === "book" && (
-          <div className="max-w-2xl mx-auto bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in-50 duration-200">
+          <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-6 animate-in fade-in-50 duration-200">
             <div>
-              <h2 className="text-xl font-bold text-white">Book Clinic Appointment</h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <h2 className="text-xl font-bold text-slate-900">Book Clinic Appointment</h2>
+              <p className="text-xs text-slate-500 mt-1">
                 Select your preferred hospital and clinic session. Real-time availability will be validated.
               </p>
             </div>
 
             {bookingSuccess && (
-              <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-xs sm:text-sm flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span>Appointment booked successfully! Returning to overview...</span>
               </div>
             )}
 
             <form onSubmit={handleBookingSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Select Healthcare Facility *
                 </label>
                 <select
                   value={bookForm.hospital}
                   onChange={(e) => setBookForm({ ...bookForm, hospital: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="National Hospital of Sri Lanka (NHSL)">National Hospital of Sri Lanka (NHSL)</option>
                   <option value="Castle Street Hospital for Women">Castle Street Hospital for Women</option>
@@ -398,13 +398,13 @@ export default function PatientDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Clinic Specialty *
                 </label>
                 <select
                   value={bookForm.clinic}
                   onChange={(e) => setBookForm({ ...bookForm, clinic: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 >
                   <option value="Cardiology Clinic">Cardiology Clinic</option>
                   <option value="General Outpatient Department (OPD)">General Outpatient Department (OPD)</option>
@@ -416,7 +416,7 @@ export default function PatientDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Preferred Date *
                   </label>
                   <input
@@ -424,18 +424,18 @@ export default function PatientDashboard() {
                     required
                     value={bookForm.date}
                     onChange={(e) => setBookForm({ ...bookForm, date: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Session Window *
                   </label>
                   <select
                     value={bookForm.timeSlot}
                     onChange={(e) => setBookForm({ ...bookForm, timeSlot: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="Morning Session (08:30 AM - 12:00 PM)">Morning Session (08:30 AM - 12:00 PM)</option>
                     <option value="Afternoon Session (01:00 PM - 04:00 PM)">Afternoon Session (01:00 PM - 04:00 PM)</option>
@@ -444,7 +444,7 @@ export default function PatientDashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Reason for Visit / Prior Clinic Card No. (Optional)
                 </label>
                 <textarea
@@ -452,7 +452,7 @@ export default function PatientDashboard() {
                   value={bookForm.notes}
                   onChange={(e) => setBookForm({ ...bookForm, notes: e.target.value })}
                   placeholder="Routine checkup, medication renewal, or doctor referral..."
-                  className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
 
@@ -469,27 +469,27 @@ export default function PatientDashboard() {
 
         {/* TAB 3: VISIT RECORDS & PRESCRIPTIONS */}
         {activeTab === "history" && (
-          <div className="bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-6 sm:p-8 space-y-6 animate-in fade-in-50 duration-200">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm animate-in fade-in-50 duration-200">
             <div>
-              <h2 className="text-xl font-bold text-white">Clinical Visit Records & Follow-Up Reminders</h2>
-              <p className="text-xs text-slate-400 mt-1">
+              <h2 className="text-xl font-bold text-slate-900">Clinical Visit Records & Follow-Up Reminders</h2>
+              <p className="text-xs text-slate-500 mt-1">
                 Authorized documentation provided by your consulting healthcare practitioners.
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="p-5 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+              <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-teal-400">Visit #SL-VIS-9418</span>
-                  <span className="text-xs text-slate-400">18 Sept 2026</span>
+                  <span className="text-xs font-bold text-teal-700">Visit #SL-VIS-9418</span>
+                  <span className="text-xs text-slate-500">18 Sept 2026</span>
                 </div>
-                <h4 className="text-sm font-bold text-white">Consultation with Dr. Samantha Senanayake (Cardiology)</h4>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <h4 className="text-sm font-bold text-slate-900">Consultation with Dr. Samantha Senanayake (Cardiology)</h4>
+                <p className="text-xs text-slate-600 leading-relaxed">
                   Patient vitals stable (BP 125/82 mmHg, Pulse 74 bpm). Continued current maintenance regimen. Recommended follow-up ECG in 4 weeks.
                 </p>
-                <div className="flex items-center gap-3 pt-2 text-[11px] text-teal-400 border-t border-slate-800">
+                <div className="flex items-center gap-3 pt-2 text-[11px] text-teal-700 border-t border-slate-200">
                   <span className="flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     Medication Dispensed (Hospital Pharmacy Counter 2)
                   </span>
                 </div>

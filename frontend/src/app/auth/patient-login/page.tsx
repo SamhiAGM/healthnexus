@@ -52,8 +52,6 @@ function PatientLoginForm() {
 
       setSuccess(true);
       setTimeout(() => router.push("/portal/patient"), 1000);
-
- 
     } catch (err: any) {
       setError(err.message || "Invalid credentials. Please verify your login details.");
     } finally {

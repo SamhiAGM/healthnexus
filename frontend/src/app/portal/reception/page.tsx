@@ -202,17 +202,17 @@ export default function ReceptionDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#081225] text-slate-100 flex flex-col selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col selection:bg-teal-500 selection:text-white">
       {/* Header */}
-      <header className="bg-[#0B1730] border-b border-slate-800 sticky top-0 z-40">
+      <header className="bg-white/95 border-b border-[#E2E8F0] sticky top-0 z-40 shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Logo variant="light" size="sm" />
+            <Logo variant="dark" size="sm" />
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-950/60 text-teal-400 border border-teal-800/40">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
                 Reception & Check-in Desk
               </span>
-              <span className="hidden md:inline-block text-xs text-slate-400">
+              <span className="hidden md:inline-block text-xs text-slate-500">
                 National Hospital of Sri Lanka (NHSL) • Main OPD Desk
               </span>
             </div>
@@ -222,21 +222,21 @@ export default function ReceptionDashboard() {
             <button
               onClick={fetchQueue}
               disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-xs font-medium text-slate-700 transition-colors shadow-xs"
               title="Refresh Queue Manifest"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-teal-400 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-teal-600 ${loading ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">Refresh</span>
             </button>
 
             <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-white">Receptionist K. Wickramasinghe</div>
-              <div className="text-[10px] text-teal-400">Desk Terminal #02</div>
+              <div className="text-xs font-bold text-slate-900">Receptionist K. Wickramasinghe</div>
+              <div className="text-[10px] text-teal-600 font-medium">Desk Terminal #02</div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -249,24 +249,24 @@ export default function ReceptionDashboard() {
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-6">
         
         {actionSuccess && (
-          <div className="p-4 rounded-xl bg-teal-950/60 border border-teal-800/80 text-teal-300 text-xs flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
               <span>{actionSuccess}</span>
             </div>
-            <button onClick={() => setActionSuccess(null)} className="text-teal-400 hover:text-white">
+            <button onClick={() => setActionSuccess(null)} className="text-teal-600 hover:text-teal-800">
               <XCircle className="w-4 h-4" />
             </button>
           </div>
         )}
 
         {actionError && (
-          <div className="p-4 rounded-xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
               <span>{actionError}</span>
             </div>
-            <button onClick={() => setActionError(null)} className="text-rose-400 hover:text-white">
+            <button onClick={() => setActionError(null)} className="text-rose-600 hover:text-rose-800">
               <XCircle className="w-4 h-4" />
             </button>
           </div>
@@ -276,24 +276,24 @@ export default function ReceptionDashboard() {
           
           {/* Left Column: Assisted Patient Check-In & Ticket Generator */}
           <div className="lg:col-span-5">
-            <div className="bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-6 sm:p-8 space-y-5 shadow-2xl">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-5 shadow-sm">
               <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Ticket className="w-5 h-5 text-teal-400" />
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Ticket className="w-5 h-5 text-teal-600" />
                   Assisted Walk-In Check-In
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   Issue instantaneous physical and digital clinic queue tokens linked to NHSL clinical sessions.
                 </p>
               </div>
 
               {issuedTicket && (
-                <div className="p-5 rounded-2xl bg-teal-950/60 border border-teal-800/60 text-teal-300 space-y-3">
-                  <div className="flex items-center justify-between border-b border-teal-800/60 pb-2">
-                    <span className="text-xs font-bold uppercase tracking-wider">Ticket Issued</span>
+                <div className="p-5 rounded-2xl bg-teal-50 border border-teal-200 text-teal-900 space-y-3">
+                  <div className="flex items-center justify-between border-b border-teal-200 pb-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-teal-700">Ticket Issued</span>
                     <button
                       onClick={() => alert(`Printing ticket receipt for token ${issuedTicket.token}...`)}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-200 hover:text-white bg-teal-900/60 px-2.5 py-1 rounded-lg"
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-800 hover:text-teal-950 bg-teal-100 px-2.5 py-1 rounded-lg"
                     >
                       <Printer className="w-3.5 h-3.5" />
                       Print Slip
@@ -301,11 +301,11 @@ export default function ReceptionDashboard() {
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-sm font-bold text-white">{issuedTicket.patientName}</div>
-                      <div className="text-xs text-teal-400">{issuedTicket.clinic}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">NIC: {issuedTicket.nic}</div>
+                      <div className="text-sm font-bold text-slate-900">{issuedTicket.patientName}</div>
+                      <div className="text-xs text-teal-700 font-medium">{issuedTicket.clinic}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">NIC: {issuedTicket.nic}</div>
                     </div>
-                    <div className="text-3xl font-black text-white bg-teal-900/80 px-3.5 py-1.5 rounded-xl border border-teal-600/40">
+                    <div className="text-3xl font-black text-white bg-teal-600 px-3.5 py-1.5 rounded-xl shadow-xs">
                       {issuedTicket.token}
                     </div>
                   </div>
@@ -314,7 +314,7 @@ export default function ReceptionDashboard() {
 
               <form onSubmit={handleGenerateTicket} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Patient Full Name *
                   </label>
                   <input
@@ -323,12 +323,12 @@ export default function ReceptionDashboard() {
                     value={patientName}
                     onChange={(e) => setPatientName(e.target.value)}
                     placeholder="e.g. Rohitha Alwis"
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     National Identity Card (NIC) *
                   </label>
                   <input
@@ -337,18 +337,18 @@ export default function ReceptionDashboard() {
                     value={nic}
                     onChange={(e) => setNic(e.target.value)}
                     placeholder="e.g. 198812345678 or 881234567V"
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 uppercase"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 uppercase"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Target Clinic Session *
                   </label>
                   <select
                     value={clinic}
                     onChange={(e) => setClinic(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="Cardiology Clinic Room 04">Cardiology Clinic Room 04</option>
                     <option value="General OPD Room 01">General OPD Room 01</option>
@@ -358,13 +358,13 @@ export default function ReceptionDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Triage Priority Class
                   </label>
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="ROUTINE">ROUTINE</option>
                     <option value="PRIORITY">PRIORITY (High Urgency)</option>
@@ -397,14 +397,14 @@ export default function ReceptionDashboard() {
           <div className="lg:col-span-7 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-teal-400" />
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-teal-600" />
                   Live Checked-In Patient Queue
                 </h3>
-                <p className="text-xs text-slate-400">{records.length} patients registered today at NHSL Desk 02</p>
+                <p className="text-xs text-slate-500">{records.length} patients registered today at NHSL Desk 02</p>
               </div>
 
-              <div className="text-xs text-slate-400 flex items-center gap-2">
+              <div className="text-xs text-slate-500 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 <span>Live Feed</span>
               </div>
@@ -416,33 +416,33 @@ export default function ReceptionDashboard() {
                 const isDone = r.status === "COMPLETED";
                 const isInConsult = r.status === "IN_CONSULTATION";
 
-                let statusBadge = "bg-teal-950/60 text-teal-400 border border-teal-800/40";
-                if (isDone) statusBadge = "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40";
-                if (isInConsult) statusBadge = "bg-cyan-950/60 text-cyan-400 border border-cyan-800/40";
-                if (isSkipped) statusBadge = "bg-rose-950/60 text-rose-400 border border-rose-800/40";
+                let statusBadge = "bg-teal-50 text-teal-700 border border-teal-200";
+                if (isDone) statusBadge = "bg-emerald-50 text-emerald-700 border border-emerald-200";
+                if (isInConsult) statusBadge = "bg-cyan-50 text-cyan-700 border border-cyan-200";
+                if (isSkipped) statusBadge = "bg-rose-50 text-rose-700 border border-rose-200";
 
                 return (
                   <div
                     key={r.id}
-                    className={`p-5 rounded-xl bg-[#0F1E36] border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                      isSkipped ? "border-rose-950/40 opacity-60" : "border-slate-700/70 hover:border-slate-600"
+                    className={`p-5 rounded-xl bg-white border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs ${
+                      isSkipped ? "border-rose-200 opacity-60" : "border-slate-200 hover:border-slate-300"
                     }`}
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-teal-400">{r.token}</span>
-                        <span className="text-xs font-bold text-white">{r.patientName}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">({r.nic})</span>
+                        <span className="text-sm font-black text-teal-700">{r.token}</span>
+                        <span className="text-xs font-bold text-slate-900">{r.patientName}</span>
+                        <span className="text-[10px] text-slate-500 font-mono">({r.nic})</span>
                       </div>
-                      <p className="text-xs text-slate-300">{r.clinic}</p>
-                      <div className="text-[11px] text-slate-400">Checked in at {r.checkInTime}</div>
+                      <p className="text-xs text-slate-600">{r.clinic}</p>
+                      <div className="text-[11px] text-slate-500">Checked in at {r.checkInTime}</div>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
                         r.priority === "PRIORITY"
-                          ? "bg-amber-950/60 text-amber-400 border border-amber-800/40"
-                          : "bg-slate-800 text-slate-300"
+                          ? "bg-amber-50 text-amber-800 border border-amber-200"
+                          : "bg-slate-100 text-slate-600"
                       }`}>
                         {r.priority}
                       </span>
@@ -455,7 +455,7 @@ export default function ReceptionDashboard() {
                         <button
                           onClick={() => handleCancelTicket(r.token)}
                           title="Cancel ticket if patient departed"
-                          className="p-1 rounded text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                          className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                         >
                           <XCircle className="w-3.5 h-3.5" />
                         </button>

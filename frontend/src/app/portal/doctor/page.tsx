@@ -191,17 +191,17 @@ export default function DoctorDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#081225] text-slate-100 flex flex-col selection:bg-blue-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col selection:bg-blue-500 selection:text-white">
       {/* Header */}
-      <header className="bg-[#0B1730] border-b border-slate-800 sticky top-0 z-40">
+      <header className="bg-white/95 border-b border-[#E2E8F0] sticky top-0 z-40 shadow-sm backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Logo variant="light" size="sm" />
+            <Logo variant="dark" size="sm" />
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-950/60 text-blue-400 border border-blue-800/40">
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
                 Clinician Workspace
               </span>
-              <span className="hidden md:inline-block text-xs text-slate-400">
+              <span className="hidden md:inline-block text-xs text-slate-500">
                 National Hospital of Sri Lanka (NHSL) • Cardiology Room 04
               </span>
             </div>
@@ -209,13 +209,13 @@ export default function DoctorDashboard() {
 
           <div className="flex items-center gap-4">
             <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-white">Dr. Samantha Senanayake, MBBS</div>
-              <div className="text-[10px] text-teal-400">SLMC Reg: 64821</div>
+              <div className="text-xs font-bold text-slate-900">Dr. Samantha Senanayake, MBBS</div>
+              <div className="text-[10px] text-teal-600 font-medium">SLMC Reg: 64821</div>
             </div>
 
             <button
               onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
+              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -232,16 +232,16 @@ export default function DoctorDashboard() {
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-400" />
+                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-blue-600" />
                   Today's Clinic Queue
                 </h2>
-                <p className="text-xs text-slate-400">Morning Session • {queue.length} Patients</p>
+                <p className="text-xs text-slate-500">Morning Session • {queue.length} Patients</p>
               </div>
               <button
                 onClick={fetchLiveQueue}
                 disabled={loading}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 border border-slate-700 transition-colors"
+                className="p-1.5 rounded-lg bg-white hover:bg-slate-50 text-teal-600 border border-slate-200 shadow-xs transition-colors"
                 title="Refresh Live Queue"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
@@ -257,33 +257,33 @@ export default function DoctorDashboard() {
                     onClick={() => setActivePatientIndex(index)}
                     className={`p-4 rounded-xl border cursor-pointer transition-all ${
                       isActive
-                        ? "bg-[#0F1E36] border-blue-500 shadow-md ring-1 ring-blue-500/50"
-                        : "bg-[#0B1730]/70 border-slate-800 hover:border-slate-700"
+                        ? "bg-white border-blue-500 shadow-sm ring-1 ring-blue-500/30"
+                        : "bg-white border-slate-200 hover:border-slate-300 shadow-xs"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-extrabold text-blue-400">
+                        <span className="text-sm font-extrabold text-blue-600">
                           {patient.token}
                         </span>
-                        <span className="text-xs font-bold text-white">
+                        <span className="text-xs font-bold text-slate-900">
                           {patient.name}
                         </span>
                       </div>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
                         patient.status === "IN_CONSULTATION"
-                          ? "bg-teal-950/60 text-teal-400 border border-teal-800/40"
+                          ? "bg-teal-50 text-teal-700 border border-teal-200"
                           : patient.status === "CALLED"
-                          ? "bg-amber-950/60 text-amber-400 border border-amber-800/40"
+                          ? "bg-amber-50 text-amber-800 border border-amber-200"
                           : patient.status === "COMPLETED"
-                          ? "bg-slate-800 text-slate-400"
-                          : "bg-blue-950/60 text-blue-400 border border-blue-800/40"
+                          ? "bg-slate-100 text-slate-600"
+                          : "bg-blue-50 text-blue-700 border border-blue-200"
                       }`}>
                         {patient.status.replace("_", " ")}
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-400 line-clamp-1">{patient.complaint}</p>
+                    <p className="text-xs text-slate-600 line-clamp-1">{patient.complaint}</p>
                     <div className="mt-2 text-[11px] text-slate-500 font-mono">{patient.vitals}</div>
                   </div>
                 );
@@ -293,18 +293,18 @@ export default function DoctorDashboard() {
 
           {/* Right Column: Active Consultation Worklist & Order Entry */}
           <div className="lg:col-span-7">
-            <div className="bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6 shadow-sm">
               
               {/* Active Patient Details Banner */}
-              <div className="border-b border-slate-800 pb-5">
+              <div className="border-b border-slate-200 pb-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-lg">
+                    <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 font-bold text-lg">
                       {activePatient.token}
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white">{activePatient.name}</h3>
-                      <div className="text-xs text-slate-400">
+                      <h3 className="text-lg font-bold text-slate-900">{activePatient.name}</h3>
+                      <div className="text-xs text-slate-500">
                         {activePatient.age} yrs • {activePatient.gender === "M" ? "Male" : "Female"} • Record ID: {activePatient.id}
                       </div>
                     </div>
@@ -313,13 +313,13 @@ export default function DoctorDashboard() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleStatusChange(activePatientIndex, "CALLED")}
-                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 text-xs font-semibold border border-amber-600/30 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200 transition-colors"
                     >
                       Call Token
                     </button>
                     <button
                       onClick={() => handleStatusChange(activePatientIndex, "IN_CONSULTATION")}
-                      className="px-3 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600/30 text-teal-400 text-xs font-semibold border border-teal-600/30 transition-colors"
+                      className="px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-semibold border border-teal-200 transition-colors"
                     >
                       Consulting
                     </button>
@@ -327,18 +327,18 @@ export default function DoctorDashboard() {
                 </div>
 
                 {/* Vitals Box */}
-                <div className="mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between text-slate-300">
+                <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between text-slate-700">
                   <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-teal-400" />
+                    <Activity className="w-4 h-4 text-teal-600" />
                     <span><strong>Triage Vitals:</strong> {activePatient.vitals}</span>
                   </div>
-                  <span className="text-[10px] text-teal-400 font-semibold">Logged by Nurse</span>
+                  <span className="text-[10px] text-teal-600 font-semibold">Logged by Nurse</span>
                 </div>
               </div>
 
               {savedNotification && (
-                <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-xs sm:text-sm flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                   <span>Consultation recorded in hospital EMR ledger. Advancing queue ticket...</span>
                 </div>
               )}
@@ -346,7 +346,7 @@ export default function DoctorDashboard() {
               {/* Consultation Input Form */}
               <form onSubmit={handleCompleteConsultation} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Clinical Examination & Assessment Notes *
                   </label>
                   <textarea
@@ -355,13 +355,13 @@ export default function DoctorDashboard() {
                     value={consultationNotes}
                     onChange={(e) => setConsultationNotes(e.target.value)}
                     placeholder="Document clinical observations, diagnosis, patient response..."
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
                       Medication Prescriptions (Hospital Pharmacy Dispatch)
                     </label>
                     <input
@@ -369,12 +369,12 @@ export default function DoctorDashboard() {
                       value={prescriptions}
                       onChange={(e) => setPrescriptions(e.target.value)}
                       placeholder="e.g. Amlodipine 5mg nocte, Atorvastatin 20mg"
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
                       Laboratory & Diagnostic Orders
                     </label>
                     <input
@@ -382,7 +382,7 @@ export default function DoctorDashboard() {
                       value={labOrders}
                       onChange={(e) => setLabOrders(e.target.value)}
                       placeholder="e.g. Fasting Lipids, 12-lead ECG, HbA1c"
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
