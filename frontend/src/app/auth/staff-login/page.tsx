@@ -85,27 +85,15 @@ export default function StaffLoginPage() {
       // Advance to MFA challenge required for privileged clinical access
       setAuthStep("MFA_CHALLENGE");
 
+  
     } catch (err: any) {
-      if (err.message && err.message.includes("Failed to fetch")) {
-        // Standalone preview simulation
-        const mockRole = identifier.toUpperCase().includes("NURSE") ? "NURSE" :
-                         identifier.toUpperCase().includes("ADMIN") ? "HOSPITAL_ADMIN" :
-                         identifier.toUpperCase().includes("RECEPT") ? "RECEPTIONIST" : "DOCTOR";
-        setSessionData({
-          userId: "USR-PREVIEW-01",
-          fullName: "Dr. Samantha Senanayake, MBBS",
-          email: identifier.includes("@") ? identifier : "samantha.s@hospital.lk",
-          roles: [mockRole],
-          token: "hc_mock_jwt_preview"
-        });
-        setAuthStep("MFA_CHALLENGE");
-      } else {
-        setError(err.message || "Authentication failed. Please verify your credentials.");
-      }
+      setError(
+        err.message || "Authentication failed. Please try again."
+      );
     } finally {
       setLoading(false);
     }
-  };
+  ;
 
   const handleMfaVerify = async (e: React.FormEvent) => {
     e.preventDefault();
