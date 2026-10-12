@@ -63,7 +63,7 @@ public class AuthController {
         // Clear secure HTTP-only cookie
         ResponseCookie deleteCookie = ResponseCookie.from("hc_session", "")
                 .httpOnly(true)
-                .secure(false) // Set to true in HTTPS production
+                .secure(true)// Set to true in HTTPS production
                 .path("/")
                 .maxAge(0)
                 .sameSite("Lax")
@@ -94,7 +94,7 @@ public class AuthController {
     private void attachHttpOnlyCookie(HttpServletResponse response, String token) {
         ResponseCookie cookie = ResponseCookie.from("hc_session", token)
                 .httpOnly(true)
-                .secure(false) // Set to true in HTTPS production
+                .secure(true) // Set to true in HTTPS production
                 .path("/")
                 .maxAge(86400) // 24 hours
                 .sameSite("Lax")
