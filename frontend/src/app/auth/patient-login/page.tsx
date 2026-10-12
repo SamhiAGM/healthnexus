@@ -55,20 +55,13 @@ export default function PatientLoginPage() {
       setSuccess(true);
       setTimeout(() => router.push("/portal/patient"), 1000);
 
-    } catch (err: any) {
-      if (err.message && err.message.includes("Failed to fetch")) {
-        // Fallback demo storage if running disconnected from backend
-        localStorage.setItem("hc_user", JSON.stringify({
-          fullName: "Kasun Chamara",
-          roles: ["PATIENT"],
-          phone: "0771234567"
-        }));
-        setSuccess(true);
-        setTimeout(() => router.push("/portal/patient"), 1000);
-      } else {
-        setError(err.message || "Invalid credentials. Please try again.");
-      }
-    } finally {
+   } catch (err: any) {
+  setError(
+    err.message || "Unable to sign in. Please try again."
+  );
+} finally {
+  setLoading(false);
+}finally {
       setLoading(false);
     }
   };
