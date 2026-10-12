@@ -73,12 +73,12 @@ function HospitalsDirectoryContent() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#172B4D] selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#F0F4F7] text-[#364A5D] selection:bg-[#159B94] selection:text-white">
       <Navbar />
 
       <main className="flex-grow pt-24 pb-20">
         {/* HERO / HEADER BANNER */}
-        <div className="bg-gradient-to-b from-[#EAF5FF] via-[#F8FAFC] to-[#F8FAFC] border-b border-[#E2E8F0] py-12 md:py-16">
+        <div className="bg-gradient-to-b from-[#E8F0F4] via-[#F0F4F7] to-[#F0F4F7] border-b border-[#D9E3E9] py-12 md:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl space-y-4">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-50 border border-teal-200 text-teal-800 text-xs font-semibold shadow-sm">

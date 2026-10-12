@@ -2,25 +2,27 @@
 
 @layer base {
   :root {
-    /* Brand Color Tokens */
-    --color-primary-navy: #0B1730;
-    --color-medical-teal: #0D9488;
-    --color-royal-blue: #2563EB;
-    --color-light-bg: #F8FAFC;
-    --color-white-surface: #FFFFFF;
-    --color-accent-amber: #F59E0B;
-    --color-success-green: #16A34A;
-    --color-error-red: #DC2626;
-    --color-text-dark: #0F172A;
-    --color-text-muted: #64748B;
-    --color-border-subtle: #E2E8F0;
+    /* Balanced Color Palette Tokens (Section 3 Specification) */
+    --color-bg-primary: #F0F4F7;
+    --color-bg-secondary: #E8F0F4;
+    --color-surface-ivory: #F8F7F3;
+    --color-surface-card: #F8FAFB;
+    --color-teal-soft: #DFEFEC;
+    --color-turquoise-muted: #159B94;
+    --color-teal-deep: #087F79;
+    --color-blue-medical: #426DA9;
+    --color-lavender-soft: #EBE8F5;
+    --color-slate-muted: #43566C;
+    --color-heading-primary: #20364C;
+    --color-text-main: #364A5D;
+    --color-border-subtle: #D9E3E9;
 
-    /* Theme Tokens */
-    --background: #F8FAFC;
-    --foreground: #0F172A;
-    --card: #FFFFFF;
-    --card-foreground: #0F172A;
-    --border: #E2E8F0;
+    /* Theme Aliases */
+    --background: #F0F4F7;
+    --foreground: #20364C;
+    --card: #F8FAFB;
+    --card-foreground: #364A5D;
+    --border: #D9E3E9;
   }
 }
 
@@ -29,17 +31,48 @@ html {
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-main);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Custom Balanced Utility Classes */
+.bg-nexus-primary { background-color: #F0F4F7; }
+.bg-nexus-secondary { background-color: #E8F0F4; }
+.bg-nexus-ivory { background-color: #F8F7F3; }
+.bg-nexus-card { background-color: #F8FAFB; }
+.bg-nexus-teal-soft { background-color: #DFEFEC; }
+.bg-nexus-lavender { background-color: #EBE8F5; }
+.text-nexus-heading { color: #20364C; }
+.text-nexus-main { color: #364A5D; }
+.text-nexus-slate { color: #43566C; }
+.text-nexus-teal { color: #087F79; }
+.text-nexus-turquoise { color: #159B94; }
+.text-nexus-blue { color: #426DA9; }
+.border-nexus { border-color: #D9E3E9; }
+
 /* Accessible focus ring standards */
 :focus-visible {
-  outline: 2px solid #0D9488;
+  outline: 2px solid #087F79;
   outline-offset: 2px;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #E8F0F4;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
 
 /* Reduced motion preference */

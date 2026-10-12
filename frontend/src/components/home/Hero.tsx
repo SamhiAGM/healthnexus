@@ -14,7 +14,9 @@ import {
   ChevronRight,
   Activity,
   CheckCircle2,
-  Compass
+  Compass,
+  Layers,
+  HeartPulse
 } from "lucide-react";
 
 export function Hero() {
@@ -34,7 +36,7 @@ export function Hero() {
   };
 
   const wordVariants = {
-    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 18 },
+    hidden: { opacity: 0, y: prefersReducedMotion ? 0 : 16 },
     visible: {
       opacity: 1,
       y: 0,
@@ -53,7 +55,7 @@ export function Hero() {
   ];
 
   return (
-    <section className="relative min-h-[92vh] flex items-center justify-center bg-[#0B1730] text-white pt-24 pb-16 overflow-hidden">
+    <section className="relative min-h-[92vh] flex items-center justify-center bg-gradient-to-b from-[#20364C] via-[#2A445E] to-[#20364C] text-white pt-24 pb-16 overflow-hidden">
       
       {/* 1. CINEMATIC BACKGROUND LAYER */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -67,7 +69,7 @@ export function Hero() {
             playsInline
             onError={() => setVideoError(true)}
             poster="/images/hospital_hero_poster.jpg"
-            className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.45] contrast-[1.08] saturate-[0.9] transform scale-105 transition-all duration-1000"
+            className="absolute inset-0 w-full h-full object-cover object-center filter brightness-[0.38] contrast-[1.08] saturate-[0.85] transform scale-105 transition-all duration-1000"
           >
             <source src="/videos/hospital_hero_bg.mp4" type="video/mp4" />
           </video>
@@ -79,26 +81,26 @@ export function Hero() {
         >
           <Image
             src="/images/hospital_hero_poster.jpg"
-            alt="Modern Hospital Collaboration Facility"
+            alt="Modern Sri Lankan Hospital Collaboration Facility"
             fill
             priority
             sizes="100vw"
-            className="object-cover object-center filter brightness-[0.45] contrast-[1.08] saturate-[0.9]"
+            className="object-cover object-center filter brightness-[0.38] contrast-[1.08] saturate-[0.85]"
           />
         </div>
 
-        {/* Deep Multi-Layered Navy & Teal Ambient Light Overlays for Contrast & Readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0B1730]/95 via-[#0B1730]/80 to-[#0B1730]/90" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0B1730] via-transparent to-[#0B1730]/60" />
+        {/* Sophisticated Multi-Layered Restrained Navy, Muted Teal & Slate Lighting Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#20364C]/95 via-[#20364C]/80 to-[#20364C]/92" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#20364C] via-transparent to-[#20364C]/70" />
 
-        {/* Dynamic Glowing Radial Highlights */}
-        <div className="absolute top-1/4 left-1/3 -translate-x-1/2 w-[700px] h-[450px] bg-gradient-to-tr from-teal-500/20 via-blue-600/15 to-transparent rounded-full blur-3xl opacity-75" />
-        <div className="absolute -top-16 right-10 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 left-10 w-80 h-80 bg-teal-500/15 rounded-full blur-2xl" />
+        {/* Balanced Glow Accents */}
+        <div className="absolute top-1/4 left-1/3 -translate-x-1/2 w-[650px] h-[400px] bg-gradient-to-tr from-[#159B94]/25 via-[#426DA9]/20 to-transparent rounded-full blur-3xl opacity-75" />
+        <div className="absolute -top-16 right-10 w-96 h-96 bg-[#426DA9]/15 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-10 w-80 h-80 bg-[#159B94]/15 rounded-full blur-2xl" />
 
-        {/* Refined Geometric Pattern */}
+        {/* Subtle Geometric Medical Grid Pattern */}
         <div 
-          className="absolute inset-0 opacity-[0.035]"
+          className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage: `radial-gradient(circle at 1px 1px, #ffffff 1px, transparent 0)`,
             backgroundSize: "28px 28px",
@@ -118,11 +120,11 @@ export function Hero() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-md border border-teal-500/30 text-xs font-semibold text-teal-300 shadow-lg shadow-teal-950/20"
+              className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#1A2C3E]/85 backdrop-blur-md border border-[#159B94]/40 text-xs font-semibold text-[#DFEFEC] shadow-lg shadow-[#087F79]/20"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <HeartPulse className="w-3.5 h-3.5 text-[#159B94]" />
               <span>HealthNexus &bull; LankaCare.me National Healthcare</span>
-              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[#159B94] animate-pulse" />
             </motion.div>
 
             {/* Staggered Heading Reveal */}
@@ -138,7 +140,7 @@ export function Hero() {
                   variants={wordVariants}
                   className={
                     word.highlight
-                      ? "text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-teal-200 to-blue-400 drop-shadow-sm inline-block"
+                      ? "text-transparent bg-clip-text bg-gradient-to-r from-[#DFEFEC] via-[#63E2D8] to-[#93C5FD] drop-shadow-sm inline-block"
                       : "inline-block text-white"
                   }
                 >
@@ -152,12 +154,12 @@ export function Hero() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-lg sm:text-xl text-slate-200 max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal"
+              className="text-lg sm:text-xl text-[#E8F0F4] max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal"
             >
-              Discover hospitals, manage healthcare services, and experience a more connected digital healthcare journey with HealthNexus.
+              One intelligent healthcare platform connecting people, hospitals, and healthcare professionals through a simpler digital experience.
             </motion.p>
 
-            {/* Primary Action Buttons with Micro-elevation */}
+            {/* Primary Action Buttons: Explore Hospitals, Create Account, Discover Services */}
             <motion.div 
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -165,26 +167,27 @@ export function Hero() {
               className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2"
             >
               <Link
-                href="/auth/patient-register"
-                className="group inline-flex items-center gap-2.5 px-6 py-3.5 text-base font-semibold text-white bg-teal-600 hover:bg-teal-500 rounded-xl shadow-lg shadow-teal-900/40 hover:shadow-teal-500/30 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0"
+                href="/hospitals"
+                className="group inline-flex items-center gap-2.5 px-6 py-3.5 text-base font-semibold text-white bg-[#087F79] hover:bg-[#159B94] rounded-xl shadow-lg shadow-[#087F79]/30 hover:shadow-[#159B94]/40 transition-all duration-200 transform hover:-translate-y-0.5 active:translate-y-0 border border-teal-400/30"
               >
-                Register Patient
+                Explore Hospitals
+                <Compass className="w-4 h-4 text-teal-200 group-hover:rotate-45 transition-transform" />
+              </Link>
+
+              <Link
+                href="/auth/patient-register"
+                className="group inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-[#DFEFEC] bg-[#1E3348]/90 hover:bg-[#28435E] border border-[#159B94]/50 rounded-xl transition-all duration-200 backdrop-blur-md transform hover:-translate-y-0.5 active:translate-y-0 shadow-md"
+              >
+                Create Account
                 <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </Link>
 
               <Link
-                href="/hospitals"
-                className="group inline-flex items-center gap-2 px-6 py-3.5 text-base font-semibold text-teal-300 bg-teal-950/70 hover:bg-teal-900/80 border border-teal-500/40 rounded-xl transition-all duration-200 backdrop-blur-md transform hover:-translate-y-0.5 active:translate-y-0"
+                href="#services"
+                className="inline-flex items-center gap-2 px-5 py-3.5 text-base font-semibold text-[#E8F0F4] hover:text-white bg-white/10 hover:bg-white/15 border border-white/20 rounded-xl transition-all backdrop-blur-sm"
               >
-                Explore Hospitals Directory
-                <Compass className="w-4 h-4 text-teal-400 group-hover:rotate-45 transition-transform" />
-              </Link>
-
-              <Link
-                href="/auth/staff-login"
-                className="inline-flex items-center gap-1.5 px-5 py-3.5 text-base font-medium text-slate-300 hover:text-white transition-colors"
-              >
-                Staff Sign In
+                <Layers className="w-4 h-4 text-teal-300" />
+                Discover Services
               </Link>
             </motion.div>
 
@@ -193,24 +196,24 @@ export function Hero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 0.5 }}
-              className="pt-6 border-t border-slate-800/80 grid grid-cols-3 gap-4 text-left max-w-lg mx-auto lg:mx-0"
+              className="pt-6 border-t border-slate-700/60 grid grid-cols-3 gap-4 text-left max-w-lg mx-auto lg:mx-0"
             >
               <div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-white">Live</div>
-                <div className="text-xs text-slate-400 mt-0.5">Digital Queue Tokens</div>
+                <div className="text-xs text-[#E8F0F4]/80 mt-0.5">Digital Queue Tokens</div>
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-teal-400">11 Roles</div>
-                <div className="text-xs text-slate-400 mt-0.5">RBAC Workspaces</div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#159B94]">11 Roles</div>
+                <div className="text-xs text-[#E8F0F4]/80 mt-0.5">RBAC Workspaces</div>
               </div>
               <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-blue-400">Island-wide</div>
-                <div className="text-xs text-slate-400 mt-0.5">Districts & Hospitals</div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#93C5FD]">Island-wide</div>
+                <div className="text-xs text-[#E8F0F4]/80 mt-0.5">Districts & Hospitals</div>
               </div>
             </motion.div>
           </div>
 
-          {/* Right Column: Redesigned Demo Queue Preview Card */}
+          {/* Right Column: Balanced Premium Queue Preview Card */}
           <div className="lg:col-span-5">
             <motion.div 
               initial={{ opacity: 0, scale: 0.96, y: 15 }}
@@ -219,67 +222,67 @@ export function Hero() {
               className="relative mx-auto max-w-md lg:max-w-none"
             >
               {/* Subtle Ambient Behind Card */}
-              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-teal-500/30 to-blue-600/30 opacity-30 blur-xl pointer-events-none" />
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-[#159B94]/30 to-[#426DA9]/30 opacity-40 blur-xl pointer-events-none" />
 
-              {/* Glassmorphic Queue Card */}
-              <div className="relative rounded-2xl bg-[#0F1E36]/90 border border-slate-700/80 p-6 sm:p-7 backdrop-blur-xl shadow-2xl space-y-6">
+              {/* Sophisticated Balanced Queue Card (Clean Card Surface) */}
+              <div className="relative rounded-2xl bg-[#F8FAFB] text-[#20364C] border border-[#D9E3E9] p-6 sm:p-7 backdrop-blur-xl shadow-2xl space-y-6">
                 
                 {/* Header Banner */}
-                <div className="flex items-center justify-between border-b border-slate-700/60 pb-4">
+                <div className="flex items-center justify-between border-b border-[#D9E3E9] pb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 font-bold">
+                    <div className="w-10 h-10 rounded-xl bg-[#DFEFEC] border border-[#159B94]/30 flex items-center justify-center text-[#087F79] font-bold">
                       <Activity className="w-5 h-5" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-white">Colombo National Hospital</div>
-                      <div className="text-xs text-slate-400">Cardiology Clinic Room 04</div>
+                      <div className="text-sm font-bold text-[#20364C]">Colombo National Hospital</div>
+                      <div className="text-xs text-[#43566C]">Cardiology Clinic Room 04</div>
                     </div>
                   </div>
-                  <span className="px-2.5 py-1 text-[11px] font-semibold rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/30">
-                    Demo Queue Preview
+                  <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-[#DFEFEC] text-[#087F79] border border-[#159B94]/30">
+                    Live Queue Preview
                   </span>
                 </div>
 
                 {/* Queue Metrics Display */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                    <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-teal-400" />
+                  <div className="p-4 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9]">
+                    <span className="text-xs font-semibold text-[#43566C] flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-[#087F79]" />
                       Serving Token
                     </span>
-                    <div className="text-3xl font-extrabold text-white mt-1">C-024</div>
-                    <span className="text-[11px] text-teal-400 flex items-center gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+                    <div className="text-3xl font-extrabold text-[#20364C] mt-1">C-024</div>
+                    <span className="text-[11px] font-medium text-[#087F79] flex items-center gap-1 mt-0.5">
+                      <span className="w-2 h-2 rounded-full bg-[#159B94] animate-pulse" />
                       In consultation
                     </span>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                    <span className="text-xs text-slate-400 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-blue-400" />
+                  <div className="p-4 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9]">
+                    <span className="text-xs font-semibold text-[#43566C] flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-[#426DA9]" />
                       Estimated Wait
                     </span>
-                    <div className="text-3xl font-extrabold text-white mt-1">12 <span className="text-sm font-normal text-slate-400">mins</span></div>
-                    <span className="text-[11px] text-slate-400 mt-0.5">4 patients ahead</span>
+                    <div className="text-3xl font-extrabold text-[#20364C] mt-1">12 <span className="text-sm font-medium text-[#43566C]">mins</span></div>
+                    <span className="text-[11px] font-medium text-[#43566C] mt-0.5">4 patients ahead</span>
                   </div>
                 </div>
 
                 {/* Patient Notification Status Indicator */}
-                <div className="p-3.5 rounded-xl bg-teal-950/40 border border-teal-800/40 flex items-center gap-3 text-xs text-slate-300">
-                  <ShieldCheck className="w-5 h-5 text-teal-400 shrink-0" />
+                <div className="p-3.5 rounded-xl bg-[#DFEFEC]/70 border border-[#159B94]/30 flex items-center gap-3 text-xs text-[#20364C]">
+                  <ShieldCheck className="w-5 h-5 text-[#087F79] shrink-0" />
                   <div>
-                    <span className="font-semibold text-teal-300">Automated Patient Alert</span>
-                    <p className="text-[11px] text-slate-400">Digital and SMS ticket updates transmitted as line advances.</p>
+                    <span className="font-bold text-[#087F79]">Automated Patient Alert</span>
+                    <p className="text-[11px] text-[#43566C]">Digital and SMS ticket updates transmitted as line advances.</p>
                   </div>
                 </div>
 
                 {/* Live Action Quick Link */}
                 <Link
                   href="/auth/patient-register"
-                  className="w-full py-3 flex items-center justify-center gap-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-500 hover:to-blue-500 text-white transition-all shadow-md transform hover:-translate-y-0.5 active:translate-y-0"
+                  className="w-full py-3.5 flex items-center justify-center gap-2 text-sm font-bold rounded-xl bg-gradient-to-r from-[#087F79] to-[#426DA9] hover:from-[#159B94] hover:to-[#557ebc] text-white transition-all shadow-md transform hover:-translate-y-0.5 active:translate-y-0"
                 >
                   <CalendarCheck className="w-4 h-4" />
-                  Simulate Appointment Request
+                  Request Clinic Appointment
                 </Link>
 
               </div>

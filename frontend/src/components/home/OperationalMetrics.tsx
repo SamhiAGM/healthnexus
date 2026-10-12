@@ -18,9 +18,8 @@ import {
   CheckCircle2, 
   TrendingUp, 
   Clock, 
-  CalendarCheck,
-  ShieldCheck,
-  Building2,
+  CalendarCheck, 
+  ShieldCheck, 
   Sparkles
 } from "lucide-react";
 
@@ -46,23 +45,23 @@ export function OperationalMetrics() {
   const [activeTab, setActiveTab] = useState<"throughput" | "specialty">("throughput");
 
   return (
-    <section className="py-24 bg-white text-[#172B4D] relative overflow-hidden">
+    <section className="py-24 bg-[#F0F4F7] text-[#364A5D] relative overflow-hidden border-t border-[#D9E3E9]">
       
       {/* Background Lighting */}
-      <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 left-1/3 w-96 h-96 bg-[#159B94]/5 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-xs font-bold uppercase tracking-widest text-teal-700">
-            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#DFEFEC] border border-[#159B94]/30 text-xs font-bold uppercase tracking-widest text-[#087F79]">
+            <Sparkles className="w-3.5 h-3.5 text-[#087F79]" />
             Operational Intelligence & Reporting
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#20364C] tracking-tight">
             Data-Driven Healthcare Operations
           </h2>
-          <p className="text-slate-600 text-base sm:text-lg">
+          <p className="text-[#43566C] text-base sm:text-lg">
             Empowering hospital directors and clinical leaders with transparent queue flow, appointment utilization, and inspection verification trends.
           </p>
         </div>
@@ -70,48 +69,48 @@ export function OperationalMetrics() {
         {/* Aggregate Highlight Cards with Demonstration Notice */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           
-          <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-slate-200 shadow-xs hover:border-teal-400 transition-all">
+          <div className="p-6 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] shadow-xs hover:border-[#159B94] transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase">Simulated Daily Visits</span>
-              <Users className="w-5 h-5 text-teal-600" />
+              <span className="text-xs font-semibold text-[#43566C] uppercase">Simulated Daily Visits</span>
+              <Users className="w-5 h-5 text-[#087F79]" />
             </div>
-            <div className="text-3xl font-extrabold text-slate-900">1,790</div>
-            <div className="text-xs text-teal-700 font-medium mt-2 flex items-center gap-1">
+            <div className="text-3xl font-extrabold text-[#20364C]">1,790</div>
+            <div className="text-xs text-[#087F79] font-medium mt-2 flex items-center gap-1">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>Demonstration Queue Throughput</span>
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-slate-200 shadow-xs hover:border-blue-400 transition-all">
+          <div className="p-6 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] shadow-xs hover:border-[#426DA9] transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase">Avg. Waiting Time</span>
-              <Clock className="w-5 h-5 text-blue-600" />
+              <span className="text-xs font-semibold text-[#43566C] uppercase">Avg. Waiting Time</span>
+              <Clock className="w-5 h-5 text-[#426DA9]" />
             </div>
-            <div className="text-3xl font-extrabold text-slate-900">18 <span className="text-base font-normal text-slate-500">mins</span></div>
-            <div className="text-xs text-emerald-700 font-medium mt-2 flex items-center gap-1">
+            <div className="text-3xl font-extrabold text-[#20364C]">18 <span className="text-base font-normal text-[#43566C]">mins</span></div>
+            <div className="text-xs text-[#087F79] font-medium mt-2 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Projected Digital Triage Flow</span>
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-slate-200 shadow-xs hover:border-amber-400 transition-all">
+          <div className="p-6 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] shadow-xs hover:border-[#159B94] transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase">Specialized Clinics</span>
-              <Activity className="w-5 h-5 text-amber-600" />
+              <span className="text-xs font-semibold text-[#43566C] uppercase">Specialized Clinics</span>
+              <Activity className="w-5 h-5 text-[#159B94]" />
             </div>
-            <div className="text-3xl font-extrabold text-slate-900">48 Active</div>
-            <div className="text-xs text-slate-500 mt-2">
+            <div className="text-3xl font-extrabold text-[#20364C]">48 Active</div>
+            <div className="text-xs text-[#43566C] mt-2">
               Across 8 Tertiary & Base Hospitals
             </div>
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#F8FAFC] border border-slate-200 shadow-xs hover:border-purple-400 transition-all">
+          <div className="p-6 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] shadow-xs hover:border-[#426DA9] transition-all">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase">Supervision Audits</span>
-              <CalendarCheck className="w-5 h-5 text-purple-600" />
+              <span className="text-xs font-semibold text-[#43566C] uppercase">Supervision Audits</span>
+              <CalendarCheck className="w-5 h-5 text-[#426DA9]" />
             </div>
-            <div className="text-3xl font-extrabold text-slate-900">114 Audits</div>
-            <div className="text-xs text-teal-700 font-medium mt-2">
+            <div className="text-3xl font-extrabold text-[#20364C]">114 Audits</div>
+            <div className="text-xs text-[#087F79] font-medium mt-2">
               92% Corrective actions verified
             </div>
           </div>
@@ -119,29 +118,29 @@ export function OperationalMetrics() {
         </div>
 
         {/* Interactive Chart Container */}
-        <div className="rounded-2xl bg-[#F8FAFC] border border-slate-200 p-6 sm:p-8 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 pb-4">
+        <div className="rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] p-6 sm:p-8 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-[#D9E3E9] pb-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700 bg-teal-50 border border-teal-200 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#087F79] bg-[#DFEFEC] border border-[#159B94]/30 px-2 py-0.5 rounded">
                   Demonstration Dataset
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-slate-900">
+              <h3 className="text-lg font-bold text-[#20364C]">
                 {activeTab === "throughput" ? "Simulated Hourly Queue Throughput" : "Clinic Attendance by Medical Specialty"}
               </h3>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-[#43566C]">
                 Aggregated operational graphs reflecting clinic check-in tokens and completed physician consultations.
               </p>
             </div>
 
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 bg-[#E8F0F4] p-1 rounded-xl border border-[#D9E3E9]">
               <button
                 onClick={() => setActiveTab("throughput")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                   activeTab === "throughput"
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-[#F8FAFB] text-[#20364C] shadow-xs font-bold"
+                    : "text-[#43566C] hover:text-[#20364C]"
                 }`}
               >
                 Hourly Queue Flow
@@ -150,8 +149,8 @@ export function OperationalMetrics() {
                 onClick={() => setActiveTab("specialty")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                   activeTab === "specialty"
-                    ? "bg-white text-slate-900 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    ? "bg-[#F8FAFB] text-[#20364C] shadow-xs font-bold"
+                    : "text-[#43566C] hover:text-[#20364C]"
                 }`}
               >
                 Specialty Distribution
@@ -165,43 +164,43 @@ export function OperationalMetrics() {
                 <AreaChart data={QUEUE_TREND_DATA}>
                   <defs>
                     <linearGradient id="colorPatients" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0D9488" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#0D9488" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#087F79" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#087F79" stopOpacity={0}/>
                     </linearGradient>
                     <linearGradient id="colorAttended" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563EB" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#2563EB" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#426DA9" stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor="#426DA9" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                  <XAxis dataKey="time" stroke="#64748B" fontSize={12} />
-                  <YAxis stroke="#64748B" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D9E3E9" />
+                  <XAxis dataKey="time" stroke="#43566C" fontSize={12} />
+                  <YAxis stroke="#43566C" fontSize={12} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: "#FFFFFF", borderColor: "#CBD5E1", borderRadius: "12px", color: "#0F172A" }}
+                    contentStyle={{ backgroundColor: "#F8FAFB", borderColor: "#D9E3E9", borderRadius: "12px", color: "#20364C" }}
                   />
-                  <Area type="monotone" dataKey="patients" stroke="#0D9488" fillOpacity={1} fill="url(#colorPatients)" name="Patients in Queue" />
-                  <Area type="monotone" dataKey="attended" stroke="#2563EB" fillOpacity={1} fill="url(#colorAttended)" name="Consultations Completed" />
+                  <Area type="monotone" dataKey="patients" stroke="#087F79" strokeWidth={2} fillOpacity={1} fill="url(#colorPatients)" name="Patients in Queue" />
+                  <Area type="monotone" dataKey="attended" stroke="#426DA9" strokeWidth={2} fillOpacity={1} fill="url(#colorAttended)" name="Consultations Completed" />
                 </AreaChart>
               ) : (
                 <BarChart data={CLINIC_SPECIALTY_DISTRIBUTION}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                  <XAxis dataKey="clinic" stroke="#64748B" fontSize={12} />
-                  <YAxis stroke="#64748B" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D9E3E9" />
+                  <XAxis dataKey="clinic" stroke="#43566C" fontSize={12} />
+                  <YAxis stroke="#43566C" fontSize={12} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: "#FFFFFF", borderColor: "#CBD5E1", borderRadius: "12px", color: "#0F172A" }}
+                    contentStyle={{ backgroundColor: "#F8FAFB", borderColor: "#D9E3E9", borderRadius: "12px", color: "#20364C" }}
                   />
-                  <Bar dataKey="visits" fill="#0D9488" radius={[8, 8, 0, 0]} name="Patient Consultations" />
+                  <Bar dataKey="visits" fill="#087F79" radius={[8, 8, 0, 0]} name="Patient Consultations" />
                 </BarChart>
               )}
             </ResponsiveContainer>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-500">
+          <div className="mt-4 pt-3 border-t border-[#D9E3E9] flex items-center justify-between text-[11px] text-[#43566C]">
             <span className="flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
+              <ShieldCheck className="w-3.5 h-3.5 text-[#087F79]" />
               In production, data is aggregated directly from Spring Boot Actuator & MongoDB collection queries.
             </span>
-            <span className="font-semibold text-teal-700">Recharts Engine</span>
+            <span className="font-semibold text-[#087F79]">Recharts Engine</span>
           </div>
 
         </div>

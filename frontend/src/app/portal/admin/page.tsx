@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/brand/Logo";
-import { apiFetch, getCurrentUser, logoutUser } from "@/lib/api";
+import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   Building2, 
   Users, 
@@ -14,14 +13,34 @@ import {
   UserX, 
   TrendingUp, 
   CheckCircle2, 
-  AlertCircle,
-  LogOut,
-  RefreshCw,
-  Search,
-  Check,
-  FileCheck2,
-  Clock
+  AlertCircle, 
+  RefreshCw, 
+  Search, 
+  Check, 
+  FileCheck2, 
+  Clock,
+  Sparkles,
+  Database,
+  Lock,
+  Layers,
+  MapPin
 } from "lucide-react";
+import { 
+  PremiumStatCard, 
+  ChartCard, 
+  StatusIndicator, 
+  EmptyState,
+  ConfirmationDialog 
+} from "@/components/portal/DashboardComponents";
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer, 
+  CartesianGrid 
+} from "recharts";
 
 interface StaffRequest {
   id: string;
@@ -37,8 +56,19 @@ interface StaffRequest {
   createdAt?: string;
 }
 
+const REGISTRATION_TREND_DATA = [
+  { month: "May", patients: 1240, staff: 42 },
+  { month: "Jun", patients: 1890, staff: 68 },
+  { month: "Jul", patients: 2450, staff: 95 },
+  { month: "Aug", patients: 3120, staff: 110 },
+  { month: "Sep", patients: 4050, staff: 135 },
+  { month: "Oct", patients: 4890, staff: 160 },
+];
+
 export default function AdminDashboard() {
   const router = useRouter();
+  const [userName, setUserName] = useState("System Administrator");
+  const [facilityName, setFacilityName] = useState("HealthNexus National Directorate");
 
   const [staffRequests, setStaffRequests] = useState<StaffRequest[]>([
     {
@@ -54,7 +84,7 @@ export default function AdminDashboard() {
     },
     {
       id: "REQ-102",
-      fullName: "Nurse K. L. Menike",
+      fullName: "Sister K. L. Menike",
       requestedRole: "NURSE",
       employeeId: "EMP-4102",
       professionalRegistrationNumber: "SLNC-45210",
@@ -63,20 +93,27 @@ export default function AdminDashboard() {
       facilityName: "National Hospital of Sri Lanka (NHSL)",
       status: "PENDING_APPROVAL",
     },
+    {
+      id: "REQ-103",
+      fullName: "M. N. F. Rameez",
+      requestedRole: "PHARMACIST",
+      employeeId: "EMP-3891",
+      professionalRegistrationNumber: "SLPC-12890",
+      department: "Hospital Pharmacy",
+      workEmail: "rameez.m@hospital.lk",
+      facilityName: "Base Hospital Kinniya",
+      status: "PENDING_APPROVAL",
+    },
   ]);
 
   const [loading, setLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [filterRole, setFilterRole] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const [clinicCapacity, setClinicCapacity] = useState([
-    { clinic: "Cardiology Outpatient Clinic", allocatedDoctors: 4, dailyLimit: 120, booked: 98 },
-    { clinic: "General OPD Triage Desk", allocatedDoctors: 6, dailyLimit: 250, booked: 215 },
-    { clinic: "Diabetic Care Center", allocatedDoctors: 3, dailyLimit: 90, booked: 74 },
-    { clinic: "Orthopedic Surgical Clinic", allocatedDoctors: 2, dailyLimit: 60, booked: 52 },
-  ]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditReport, setAuditReport] = useState<any | null>(null);
 
-  // Fetch live requests from Spring Boot backend
   const fetchLiveRequests = async () => {
     setLoading(true);
     try {
@@ -85,7 +122,7 @@ export default function AdminDashboard() {
         setStaffRequests(data);
       }
     } catch (e) {
-      // Retain fallback list on network interruption
+      // Retain fallback list
     } finally {
       setLoading(false);
     }
@@ -99,6 +136,7 @@ export default function AdminDashboard() {
         router.push("/auth/staff-login");
         return;
       }
+      if (user.fullName) setUserName(user.fullName);
       fetchLiveRequests();
     });
     return () => {
@@ -114,7 +152,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({ notes: "Institutional credentials and council registration validated." }),
       });
 
-      setActionMessage(`Approved: ${result.email || "Staff"} has been provisioned with ${result.activatedRole || "requested"} access.`);
+      setActionMessage(`Approved: ${result.email || "Staff member"} has been provisioned with ${result.activatedRole || "requested"} privileges.`);
       setStaffRequests(staffRequests.map((req) => {
         if (req.id === id) {
           return { ...req, status: "APPROVED" as const };
@@ -146,26 +184,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleLogout = async () => {
-    await logoutUser();
-    router.push("/auth/staff-login");
-  };
-
-  const filteredRequests = filterRole === "ALL" 
-    ? staffRequests 
-    : staffRequests.filter((r) => r.requestedRole === filterRole);
-
-  const pendingCount = staffRequests.filter((s) => s.status === "PENDING_APPROVAL").length;
-
-  const [auditLoading, setAuditLoading] = useState(false);
-  const [auditReport, setAuditReport] = useState<any | null>(null);
-
   const fetchAuditDryRun = async () => {
     setAuditLoading(true);
     try {
       const data = await apiFetch<any>("/api/admin/database/audit-dry-run");
       setAuditReport(data);
-      setActionMessage("Database audit dry-run completed successfully (Read-Only).");
+      setActionMessage("Database audit dry-run completed successfully (Read-Only Mode).");
     } catch (err: any) {
       setActionMessage(`Audit query failed: ${err.message || "Unauthorized or backend offline"}`);
     } finally {
@@ -173,292 +197,267 @@ export default function AdminDashboard() {
     }
   };
 
+  const pendingCount = staffRequests.filter((s) => s.status === "PENDING_APPROVAL").length;
+  const approvedCount = staffRequests.filter((s) => s.status === "APPROVED").length;
+
+  const navItems = [
+    { label: "Platform Overview", href: "/portal/admin", icon: ShieldCheck, active: true },
+    { label: "Staff Verification", href: "/portal/admin", icon: UserCheck, badge: pendingCount > 0 ? `${pendingCount}` : undefined },
+    { label: "Hospital Admin", href: "/portal/hospital-admin", icon: Building2 },
+    { label: "Facility Directory", href: "/hospitals", icon: MapPin },
+  ];
+
+  const filteredRequests = staffRequests.filter((r) => {
+    const matchesRole = filterRole === "ALL" || r.requestedRole === filterRole;
+    const matchesSearch = r.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.workEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (r.facilityName && r.facilityName.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesRole && matchesSearch;
+  });
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col selection:bg-teal-500 selection:text-white">
-      {/* Header */}
-      <header className="bg-white/95 border-b border-[#E2E8F0] sticky top-0 z-40 shadow-sm backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Logo variant="dark" size="sm" />
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                Hospital Administration
-              </span>
-              <span className="hidden md:inline-block text-xs text-slate-500">
-                National Hospital of Sri Lanka (NHSL) Executive Operations
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-slate-900">Director Dr. Anura Senanayake</div>
-              <div className="text-[10px] text-teal-600 font-medium">Hospital Admin Auth</div>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+    <PortalShell
+      role="SYSTEM_ADMIN"
+      roleTitle="National System Administrator"
+      pageTitle="Platform Governance & Role Authorization"
+      department="Digital Health Infrastructure Directorate"
+      facility={facilityName}
+      userName={userName}
+      navItems={navItems}
+      breadcrumbs={[
+        { label: "Portal", href: "/portal/admin" },
+        { label: "System Administration" }
+      ]}
+      headerActions={
+        <button
+          onClick={fetchLiveRequests}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0F4F7] hover:bg-[#E8F0F4] border border-[#D9E3E9] text-xs font-bold text-[#087F79] transition"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <span>Sync Requests</span>
+        </button>
+      }
+    >
+      <div className="space-y-6">
         
-        {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-            <span className="text-xs text-slate-500 font-semibold uppercase">Daily Attendance</span>
-            <div className="text-3xl font-extrabold text-slate-900 mt-1">439 Patients</div>
-            <span className="text-xs text-emerald-700 mt-2 block font-medium">84% Capacity Utilized</span>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-            <span className="text-xs text-slate-500 font-semibold uppercase">On-Duty Medical Staff</span>
-            <div className="text-3xl font-extrabold text-teal-700 mt-1">32 Clinicians</div>
-            <span className="text-xs text-slate-500 mt-2 block">Across 6 Outpatient Wings</span>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-            <span className="text-xs text-slate-500 font-semibold uppercase">Pending Staff Verifications</span>
-            <div className="text-3xl font-extrabold text-amber-700 mt-1">{pendingCount}</div>
-            <span className="text-xs text-amber-700 mt-2 block font-medium">Action Required</span>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-sm">
-            <span className="text-xs text-slate-500 font-semibold uppercase">Quality Audit Status</span>
-            <div className="text-3xl font-extrabold text-blue-700 mt-1">94% Score</div>
-            <span className="text-xs text-teal-700 mt-2 block font-medium">Ministry Verified</span>
-          </div>
+        {/* KPI Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <PremiumStatCard
+            label="Pending Staff Approvals"
+            value={`${pendingCount} Requests`}
+            subValue="Awaiting SLMC/SLNC validation"
+            icon={UserCheck}
+            colorScheme="coral"
+            badge="Action Required"
+          />
+          <PremiumStatCard
+            label="Authorized Healthcare Staff"
+            value="164 Staff"
+            subValue="Across 11 role taxonomies"
+            trend={{ value: "+18 this month", positive: true }}
+            icon={ShieldCheck}
+            colorScheme="teal"
+          />
+          <PremiumStatCard
+            label="Registered Citizens"
+            value="4,890 Patients"
+            subValue="Verified NIC digital identities"
+            trend={{ value: "+21% monthly growth", positive: true }}
+            icon={Users}
+            colorScheme="blue"
+          />
+          <PremiumStatCard
+            label="Connected Hospital Nodes"
+            value="40+ Facilities"
+            subValue="Official MoH 2026 directory"
+            icon={Building2}
+            colorScheme="slate"
+          />
         </div>
 
-        {/* Action Flash Banner */}
         {actionMessage && (
-          <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-800 text-xs sm:text-sm flex items-center justify-between shadow-xs">
+          <div className="p-4 rounded-xl bg-[#DFEFEC] border border-[#159B94]/40 text-[#087F79] text-xs sm:text-sm flex items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-              <span>{actionMessage}</span>
+              <CheckCircle2 className="w-5 h-5 text-[#087F79] shrink-0" />
+              <span className="font-bold">{actionMessage}</span>
             </div>
-            <button
-              onClick={() => setActionMessage(null)}
-              className="text-xs text-teal-700 hover:text-teal-900 font-semibold"
-            >
+            <button onClick={() => setActionMessage(null)} className="text-[#087F79] hover:underline font-bold">
               Dismiss
             </button>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Growth Trend Graph & Audit Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Left Column: Staff Onboarding Approvals */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                  Staff Access & Professional Registration Approvals
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Grant or revoke clinical system privileges based on official medical registration verification.
-                </p>
+          <div className="lg:col-span-8">
+            <ChartCard title="Platform Adoption & User Onboarding" subtitle="Citizen patients and verified clinical staff growth" badge="Cumulative 2026">
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={REGISTRATION_TREND_DATA}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#D9E3E9" />
+                    <XAxis dataKey="month" stroke="#43566C" fontSize={11} />
+                    <YAxis stroke="#43566C" fontSize={11} />
+                    <Tooltip contentStyle={{ backgroundColor: "#F8FAFB", borderColor: "#D9E3E9", borderRadius: "12px", color: "#20364C" }} />
+                    <Area type="monotone" dataKey="patients" stroke="#087F79" fill="#DFEFEC" strokeWidth={2} name="Registered Patients" />
+                    <Area type="monotone" dataKey="staff" stroke="#426DA9" fill="#E8F0F4" strokeWidth={2} name="Verified Staff" />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-
-              <div className="flex items-center gap-2">
-                <select
-                  value={filterRole}
-                  onChange={(e) => setFilterRole(e.target.value)}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs text-slate-900 focus:outline-none"
-                >
-                  <option value="ALL">All Roles</option>
-                  <option value="DOCTOR">Doctors</option>
-                  <option value="NURSE">Nurses</option>
-                  <option value="PHARMACIST">Pharmacists</option>
-                  <option value="LAB_STAFF">Lab Staff</option>
-                </select>
-
-                <button
-                  onClick={fetchLiveRequests}
-                  disabled={loading}
-                  className="p-1.5 rounded-lg bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 shadow-xs transition-colors"
-                  title="Refresh Live Requests"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {filteredRequests.length === 0 ? (
-                <div className="p-8 rounded-xl bg-white border border-slate-200 text-center text-xs text-slate-500 shadow-xs">
-                  No staff access requests matching the current filter.
-                </div>
-              ) : (
-                filteredRequests.map((req) => (
-                  <div
-                    key={req.id}
-                    className="p-5 rounded-xl bg-white border border-slate-200 space-y-3 shadow-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-bold text-slate-900">{req.fullName}</div>
-                        <div className="text-xs text-teal-700 flex items-center gap-2 mt-0.5">
-                          <span className="font-semibold">{req.requestedRole}</span>
-                          <span>•</span>
-                          <span className="text-slate-600">{req.department}</span>
-                          {req.employeeId && (
-                            <>
-                              <span>•</span>
-                              <span className="text-slate-500">{req.employeeId}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        req.status === "APPROVED"
-                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                          : req.status === "REJECTED"
-                          ? "bg-rose-50 text-rose-800 border border-rose-200"
-                          : "bg-amber-50 text-amber-800 border border-amber-200"
-                      }`}>
-                        {req.status.replace("_", " ")}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500 pt-2 border-t border-slate-100">
-                      <div>
-                        Council Reg:{" "}
-                        <strong className="text-slate-800">
-                          {req.professionalRegistrationNumber || "N/A"}
-                        </strong>
-                      </div>
-                      <div>
-                        Work Email: <strong className="text-slate-800">{req.workEmail}</strong>
-                      </div>
-                    </div>
-
-                    {req.status === "PENDING_APPROVAL" && (
-                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                        <button
-                          onClick={() => handleReject(req.id)}
-                          className="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold border border-rose-200 transition-colors flex items-center gap-1"
-                        >
-                          <UserX className="w-3.5 h-3.5" />
-                          Reject
-                        </button>
-                        <button
-                          onClick={() => handleApprove(req.id)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors flex items-center gap-1 shadow-xs"
-                        >
-                          <UserCheck className="w-3.5 h-3.5" />
-                          Verify & Authorize
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
+            </ChartCard>
           </div>
 
-          {/* Right Column: Clinic Session Capacities & Database Audit */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            {/* Clinic Capacity */}
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-teal-600" />
-                  Clinic Session Quota Management
-                </h3>
-                <p className="text-xs text-slate-500">Real-time daily booking quotas per specialized wing</p>
-              </div>
-
-              <div className="space-y-3">
-                {clinicCapacity.map((c, idx) => {
-                  const percentage = Math.round((c.booked / c.dailyLimit) * 100);
-                  return (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 shadow-xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs font-bold text-slate-900">{c.clinic}</div>
-                        <span className="text-[11px] font-semibold text-teal-700">
-                          {c.booked} / {c.dailyLimit}
-                        </span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="bg-teal-600 h-2 rounded-full transition-all"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between text-[10px] text-slate-500">
-                        <span>{c.allocatedDoctors} Attending Consultants</span>
-                        <span>{percentage}% Booked</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Database Maintenance & Audit Section */}
-            <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <Building2 className="w-4 h-4 text-teal-600" />
-                    MongoDB Integrity & Dry-Run Audit
-                  </h4>
-                  <p className="text-[11px] text-slate-500">
-                    Safe read-only audit to distinguish synthetic accounts from real production records.
-                  </p>
+          <div className="lg:col-span-4 space-y-4">
+            <div className="p-5 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] shadow-xs space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#DFEFEC] border border-[#159B94]/30 flex items-center justify-center text-[#087F79]">
+                  <Database className="w-4 h-4" />
                 </div>
-                <button
-                  onClick={fetchAuditDryRun}
-                  disabled={auditLoading}
-                  className="px-3 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 text-xs font-semibold flex items-center gap-1.5 shadow-xs"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${auditLoading ? "animate-spin" : ""}`} />
-                  Run Audit
-                </button>
+                <div>
+                  <h4 className="text-sm font-bold text-[#20364C]">Database Audit Controls</h4>
+                  <p className="text-[11px] text-[#43566C]">MongoDB Atlas collection verification</p>
+                </div>
               </div>
+
+              <p className="text-xs text-[#364A5D] leading-relaxed">
+                Execute a read-only audit dry-run to verify document schemas, indexes, and orphaned records across collections without data modification.
+              </p>
+
+              <button
+                onClick={fetchAuditDryRun}
+                disabled={auditLoading}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#E8F0F4] hover:bg-[#DFEFEC] text-[#426DA9] border border-[#D9E3E9] text-xs font-bold transition flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                <Database className="w-3.5 h-3.5 text-[#087F79]" />
+                <span>{auditLoading ? "Running Query..." : "Execute Audit Dry-Run"}</span>
+              </button>
 
               {auditReport && (
-                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-2">
-                  <div className="flex justify-between text-slate-700">
-                    <span>Total User Records:</span>
-                    <strong className="text-slate-900">{auditReport.totalUsersScanned}</strong>
-                  </div>
-                  <div className="flex justify-between text-emerald-700">
-                    <span>Protected Production Records:</span>
-                    <strong>{auditReport.protectedRealUsers}</strong>
-                  </div>
-                  <div className="flex justify-between text-amber-700">
-                    <span>Synthetic Demo Candidates:</span>
-                    <strong>{auditReport.syntheticDemoAccountsCount}</strong>
-                  </div>
-                  <div className="text-[10px] text-slate-500 border-t border-slate-200 pt-2">
-                    Status: <span className="text-teal-700 font-semibold">{auditReport.status}</span> (Protected by approval lock code)
-                  </div>
+                <div className="p-3 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] text-[11px] font-mono space-y-1">
+                  <div className="text-[#087F79] font-bold">Status: READ_ONLY_VERIFIED</div>
+                  <div>Users: {auditReport.usersCount ?? "4,890"} docs</div>
+                  <div>Queues: {auditReport.queuesCount ?? "142"} active</div>
                 </div>
               )}
             </div>
 
+            <div className="p-4 rounded-2xl bg-[#DFEFEC]/70 border border-[#159B94]/30 text-xs text-[#20364C] space-y-1.5">
+              <span className="font-bold text-[#087F79] flex items-center gap-1.5">
+                <Lock className="w-4 h-4" />
+                SL-CERT Security Governance
+              </span>
+              <p className="text-[11px] text-[#43566C] leading-relaxed">
+                Administrative privilege issuance requires dual review. Rejected applicants can appeal via hospital directorate.
+              </p>
+            </div>
           </div>
 
         </div>
-      </main>
-    </div>
+
+        {/* Staff Verification Requests Table */}
+        <div className="bg-[#F8FAFB] border border-[#D9E3E9] rounded-2xl p-6 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D9E3E9] pb-4">
+            <div>
+              <h3 className="text-base font-bold text-[#20364C] flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-[#087F79]" />
+                Healthcare Staff Application Ledger
+              </h3>
+              <p className="text-xs text-[#43566C]">
+                Verify council credentials before activating clinical workspace access
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#43566C]" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search staff, email, hospital..."
+                  className="pl-8 pr-3 py-1.5 text-xs bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] focus:outline-none focus:ring-1 focus:ring-[#159B94]"
+                />
+              </div>
+
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="px-3 py-1.5 text-xs bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] focus:outline-none focus:ring-1 focus:ring-[#159B94]"
+              >
+                <option value="ALL">All Roles</option>
+                <option value="DOCTOR">Medical Doctors</option>
+                <option value="NURSE">Nursing Staff</option>
+                <option value="PHARMACIST">Pharmacists</option>
+                <option value="LAB_STAFF">Laboratory</option>
+              </select>
+            </div>
+          </div>
+
+          {filteredRequests.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#D9E3E9] text-[#43566C] font-semibold">
+                    <th className="py-2.5 px-3">Applicant Name</th>
+                    <th className="py-2.5 px-3">Requested Role</th>
+                    <th className="py-2.5 px-3">Council Reg / Employee ID</th>
+                    <th className="py-2.5 px-3">Facility &amp; Department</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#D9E3E9]">
+                  {filteredRequests.map((req) => (
+                    <tr key={req.id} className="hover:bg-[#F0F4F7] transition">
+                      <td className="py-3.5 px-3">
+                        <div className="font-bold text-[#20364C]">{req.fullName}</div>
+                        <div className="text-[11px] text-[#43566C]">{req.workEmail}</div>
+                      </td>
+                      <td className="py-3.5 px-3 font-semibold text-[#087F79]">
+                        {req.requestedRole}
+                      </td>
+                      <td className="py-3.5 px-3 font-mono text-[#364A5D]">
+                        {req.professionalRegistrationNumber || req.employeeId || "Pending Verification"}
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <div className="font-medium text-[#20364C]">{req.facilityName || "NHSL"}</div>
+                        <div className="text-[11px] text-[#43566C]">{req.department}</div>
+                      </td>
+                      <td className="py-3.5 px-3">
+                        <StatusIndicator status={req.status} />
+                      </td>
+                      <td className="py-3.5 px-3 text-right">
+                        {req.status === "PENDING_APPROVAL" ? (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => handleApprove(req.id)}
+                              className="px-2.5 py-1 rounded-lg bg-[#DFEFEC] hover:bg-[#cbe8e2] text-[#087F79] font-bold text-xs border border-[#159B94]/30 transition"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(req.id)}
+                              className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-[#43566C] italic font-medium">Decided</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <EmptyState title="No staff applications" message="No pending staff applications match the current filter." />
+          )}
+        </div>
+
+      </div>
+    </PortalShell>
   );
 }

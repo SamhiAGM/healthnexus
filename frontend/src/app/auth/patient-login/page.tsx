@@ -187,13 +187,12 @@ function PatientLoginForm() {
                 <label className="text-xs font-semibold text-slate-700">
                   Password *
                 </label>
-                <button
-                  type="button"
-                  onClick={() => alert("Self-service OTP reset: Enter your mobile number or NIC on the recovery step.")}
+                <Link
+                  href="/auth/forgot-password"
                   className="text-[11px] text-[#0F766E] hover:underline font-semibold"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
