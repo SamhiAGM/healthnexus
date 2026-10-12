@@ -18,7 +18,7 @@ public class JwtService {
     private final long jwtExpirationMs;
 
     public JwtService(
-            @Value("${jwt.secret:HealthConnectLKSuperSecretSecureKeyForJWTSigningMustBe256BitsLong2026!}") String secret,
+           @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration-ms:86400000}") long jwtExpirationMs // 24 hours
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
