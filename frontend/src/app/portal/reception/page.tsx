@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch, getCurrentUser, logoutUser } from "@/lib/api";
 import { 
   Building2, 
   Search, 
@@ -85,39 +86,28 @@ export default function ReceptionDashboard() {
     setLoading(true);
     setActionError(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/reception/queue?facilityId=NHSL", {
-        headers,
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: CheckInRecord[] = data.map((d: any, idx: number) => {
-            const rawNic = d.patientNic || "";
-            const maskedNic = rawNic.length >= 6 
-              ? rawNic.substring(0, 4) + "*****" + rawNic.substring(rawNic.length - 2) 
-              : rawNic || "N/A";
-            const dateStr = d.createdAt 
-              ? new Date(d.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) 
-              : "08:30 AM";
-            return {
-              id: d.id || `CHK-${idx}`,
-              token: d.ticketNumber || `C-02${idx}`,
-              patientName: d.patientName || "Clinic Patient",
-              nic: maskedNic,
-              clinic: d.clinicType || "Cardiology Clinic Room 04",
-              priority: d.priorityTag || "ROUTINE",
-              checkInTime: dateStr,
-              status: d.status || "WAITING",
-            };
-          });
-          setRecords(mapped);
-        }
+      const data = await apiFetch<any[]>("/api/reception/queue?facilityId=NHSL");
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped: CheckInRecord[] = data.map((d: any, idx: number) => {
+          const rawNic = d.patientNic || "";
+          const maskedNic = rawNic.length >= 6 
+            ? rawNic.substring(0, 4) + "*****" + rawNic.substring(rawNic.length - 2) 
+            : rawNic || "N/A";
+          const dateStr = d.createdAt 
+            ? new Date(d.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) 
+            : "08:30 AM";
+          return {
+            id: d.id || `CHK-${idx}`,
+            token: d.ticketNumber || `C-02${idx}`,
+            patientName: d.patientName || "Clinic Patient",
+            nic: maskedNic,
+            clinic: d.clinicType || "Cardiology Clinic Room 04",
+            priority: d.priorityTag || "ROUTINE",
+            checkInTime: dateStr,
+            status: d.status || "WAITING",
+          };
+        });
+        setRecords(mapped);
       }
     } catch (e) {
       // Retain fallback records if backend is temporarily unreachable
@@ -127,8 +117,19 @@ export default function ReceptionDashboard() {
   };
 
   useEffect(() => {
-    fetchQueue();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || (!user.roles?.includes("RECEPTIONIST") && !user.roles?.includes("SYSTEM_ADMIN") && !user.roles?.includes("HOSPITAL_ADMIN"))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchQueue();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleGenerateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,9 +137,6 @@ export default function ReceptionDashboard() {
     setActionError(null);
     setActionSuccess(null);
 
-    const token = localStorage.getItem("hc_token");
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
 
     const payload = {
       patientName,
@@ -151,55 +149,30 @@ export default function ReceptionDashboard() {
     };
 
     try {
-      const res = await fetch("http://localhost:8080/api/reception/ticket/issue", {
+      const data = await apiFetch<any>("/api/reception/ticket/issue", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const rawNic = data.patientNic || nic;
-        const masked = rawNic.length >= 6 ? rawNic.substring(0, 4) + "*****" + rawNic.substring(rawNic.length - 2) : rawNic;
-        const newRecord: CheckInRecord = {
-          id: data.id || `CHK-${Date.now()}`,
-          token: data.ticketNumber,
-          patientName: data.patientName,
-          nic: masked,
-          clinic: data.clinicType,
-          priority: data.priorityTag,
-          checkInTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          status: data.status,
-        };
-        setRecords((prev) => [newRecord, ...prev.filter(r => r.token !== newRecord.token)]);
-        setIssuedTicket(newRecord);
-        setActionSuccess(`Queue Token ${data.ticketNumber} generated successfully for ${data.patientName}.`);
-        setPatientName("");
-        setNic("");
-      } else {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to generate ticket via backend");
-      }
-    } catch (err: any) {
-      // Graceful local generation if offline
-      const tokenNum = `C-02${records.length + 3}`;
+      const rawNic = data.patientNic || nic;
+      const masked = rawNic.length >= 6 ? rawNic.substring(0, 4) + "*****" + rawNic.substring(rawNic.length - 2) : rawNic;
       const newRecord: CheckInRecord = {
-        id: `CHK-${Math.floor(904 + Math.random() * 90)}`,
-        token: tokenNum,
-        patientName,
-        nic: nic.substring(0, 4) + "*****" + nic.substring(nic.length - 2),
-        clinic,
-        priority,
+        id: data.id || `CHK-${Date.now()}`,
+        token: data.ticketNumber,
+        patientName: data.patientName,
+        nic: masked,
+        clinic: data.clinicType,
+        priority: data.priorityTag,
         checkInTime: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        status: "CHECKED_IN",
+        status: data.status,
       };
-
-      setRecords((prev) => [newRecord, ...prev]);
+      setRecords((prev) => [newRecord, ...prev.filter(r => r.token !== newRecord.token)]);
       setIssuedTicket(newRecord);
-      setActionSuccess(`Queue Token ${tokenNum} generated locally.`);
+      setActionSuccess(`Queue Token ${data.ticketNumber} generated successfully for ${data.patientName}.`);
       setPatientName("");
       setNic("");
+    } catch (err: any) {
+      setActionError(err.message || "Failed to generate queue token via backend.");
     } finally {
       setSubmitting(false);
     }
@@ -207,14 +180,8 @@ export default function ReceptionDashboard() {
 
   const handleCancelTicket = async (ticketNum: string) => {
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      await fetch(`http://localhost:8080/api/reception/tickets/${ticketNum}/cancel`, {
+      await apiFetch(`/api/reception/tickets/${ticketNum}/cancel`, {
         method: "POST",
-        headers,
-        credentials: "include",
       });
 
       setRecords((prev) =>
@@ -224,16 +191,13 @@ export default function ReceptionDashboard() {
         setIssuedTicket(null);
       }
       setActionSuccess(`Ticket ${ticketNum} marked as cancelled.`);
-    } catch (e) {
-      setRecords((prev) =>
-        prev.map((r) => (r.token === ticketNum ? { ...r, status: "SKIPPED" } : r))
-      );
+    } catch (err: any) {
+      setActionError(err.message || `Failed to cancel ticket ${ticketNum}.`);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("hc_staff_user");
-    localStorage.removeItem("hc_token");
+  const handleLogout = async () => {
+    await logoutUser();
     router.push("/auth/staff-login");
   };
 

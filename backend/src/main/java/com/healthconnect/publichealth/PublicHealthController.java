@@ -17,7 +17,6 @@ public class PublicHealthController {
 
     public PublicHealthController(PublicHealthService service) {
         this.service = service;
-        this.service.seedInitialActivitiesIfEmpty();
     }
 
     @GetMapping("/activities")

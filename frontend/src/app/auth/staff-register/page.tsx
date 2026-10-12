@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch } from "@/lib/api";
 import { 
   Building2, 
   Stethoscope, 
@@ -115,9 +116,8 @@ export default function StaffRegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/staff/access-requests", {
+      const data = await apiFetch<any>("/api/staff/access-requests", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           fullName: formData.fullName.trim(),
           employeeId: formData.employeeId.trim().toUpperCase(),
@@ -133,28 +133,10 @@ export default function StaffRegisterPage() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to submit staff access request. Please check your details.");
-      }
-
-      const data = await response.json();
       setSubmittedData(data);
       setStep(4);
-
     } catch (err: any) {
-      if (err.message && err.message.includes("Failed to fetch")) {
-        // Development simulation fallback
-        setSubmittedData({
-          requestId: `REQ-${Math.floor(100 + Math.random() * 900)}`,
-          status: "PENDING_APPROVAL",
-          requestedRole: formData.requestedRole,
-          facility: formData.facilityName,
-        });
-        setStep(4);
-      } else {
-        setError(err.message || "An error occurred while submitting your application.");
-      }
+      setError(err.message || "An error occurred while submitting your application.");
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,8 @@ import {
   CheckCircle2
 } from "lucide-react";
 
+import { apiFetch, AuthResponse } from "@/lib/api";
+
 export default function PatientLoginPage() {
   const router = useRouter();
   const [identifier, setIdentifier] = useState("");
@@ -34,40 +36,19 @@ export default function PatientLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      await apiFetch<AuthResponse>("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Captures HttpOnly session cookie
         body: JSON.stringify({ 
           identifier: identifier.trim(), 
           password 
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Invalid login credentials. Please check your NIC, mobile, or password.");
-      }
-
-      const data = await response.json();
-      localStorage.setItem("hc_token", data.token);
-      localStorage.setItem("hc_user", JSON.stringify(data));
       setSuccess(true);
       setTimeout(() => router.push("/portal/patient"), 1000);
 
     } catch (err: any) {
-      if (err.message && err.message.includes("Failed to fetch")) {
-        // Fallback demo storage if running disconnected from backend
-        localStorage.setItem("hc_user", JSON.stringify({
-          fullName: "Kasun Chamara",
-          roles: ["PATIENT"],
-          phone: "0771234567"
-        }));
-        setSuccess(true);
-        setTimeout(() => router.push("/portal/patient"), 1000);
-      } else {
-        setError(err.message || "Invalid credentials. Please try again.");
-      }
+      setError(err.message || "Invalid credentials. Please verify your login details.");
     } finally {
       setLoading(false);
     }

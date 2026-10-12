@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   CalendarDays, 
   Users, 
@@ -57,22 +59,20 @@ export default function ClinicCoordinatorPortalPage() {
   // Adjust Capacity Modal
   const [selectedSession, setSelectedSession] = useState<SessionItem | null>(null);
   const [adjustCapacity, setAdjustCapacity] = useState(40);
+  const router = useRouter();
   const [adjustStatus, setAdjustStatus] = useState("OPEN");
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const [sessRes, workRes] = await Promise.all([
-        fetch("http://localhost:8080/api/coordinator/sessions", { headers }),
-        fetch("http://localhost:8080/api/coordinator/workload", { headers })
+      const [sessData, workData] = await Promise.all([
+        apiFetch<any[]>("/api/coordinator/sessions").catch(() => null),
+        apiFetch<any>("/api/coordinator/workload").catch(() => null)
       ]);
 
-      if (sessRes.ok) setSessions(await sessRes.json());
-      if (workRes.ok) setWorkload(await workRes.json());
+      if (Array.isArray(sessData)) setSessions(sessData);
+      if (workData) setWorkload(workData);
     } catch (err) {
       console.error("Failed to load coordinator data:", err);
     } finally {
@@ -81,19 +81,26 @@ export default function ClinicCoordinatorPortalPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["CLINIC_COORDINATOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchData();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleCreateSession = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/coordinator/sessions", {
+      await apiFetch("/api/coordinator/sessions", {
         method: "POST",
-        headers,
         body: JSON.stringify({
           clinicName: cName,
           roomNumber: cRoom,
@@ -106,44 +113,38 @@ export default function ClinicCoordinatorPortalPage() {
         })
       });
 
-      if (res.ok) {
-        setActionSuccess(`Clinic session "${cName}" successfully rostered.`);
-        setCName("");
-        setCRoom("");
-        setCDoctor("");
-        setActiveTab("ROSTER");
-        fetchData();
-        setTimeout(() => setActionSuccess(null), 4000);
-      }
-    } catch (err) {
-      console.error("Error creating session:", err);
+      setActionSuccess(`Clinic session "${cName}" successfully rostered.`);
+      setCName("");
+      setCRoom("");
+      setCDoctor("");
+      setActiveTab("ROSTER");
+      fetchData();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setActionError(err.message || "Error creating clinic session.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
   const handleUpdateCapacity = async () => {
     if (!selectedSession) return;
+    setActionError(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/coordinator/sessions/${selectedSession.id}/capacity`, {
+      await apiFetch(`/api/coordinator/sessions/${selectedSession.id}/capacity`, {
         method: "PATCH",
-        headers,
         body: JSON.stringify({
           capacity: Number(adjustCapacity),
           status: adjustStatus
         })
       });
 
-      if (res.ok) {
-        setActionSuccess(`Capacity for ${selectedSession.clinicName} updated to ${adjustCapacity} (${adjustStatus}).`);
-        setSelectedSession(null);
-        fetchData();
-        setTimeout(() => setActionSuccess(null), 4000);
-      }
-    } catch (err) {
-      console.error("Error updating capacity:", err);
+      setActionSuccess(`Capacity for ${selectedSession.clinicName} updated to ${adjustCapacity} (${adjustStatus}).`);
+      setSelectedSession(null);
+      fetchData();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setActionError(err.message || "Error updating capacity.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 

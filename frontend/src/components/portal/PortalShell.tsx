@@ -57,15 +57,11 @@ export function PortalShell({
   const displayRoleTitle = roleTitle || role.replace(/_/g, " ");
   const displayName = userName || "Authorized Personnel";
 
-  const handleLogout = () => {
-    localStorage.removeItem("hc_token");
-    localStorage.removeItem("hc_user");
-    localStorage.removeItem("hc_staff_user");
-    // Trigger server-side cookie deletion
-    fetch("http://localhost:8080/api/auth/logout", {
-      method: "POST",
-      credentials: "include",
-    }).catch(() => {});
+  const handleLogout = async () => {
+    try {
+      const { logoutUser } = await import("@/lib/api");
+      await logoutUser();
+    } catch (e) {}
 
     if (role === "PATIENT") {
       router.push("/auth/patient-login");

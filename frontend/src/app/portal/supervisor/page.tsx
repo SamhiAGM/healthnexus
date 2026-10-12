@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch, getCurrentUser, logoutUser } from "@/lib/api";
 import { 
   ClipboardCheck, 
   Building2, 
@@ -81,40 +82,40 @@ export default function SupervisorDashboard() {
     setLoading(true);
     setActionError(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/supervisor/findings", {
-        headers,
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: InspectionFinding[] = data.map((d: any, idx: number) => ({
-            id: d.findingCode || d.id || `FND-${300 + idx}`,
-            facility: d.facility || "Government Base Hospital",
-            category: d.category || "General Safety",
-            description: d.description || "",
-            severity: d.severity || "MODERATE",
-            status: d.status || "OPEN",
-            deadline: d.deadline || "30 Oct 2026",
-          }));
-          setFindings(mapped);
-        }
+      const data = await apiFetch<any[]>("/api/supervisor/findings");
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped: InspectionFinding[] = data.map((d: any, idx: number) => ({
+          id: d.findingCode || d.id || `FND-${300 + idx}`,
+          facility: d.facility || "Government Base Hospital",
+          category: d.category || "General Safety",
+          description: d.description || "",
+          severity: d.severity || "MODERATE",
+          status: d.status || "OPEN",
+          deadline: d.deadline || "30 Oct 2026",
+        }));
+        setFindings(mapped);
       }
     } catch (e) {
-      // Graceful fallback to initial findings if offline
+      // Retain fallback to initial findings if offline
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLiveFindings();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["FIELD_SUPERVISOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchLiveFindings();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleCreateFinding = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,9 +123,6 @@ export default function SupervisorDashboard() {
     setActionError(null);
     setActionSuccess(null);
 
-    const token = localStorage.getItem("hc_token");
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
 
     const payload = {
       facility: newFacility,
@@ -135,53 +133,32 @@ export default function SupervisorDashboard() {
     };
 
     try {
-      const res = await fetch("http://localhost:8080/api/supervisor/findings", {
+      const data = await apiFetch<any>("/api/supervisor/findings", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const created: InspectionFinding = {
-          id: data.findingCode || data.id,
-          facility: data.facility,
-          category: data.category,
-          description: data.description,
-          severity: data.severity,
-          status: data.status,
-          deadline: data.deadline,
-        };
-        setFindings((prev) => [created, ...prev.filter(f => f.id !== created.id)]);
-        setActionSuccess(`Finding ${created.id} dispatched to ${created.facility} administrators!`);
-        setNewDescription("");
-      } else {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to dispatch finding");
-      }
-    } catch (err: any) {
-      // Graceful offline fallback creation
-      const fallbackId = `FND-${Math.floor(400 + Math.random() * 500)}`;
       const created: InspectionFinding = {
-        id: fallbackId,
-        facility: newFacility,
-        category: newCategory,
-        description: newDescription,
-        severity: newSeverity,
-        status: "OPEN",
-        deadline: newDeadline,
+        id: data.findingCode || data.id,
+        facility: data.facility,
+        category: data.category,
+        description: data.description,
+        severity: data.severity,
+        status: data.status,
+        deadline: data.deadline,
       };
-      setFindings((prev) => [created, ...prev]);
-      setActionSuccess(`Finding ${fallbackId} logged locally.`);
+      setFindings((prev) => [created, ...prev.filter(f => f.id !== created.id)]);
+      setActionSuccess(`Finding ${created.id} dispatched to ${created.facility} administrators!`);
       setNewDescription("");
+    } catch (err: any) {
+      setActionError(err.message || "Failed to dispatch finding.");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleStatusToggle = async (id: string) => {
-    // Optimistic local update
+    const prevFindings = [...findings];
     setFindings((prev) =>
       prev.map((f) => {
         if (f.id === id) {
@@ -198,23 +175,18 @@ export default function SupervisorDashboard() {
     );
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      await fetch(`http://localhost:8080/api/supervisor/findings/${id}/cycle-status`, {
+      await apiFetch(`/api/supervisor/findings/${id}/cycle-status`, {
         method: "POST",
-        headers,
-        credentials: "include",
       });
     } catch (e) {
-      // Retain optimistic state
+      // Revert if backend update failed
+      setFindings(prevFindings);
+      setActionError("Failed to update status on server.");
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("hc_staff_user");
-    localStorage.removeItem("hc_token");
+  const handleLogout = async () => {
+    await logoutUser();
     router.push("/auth/staff-login");
   };
 

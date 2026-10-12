@@ -17,12 +17,7 @@ public class LaboratoryService {
 
     public List<LabOrder> getLabOrders(String facilityId) {
         String safeFacility = (facilityId != null && !facilityId.isBlank()) ? facilityId : "NHSL";
-        List<LabOrder> list = labOrderRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
-        if (list.isEmpty()) {
-            initSeedLabOrders(safeFacility);
-            return labOrderRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
-        }
-        return list;
+        return labOrderRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
     }
 
     public LabOrder collectSample(String idOrNumber) {

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch } from "@/lib/api";
 import { 
   ShieldAlert, 
   Lock, 
@@ -59,22 +60,13 @@ export default function StaffLoginPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/login", {
+      const data = await apiFetch<any>("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ 
           identifier: identifier.trim(), 
           password 
         }),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Invalid employee credentials or account is awaiting administrator approval.");
-      }
-
-      const data = await response.json();
 
       // Guard: If account only has PATIENT role, deny access to healthcare staff workspace
       if (data.roles && data.roles.length === 1 && data.roles.includes("PATIENT")) {
@@ -82,26 +74,29 @@ export default function StaffLoginPage() {
       }
 
       setSessionData(data);
-      // Advance to MFA challenge required for privileged clinical access
-      setAuthStep("MFA_CHALLENGE");
 
-    } catch (err: any) {
-      if (err.message && err.message.includes("Failed to fetch")) {
-        // Standalone preview simulation
-        const mockRole = identifier.toUpperCase().includes("NURSE") ? "NURSE" :
-                         identifier.toUpperCase().includes("ADMIN") ? "HOSPITAL_ADMIN" :
-                         identifier.toUpperCase().includes("RECEPT") ? "RECEPTIONIST" : "DOCTOR";
-        setSessionData({
-          userId: "USR-PREVIEW-01",
-          fullName: "Dr. Samantha Senanayake, MBBS",
-          email: identifier.includes("@") ? identifier : "samantha.s@hospital.lk",
-          roles: [mockRole],
-          token: "hc_mock_jwt_preview"
-        });
+      if (data.mfaRequired) {
+        // Advance to MFA challenge required for privileged clinical access
         setAuthStep("MFA_CHALLENGE");
       } else {
-        setError(err.message || "Authentication failed. Please verify your credentials.");
+        // Direct staff session (if MFA not required)
+        if (typeof window !== "undefined") {
+          localStorage.setItem("hc_staff_user", JSON.stringify({
+            userId: data.userId,
+            name: data.fullName,
+            email: data.email,
+            role: data.roles?.[0] || "DOCTOR",
+            roles: data.roles || ["DOCTOR"],
+            facility: data.assignedFacilityId || "Healthcare Facility"
+          }));
+        }
+        setSuccess(true);
+        const primaryRole = data.roles?.[0] || "DOCTOR";
+        const destination = roleRoutes[primaryRole] || "/portal/doctor";
+        setTimeout(() => router.push(destination), 1000);
       }
+    } catch (err: any) {
+      setError(err.message || "Authentication failed. Please verify your credentials.");
     } finally {
       setLoading(false);
     }
@@ -113,30 +108,36 @@ export default function StaffLoginPage() {
     setLoading(true);
 
     try {
-      // Valid MFA verification (accepts standard SL-CERT 6-digit TOTP / SMS code)
-      if (mfaCode.trim().length < 6) {
+      if (!mfaCode.trim() || mfaCode.trim().length < 6) {
         throw new Error("Please enter a valid 6-digit verification code.");
       }
 
-      // Store authenticated staff session
-      if (sessionData) {
-        localStorage.setItem("hc_token", sessionData.token || "hc_session_active");
-        localStorage.setItem("hc_staff_user", JSON.stringify({
-          userId: sessionData.userId,
-          name: sessionData.fullName,
-          email: sessionData.email,
-          role: sessionData.roles?.[0] || "DOCTOR",
-          roles: sessionData.roles || ["DOCTOR"],
-          facility: sessionData.assignedFacilityId || "National Hospital of Sri Lanka (NHSL)"
-        }));
+      const verifiedData = await apiFetch<any>("/api/auth/mfa/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          mfaSessionId: sessionData?.mfaSessionId,
+          code: mfaCode.trim(),
+        }),
+      });
 
-        setSuccess(true);
-        const primaryRole = sessionData.roles?.[0] || "DOCTOR";
-        const destination = roleRoutes[primaryRole] || "/portal/doctor";
-        setTimeout(() => router.push(destination), 1000);
+      // Store non-sensitive authenticated staff metadata (HttpOnly cookie holds the session)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("hc_staff_user", JSON.stringify({
+          userId: verifiedData.userId,
+          name: verifiedData.fullName,
+          email: verifiedData.email,
+          role: verifiedData.roles?.[0] || "DOCTOR",
+          roles: verifiedData.roles || ["DOCTOR"],
+          facility: verifiedData.assignedFacilityId || "Healthcare Facility"
+        }));
       }
+
+      setSuccess(true);
+      const primaryRole = verifiedData.roles?.[0] || "DOCTOR";
+      const destination = roleRoutes[primaryRole] || "/portal/doctor";
+      setTimeout(() => router.push(destination), 1000);
     } catch (err: any) {
-      setError(err.message || "Invalid multifactor authentication code.");
+      setError(err.message || "Multifactor authentication failed. Privileged access denied.");
     } finally {
       setLoading(false);
     }
@@ -261,7 +262,7 @@ export default function StaffLoginPage() {
                   Multifactor Authentication Required
                 </div>
                 <p className="text-[11px] text-slate-300">
-                  Clinical access requires secondary authentication. Enter your registered security code or enter <strong>123456</strong> for dev verification.
+                  Clinical access requires secondary authentication. Enter your registered security code.
                 </p>
               </div>
 

@@ -58,22 +58,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Claims claims = jwtService.extractAllClaims(jwt);
-            @SuppressWarnings("unchecked")
-            List<String> roles = (List<String>) claims.get("roles");
+            java.util.Optional<User> userOpt = userRepository.findById(userId);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                if (!user.isEnabled()) {
+                    // Suspended or disabled accounts cannot access protected resources
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+                // Server-side active roles prevent role escalation from outdated tokens
+                List<SimpleGrantedAuthority> authorities = user.getRoles() == null ? List.of() :
+                        user.getRoles().stream()
+                                .map(r -> new SimpleGrantedAuthority("ROLE_" + r.name()))
+                                .collect(Collectors.toList());
 
-            List<SimpleGrantedAuthority> authorities = roles == null ? List.of() :
-                    roles.stream()
-                            .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
-                            .collect(Collectors.toList());
-
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userId,
-                    null,
-                    authorities
-            );
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userId,
+                        null,
+                        authorities
+                );
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+            }
         }
 
         filterChain.doFilter(request, response);

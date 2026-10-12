@@ -16,7 +16,6 @@ public class HospitalAdminController {
 
     public HospitalAdminController(HospitalAdminService service) {
         this.service = service;
-        this.service.seedInitialHospitalDataIfEmpty();
     }
 
     @GetMapping("/overview")

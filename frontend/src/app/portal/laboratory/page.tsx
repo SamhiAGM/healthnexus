@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   FlaskConical, 
   TestTube2, 
@@ -37,86 +39,74 @@ export default function LaboratoryPortalPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const router = useRouter();
   const [resultInput, setResultInput] = useState("");
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/laboratory/orders", {
-        headers,
-        credentials: "include"
-      });
-
-      if (res.ok) {
-        const data = await res.json();
+      const data = await apiFetch<any[]>("/api/laboratory/orders");
+      if (Array.isArray(data)) {
         setOrders(data);
       }
     } catch (e) {
-      // Graceful fallback
+      // Retain fallback display
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["LAB_TECHNICIAN", "LAB_STAFF", "DOCTOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchOrders();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleCollectSample = async (orderId: string, orderNumber: string) => {
+    setActionError(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/laboratory/orders/${orderId}/sample`, {
+      const updated = await apiFetch<any>(`/api/laboratory/orders/${orderId}/sample`, {
         method: "POST",
-        headers,
-        credentials: "include"
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
-        setActionSuccess(`Specimen for ${orderNumber} collected and barcoded.`);
-        setTimeout(() => setActionSuccess(null), 3000);
-      }
-    } catch (e) {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "SAMPLE_COLLECTED" } : o));
+      setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+      setActionSuccess(`Specimen for ${orderNumber} collected and barcoded.`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err: any) {
+      setActionError(err.message || `Failed to collect specimen for ${orderNumber}.`);
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
   const handleRecordResults = async (orderId: string, orderNumber: string) => {
     if (!resultInput.trim()) return;
+    setActionError(null);
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/laboratory/orders/${orderId}/results`, {
+      const updated = await apiFetch<any>(`/api/laboratory/orders/${orderId}/results`, {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({ results: resultInput.trim() })
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
-        setActionSuccess(`Test report for ${orderNumber} released to physician.`);
-        setSelectedOrderId(null);
-        setResultInput("");
-        setTimeout(() => setActionSuccess(null), 3000);
-      }
-    } catch (e) {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "RELEASED", resultsSummary: resultInput, technicianName: "T. Mendis, MLT" } : o));
+      setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+      setActionSuccess(`Test report for ${orderNumber} released to physician.`);
       setSelectedOrderId(null);
       setResultInput("");
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err: any) {
+      setActionError(err.message || `Failed to release test results for ${orderNumber}.`);
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 

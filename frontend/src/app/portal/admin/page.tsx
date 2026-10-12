@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch, getCurrentUser, logoutUser } from "@/lib/api";
 import { 
   Building2, 
   Users, 
@@ -79,20 +80,9 @@ export default function AdminDashboard() {
   const fetchLiveRequests = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/admin/staff/requests", {
-        headers,
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setStaffRequests(data);
-        }
+      const data = await apiFetch<any[]>("/api/admin/staff/requests");
+      if (Array.isArray(data) && data.length > 0) {
+        setStaffRequests(data);
       }
     } catch (e) {
       // Retain fallback list on network interruption
@@ -102,76 +92,62 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    fetchLiveRequests();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["SYSTEM_ADMIN", "HOSPITAL_ADMIN"].includes(r))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchLiveRequests();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleApprove = async (id: string) => {
     setActionMessage(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/admin/staff/requests/${id}/approve`, {
+      const result = await apiFetch<any>(`/api/admin/staff/requests/${id}/approve`, {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({ notes: "Institutional credentials and council registration validated." }),
       });
 
-      if (res.ok) {
-        const result = await res.json();
-        setActionMessage(`Approved: ${result.email} has been provisioned with ${result.activatedRole} access.`);
-      } else {
-        setActionMessage(`Approved locally: Request ${id} authorized.`);
-      }
-    } catch (e) {
-      setActionMessage(`Approved locally: Request ${id} authorized.`);
+      setActionMessage(`Approved: ${result.email || "Staff"} has been provisioned with ${result.activatedRole || "requested"} access.`);
+      setStaffRequests(staffRequests.map((req) => {
+        if (req.id === id) {
+          return { ...req, status: "APPROVED" as const };
+        }
+        return req;
+      }));
+    } catch (err: any) {
+      setActionMessage(`Approval failed: ${err.message || "Unauthorized or backend error"}`);
     }
-
-    setStaffRequests(staffRequests.map((req) => {
-      if (req.id === id) {
-        return { ...req, status: "APPROVED" as const };
-      }
-      return req;
-    }));
   };
 
   const handleReject = async (id: string) => {
     setActionMessage(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      await fetch(`http://localhost:8080/api/admin/staff/requests/${id}/reject`, {
+      await apiFetch(`/api/admin/staff/requests/${id}/reject`, {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({ reason: "Credentials could not be verified against institutional ledger." }),
       });
-      setActionMessage(`Request ${id} rejected.`);
-    } catch (e) {
-      setActionMessage(`Request ${id} rejected.`);
-    }
 
-    setStaffRequests(staffRequests.map((req) => {
-      if (req.id === id) {
-        return { ...req, status: "REJECTED" as const };
-      }
-      return req;
-    }));
+      setActionMessage(`Request ${id} rejected.`);
+      setStaffRequests(staffRequests.map((req) => {
+        if (req.id === id) {
+          return { ...req, status: "REJECTED" as const };
+        }
+        return req;
+      }));
+    } catch (err: any) {
+      setActionMessage(`Rejection failed: ${err.message || "Unauthorized or backend error"}`);
+    }
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:8080/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (e) {}
-    localStorage.removeItem("hc_staff_user");
-    localStorage.removeItem("hc_token");
+    await logoutUser();
     router.push("/auth/staff-login");
   };
 

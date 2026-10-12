@@ -1,5 +1,6 @@
 package com.healthconnect.users;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -25,12 +26,14 @@ public class User {
     private String phone;
 
     // Salted hash of NIC (never store plaintext NIC)
+    @JsonIgnore
     @Indexed(unique = true, sparse = true)
     private String nicHash;
 
     // Masked display representation of NIC (e.g. 1990*****123 or 85*****12V)
     private String maskedNic;
 
+    @JsonIgnore
     private String passwordHash;
 
     private Set<Role> roles = new HashSet<>();

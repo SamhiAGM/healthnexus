@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch } from "@/lib/api";
 import { 
   User, 
   CreditCard, 
@@ -105,10 +106,8 @@ export default function PatientRegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/patients/register", {
+      const data = await apiFetch<any>("/api/auth/patients/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Captures HttpOnly session cookie
         body: JSON.stringify({
           fullName,
           identificationType: idType,
@@ -121,32 +120,22 @@ export default function PatientRegisterPage() {
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const detailedMsg = errorData.error || errorData.message || (errorData.errors && errorData.errors[0]?.defaultMessage) || "Registration could not be completed. Please verify your details.";
-        throw new Error(detailedMsg);
+      // Store non-sensitive profile metadata for client UI display (session is in HttpOnly cookie)
+      if (typeof window !== "undefined") {
+        localStorage.setItem("hc_user", JSON.stringify({
+          userId: data.userId,
+          fullName: data.fullName || fullName,
+          roles: data.roles || ["PATIENT"],
+          phone: data.phone || phone,
+          email: data.email || email,
+          verified: data.verified
+        }));
       }
-
-      const data = await response.json();
-      // Store non-sensitive metadata for client routing & UI display
-      localStorage.setItem("hc_token", data.token);
-      localStorage.setItem("hc_user", JSON.stringify(data));
       setSuccess(true);
       setTimeout(() => router.push("/portal/patient"), 1200);
 
     } catch (err: any) {
-      if (err.message && err.message.includes("Failed to fetch")) {
-        // Graceful standalone preview fallback if backend isn't reached
-        localStorage.setItem("hc_user", JSON.stringify({
-          fullName: fullName || "Registered Citizen",
-          roles: ["PATIENT"],
-          phone: phone
-        }));
-        setSuccess(true);
-        setTimeout(() => router.push("/portal/patient"), 1200);
-      } else {
-        setError(err.message || "An unexpected error occurred during patient registration.");
-      }
+      setError(err.message || "Registration could not be completed. Please verify your details.");
     } finally {
       setLoading(false);
     }

@@ -19,12 +19,7 @@ public class PharmacyService {
 
     public List<Prescription> getPrescriptions(String facilityId) {
         String safeFacility = (facilityId != null && !facilityId.isBlank()) ? facilityId : "NHSL";
-        List<Prescription> list = prescriptionRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
-        if (list.isEmpty()) {
-            initSeedPrescriptions(safeFacility);
-            return prescriptionRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
-        }
-        return list;
+        return prescriptionRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
     }
 
     public Prescription dispensePrescription(String idOrNumber, String pharmacistName) {
@@ -42,12 +37,7 @@ public class PharmacyService {
 
     public List<MedicationStock> getInventory(String facilityId) {
         String safeFacility = (facilityId != null && !facilityId.isBlank()) ? facilityId : "NHSL";
-        List<MedicationStock> stocks = stockRepository.findByFacilityId(safeFacility);
-        if (stocks.isEmpty()) {
-            initSeedInventory(safeFacility);
-            return stockRepository.findByFacilityId(safeFacility);
-        }
-        return stocks;
+        return stockRepository.findByFacilityId(safeFacility);
     }
 
     public MedicationStock adjustStock(String stockId, int quantityChange) {

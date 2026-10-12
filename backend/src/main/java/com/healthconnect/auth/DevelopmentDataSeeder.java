@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -15,9 +16,24 @@ import java.util.Set;
 
 /**
  * Opt-in synthetic development data seeder for LankaCare.me.
- * Provisions 1 synthetic demonstration account per target role if absent.
+ *
+ * SECURITY NOTICE:
+ * - Disabled by default in all environments (matchIfMissing = false).
+ * - Requires explicit opt-in: lankacare.seed.enabled=true (via APP_SEEDING_ENABLED=true).
+ * - Requires explicit password configuration: lankacare.seed.password (via APP_SEEDING_PASSWORD).
+ * - Passwords and security tokens are never logged.
+ *
+ * PRODUCTION AUDIT & REVOCATION NOTICE:
+ * If demonstration accounts were provisioned in MongoDB prior to this security hardening,
+ * administrators should identify them by domain '@lankacare.me' (e.g., admin@lankacare.me,
+ * doctor@lankacare.me, etc.) and immediately disable or remove them:
+ *
+ *   db.users.updateMany({ email: { $regex: /@lankacare\.me$/ } }, { $set: { enabled: false } });
+ *
+ * Any database passwords, JWT secrets, or administrative credentials that were exposed must be rotated.
  */
 @Component
+@ConditionalOnProperty(prefix = "lankacare.seed", name = "enabled", havingValue = "true", matchIfMissing = false)
 public class DevelopmentDataSeeder implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DevelopmentDataSeeder.class);
@@ -25,11 +41,8 @@ public class DevelopmentDataSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Value("${lankacare.seed.enabled:true}")
-    private boolean seedEnabled;
-
-    @Value("${lankacare.demo.password:DemoPass2026!}")
-    private String demoPassword;
+    @Value("${lankacare.seed.password:}")
+    private String seedPassword;
 
     public DevelopmentDataSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -38,12 +51,12 @@ public class DevelopmentDataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!seedEnabled) {
-            log.info("Development data seeding is disabled.");
+        if (seedPassword == null || seedPassword.trim().isBlank()) {
+            log.warn("Development seeding is enabled, but 'lankacare.seed.password' (APP_SEEDING_PASSWORD) is not configured. Aborting seed operation.");
             return;
         }
 
-        String encodedPassword = passwordEncoder.encode(demoPassword);
+        String encodedPassword = passwordEncoder.encode(seedPassword.trim());
 
         record DemoAccount(String email, String fullName, String phone, Role role, String department) {}
 
@@ -61,6 +74,7 @@ public class DevelopmentDataSeeder implements CommandLineRunner {
                 new DemoAccount("coordinator@lankacare.me", "Malini Fernando (Demo Clinic Coordinator)", "0771234511", Role.CLINIC_COORDINATOR, "Clinical Operations & Scheduling")
         );
 
+        int count = 0;
         for (DemoAccount acc : demoAccounts) {
             if (!userRepository.existsByEmail(acc.email())) {
                 User user = new User(
@@ -77,8 +91,9 @@ public class DevelopmentDataSeeder implements CommandLineRunner {
                 user.setEnabled(true);
                 user.setVerified(true);
                 userRepository.save(user);
-                log.info("Provisioned demo account: {} ({})", acc.email(), acc.role());
+                count++;
             }
         }
+        log.info("Development seeding completed: provisioned {} synthetic development account(s).", count);
     }
 }

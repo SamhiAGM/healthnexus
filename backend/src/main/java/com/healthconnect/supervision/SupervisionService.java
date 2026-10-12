@@ -17,12 +17,7 @@ public class SupervisionService {
     }
 
     public List<InspectionFinding> getAllFindings() {
-        List<InspectionFinding> list = repository.findAllByOrderByCreatedAtDesc();
-        if (list.isEmpty()) {
-            initSeedFindings();
-            return repository.findAllByOrderByCreatedAtDesc();
-        }
-        return list;
+        return repository.findAllByOrderByCreatedAtDesc();
     }
 
     public InspectionFinding createFinding(

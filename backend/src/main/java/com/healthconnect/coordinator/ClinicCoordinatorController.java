@@ -15,7 +15,6 @@ public class ClinicCoordinatorController {
 
     public ClinicCoordinatorController(ClinicCoordinatorService service) {
         this.service = service;
-        this.service.seedInitialSessionsIfEmpty();
     }
 
     @GetMapping("/sessions")

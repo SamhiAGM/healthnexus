@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   Pill, 
   Package, 
@@ -47,86 +49,78 @@ export default function PharmacyPortalPage() {
   const [activeTab, setActiveTab] = useState<"PRESCRIPTIONS" | "INVENTORY">("PRESCRIPTIONS");
   const [prescriptions, setPrescriptions] = useState<PrescriptionItem[]>([]);
   const [inventory, setInventory] = useState<StockItem[]>([]);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchPharmacyData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const [rxRes, invRes] = await Promise.all([
-        fetch("http://localhost:8080/api/pharmacy/prescriptions", { headers, credentials: "include" }),
-        fetch("http://localhost:8080/api/pharmacy/inventory", { headers, credentials: "include" })
+      const [rxData, invData] = await Promise.all([
+        apiFetch<any[]>("/api/pharmacy/prescriptions").catch(() => null),
+        apiFetch<any[]>("/api/pharmacy/inventory").catch(() => null),
       ]);
 
-      if (rxRes.ok) {
-        const data = await rxRes.json();
-        setPrescriptions(data);
+      if (Array.isArray(rxData)) {
+        setPrescriptions(rxData);
       }
-      if (invRes.ok) {
-        const invData = await invRes.json();
+      if (Array.isArray(invData)) {
         setInventory(invData);
       }
     } catch (e) {
-      // Retain graceful fallback state
+      // Retain fallback display
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPharmacyData();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["PHARMACIST", "DOCTOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchPharmacyData();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleDispense = async (rxId: string, rxNumber: string) => {
+    setActionError(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/pharmacy/prescriptions/${rxId}/dispense`, {
+      const updated = await apiFetch<any>(`/api/pharmacy/prescriptions/${rxId}/dispense`, {
         method: "POST",
-        headers,
-        credentials: "include"
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setPrescriptions(prev => prev.map(p => p.id === rxId ? updated : p));
-        setActionSuccess(`Prescription ${rxNumber} verified & dispensed successfully.`);
-        setTimeout(() => setActionSuccess(null), 3000);
-      }
-    } catch (e) {
-      // Optimistic fallback
-      setPrescriptions(prev => prev.map(p => p.id === rxId ? { ...p, status: "DISPENSED", dispensedBy: "P. Jayasuriya, B.Pharm" } : p));
+      setPrescriptions(prev => prev.map(p => p.id === rxId ? updated : p));
+      setActionSuccess(`Prescription ${rxNumber} verified & dispensed successfully.`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err: any) {
+      setActionError(err.message || "Failed to record medication dispensing on backend.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
   const handleRestock = async (stockId: string, medicationName: string) => {
+    setActionError(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/pharmacy/inventory/adjust", {
+      const updated = await apiFetch<any>("/api/pharmacy/inventory/adjust", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({ stockId, change: 100 })
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setInventory(prev => prev.map(item => item.id === stockId ? updated : item));
-        setActionSuccess(`Restocked +100 units of ${medicationName}.`);
-        setTimeout(() => setActionSuccess(null), 3000);
-      }
-    } catch (e) {
-      setInventory(prev => prev.map(item => item.id === stockId ? { ...item, stockUnits: item.stockUnits + 100 } : item));
+      setInventory(prev => prev.map(item => item.id === stockId ? updated : item));
+      setActionSuccess(`Restocked +100 units of ${medicationName}.`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err: any) {
+      setActionError(err.message || "Failed to update inventory on backend.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 

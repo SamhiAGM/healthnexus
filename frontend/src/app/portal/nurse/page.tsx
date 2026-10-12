@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch, getCurrentUser, logoutUser } from "@/lib/api";
 import { 
   Heart, 
   Activity, 
@@ -82,56 +83,50 @@ export default function NurseDashboard() {
   const fetchLiveTriage = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/nurse/queue?facilityId=NHSL", {
-        headers,
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: TriagePatient[] = data.map((d: any, idx: number) => ({
-            id: d.id || `P-${100 + idx}`,
-            name: d.patientName || "Clinic Citizen",
-            token: d.ticketNumber || `C-02${idx}`,
-            bp: d.vitalsSummary?.match(/BP: ([\d/]+)/)?.[1] || "",
-            pulse: d.vitalsSummary?.match(/HR: (\d+)/)?.[1] || "",
-            temp: d.vitalsSummary?.match(/Temp: ([\d.]+)/)?.[1] || "",
-            spo2: d.vitalsSummary?.match(/SpO2: (\d+)/)?.[1] || "",
-            urgency: d.priorityTag === "URGENT" ? "URGENT" : d.priorityTag === "ELDERLY" ? "PRIORITY" : "ROUTINE",
-            status: d.vitalsSummary ? "VITALS_RECORDED" : "PENDING_VITALS",
-          }));
-          setPatients(mapped);
-          if (mapped[0]) setSelectedPatient(mapped[0]);
-        }
+      const data = await apiFetch<any[]>("/api/nurse/queue?facilityId=NHSL");
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped: TriagePatient[] = data.map((d: any, idx: number) => ({
+          id: d.id || `P-${100 + idx}`,
+          name: d.patientName || "Clinic Citizen",
+          token: d.ticketNumber || `C-02${idx}`,
+          bp: d.vitalsSummary?.match(/BP: ([\d/]+)/)?.[1] || "",
+          pulse: d.vitalsSummary?.match(/HR: (\d+)/)?.[1] || "",
+          temp: d.vitalsSummary?.match(/Temp: ([\d.]+)/)?.[1] || "",
+          spo2: d.vitalsSummary?.match(/SpO2: (\d+)/)?.[1] || "",
+          urgency: d.priorityTag === "URGENT" ? "URGENT" : d.priorityTag === "ELDERLY" ? "PRIORITY" : "ROUTINE",
+          status: d.vitalsSummary ? "VITALS_RECORDED" : "PENDING_VITALS",
+        }));
+        setPatients(mapped);
+        if (mapped[0]) setSelectedPatient(mapped[0]);
       }
     } catch (e) {
-      // Retain fallback list
+      // Retain offline fallback list
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLiveTriage();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["NURSE", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchLiveTriage();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleSaveVitals = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      await fetch("http://localhost:8080/api/nurse/vitals", {
+      await apiFetch("/api/nurse/vitals", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({
           token: selectedPatient.token,
           bp: bpInput,
@@ -162,14 +157,7 @@ export default function NurseDashboard() {
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:8080/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (e) {}
-    localStorage.removeItem("hc_staff_user");
-    localStorage.removeItem("hc_token");
+    await logoutUser();
     router.push("/auth/staff-login");
   };
 

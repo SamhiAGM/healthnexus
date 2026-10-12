@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { apiFetch, getCurrentUser, logoutUser } from "@/lib/api";
 import { 
   Stethoscope, 
   Users, 
@@ -88,45 +89,51 @@ export default function DoctorDashboard() {
   const [labOrders, setLabOrders] = useState("Resting 12-lead ECG");
   const [savedNotification, setSavedNotification] = useState(false);
 
+  const [isDemoData, setIsDemoData] = useState(false);
+
   // Fetch live queue from Spring Boot backend
   const fetchLiveQueue = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/doctor/queue?facilityId=NHSL", {
-        headers,
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: PatientQueueItem[] = data.map((d: any, idx: number) => ({
-            id: d.id || `P-${100 + idx}`,
-            token: d.ticketNumber || `C-02${idx}`,
-            name: d.patientName || "Clinic Citizen",
-            age: d.patientAge || 40,
-            gender: (d.patientGender === "F" ? "F" : "M"),
-            complaint: d.complaint || "Cardiology follow-up consultation",
-            vitals: d.vitalsSummary || "BP: 125/82 mmHg, HR: 72 bpm",
-            status: d.status || "WAITING",
-          }));
-          setQueue(mapped);
-        }
+      const data = await apiFetch<any[]>("/api/doctor/queue?facilityId=NHSL");
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped: PatientQueueItem[] = data.map((d: any, idx: number) => ({
+          id: d.id || `P-${100 + idx}`,
+          token: d.ticketNumber || `C-02${idx}`,
+          name: d.patientName || "Clinic Citizen",
+          age: d.patientAge || 40,
+          gender: (d.patientGender === "F" ? "F" : "M"),
+          complaint: d.complaint || "Cardiology follow-up consultation",
+          vitals: d.vitalsSummary || "BP: 125/82 mmHg, HR: 72 bpm",
+          status: d.status || "WAITING",
+        }));
+        setQueue(mapped);
+        setIsDemoData(false);
+      } else {
+        setIsDemoData(true);
       }
     } catch (e) {
-      // Retain offline fallback
+      // Retain offline fallback with synthetic demo indicator
+      setIsDemoData(true);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLiveQueue();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["DOCTOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        router.push("/auth/staff-login");
+        return;
+      }
+      fetchLiveQueue();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleStatusChange = async (index: number, newStatus: PatientQueueItem["status"]) => {
     const updated = [...queue];
@@ -134,14 +141,8 @@ export default function DoctorDashboard() {
     setQueue(updated);
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      await fetch("http://localhost:8080/api/doctor/queue/status", {
+      await apiFetch("/api/doctor/queue/status", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({
           token: queue[index].token,
           status: newStatus,
@@ -154,17 +155,11 @@ export default function DoctorDashboard() {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
       const prescList = prescriptions.split(",").map((s) => s.trim()).filter(Boolean);
       const labList = labOrders.split(",").map((s) => s.trim()).filter(Boolean);
 
-      await fetch("http://localhost:8080/api/doctor/consultations", {
+      await apiFetch("/api/doctor/consultations", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({
           token: activePatient.token,
           patientId: activePatient.id,
@@ -191,14 +186,7 @@ export default function DoctorDashboard() {
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:8080/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (e) {}
-    localStorage.removeItem("hc_staff_user");
-    localStorage.removeItem("hc_token");
+    await logoutUser();
     router.push("/auth/staff-login");
   };
 

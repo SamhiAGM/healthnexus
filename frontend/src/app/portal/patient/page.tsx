@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
+import { getCurrentUser, logoutUser } from "@/lib/api";
 import { 
   Activity, 
   Calendar, 
@@ -84,28 +85,23 @@ export default function PatientDashboard() {
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("hc_user");
-    if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        if (parsed.fullName) setUserName(parsed.fullName);
-      } catch (e) {}
-    }
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user) {
+        router.push("/auth/patient-login");
+        return;
+      }
+      if (user.fullName) setUserName(user.fullName);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:8080/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (e) {
-      // Ignore network errors on logout
-    } finally {
-      localStorage.removeItem("hc_token");
-      localStorage.removeItem("hc_user");
-      router.push("/auth/patient-login");
-    }
+    await logoutUser();
+    router.push("/auth/patient-login");
   };
 
   const handleBookingSubmit = (e: React.FormEvent) => {
