@@ -37,16 +37,20 @@ export default function StaffLoginPage() {
   const [success, setSuccess] = useState(false);
   const [sessionData, setSessionData] = useState<any>(null);
 
-  // Role routing map
+  // Role routing map across all 11 target roles
   const roleRoutes: Record<string, string> = {
+    PATIENT: "/portal/patient",
     DOCTOR: "/portal/doctor",
     NURSE: "/portal/nurse",
     RECEPTIONIST: "/portal/reception",
+    PHARMACIST: "/portal/pharmacy",
+    LAB_TECHNICIAN: "/portal/laboratory",
+    LAB_STAFF: "/portal/laboratory",
+    PUBLIC_HEALTH_OFFICER: "/portal/public-health",
     FIELD_SUPERVISOR: "/portal/supervisor",
-    HOSPITAL_ADMIN: "/portal/admin",
+    HOSPITAL_ADMIN: "/portal/hospital-admin",
     SYSTEM_ADMIN: "/portal/admin",
-    PHARMACIST: "/portal/doctor", // Integrated clinical dispensary
-    LAB_STAFF: "/portal/doctor", // Integrated diagnostics
+    CLINIC_COORDINATOR: "/portal/coordinator",
   };
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {

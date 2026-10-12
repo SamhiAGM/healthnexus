@@ -1,5 +1,11 @@
 package com.healthconnect.security;
 
+import com.healthconnect.users.UserRepository;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,9 +29,11 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final UserRepository userRepository;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserRepository userRepository) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.userRepository = userRepository;
     }
 
     @Bean
@@ -44,19 +52,52 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**"
                         ).permitAll()
-                        // Role-specific protected paths
-                        .requestMatchers("/api/admin/**").hasAnyRole("HOSPITAL_ADMIN", "SYSTEM_ADMIN")
-                        .requestMatchers("/api/doctor/**").hasRole("DOCTOR")
-                        .requestMatchers("/api/nurse/**").hasRole("NURSE")
+                        // 11 Target role protected API routes
+                        .requestMatchers("/api/admin/**").hasAnyRole("SYSTEM_ADMIN", "HOSPITAL_ADMIN")
+                        .requestMatchers("/api/hospital-admin/**").hasAnyRole("HOSPITAL_ADMIN", "SYSTEM_ADMIN")
+                        .requestMatchers("/api/doctor/**").hasAnyRole("DOCTOR", "HOSPITAL_ADMIN")
+                        .requestMatchers("/api/nurse/**").hasAnyRole("NURSE", "HOSPITAL_ADMIN")
                         .requestMatchers("/api/reception/**").hasAnyRole("RECEPTIONIST", "HOSPITAL_ADMIN")
+                        .requestMatchers("/api/pharmacy/**").hasAnyRole("PHARMACIST", "DOCTOR", "HOSPITAL_ADMIN")
+                        .requestMatchers("/api/laboratory/**").hasAnyRole("LAB_TECHNICIAN", "LAB_STAFF", "DOCTOR", "HOSPITAL_ADMIN")
+                        .requestMatchers("/api/public-health/**").hasAnyRole("PUBLIC_HEALTH_OFFICER", "FIELD_SUPERVISOR", "HOSPITAL_ADMIN")
                         .requestMatchers("/api/supervisor/**").hasAnyRole("FIELD_SUPERVISOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN")
-                        .requestMatchers("/api/patient/**").hasRole("PATIENT")
+                        .requestMatchers("/api/coordinator/**").hasAnyRole("CLINIC_COORDINATOR", "HOSPITAL_ADMIN")
+                        .requestMatchers("/api/patient/**").hasAnyRole("PATIENT", "DOCTOR", "NURSE")
                         // Any other request must be authenticated
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return username -> {
+            com.healthconnect.users.User user = userRepository.findByEmail(username.toLowerCase())
+                    .or(() -> userRepository.findByPhone(username))
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found with identifier: " + username));
+
+            List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+                    .toList();
+
+            return new org.springframework.security.core.userdetails.User(
+                    user.getEmail() != null ? user.getEmail() : user.getPhone(),
+                    user.getPasswordHash(),
+                    user.isEnabled(),
+                    true,
+                    true,
+                    true,
+                    authorities
+            );
+        };
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 
     @Bean

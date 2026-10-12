@@ -167,7 +167,7 @@ public class AuthService {
                 token,
                 user.getId(),
                 user.getFullName(),
-                user.getEmail(),
+                user.getEmail() != null ? user.getEmail() : user.getPhone(),
                 roles,
                 user.getAssignedFacilityId()
         );

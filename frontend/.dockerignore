@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.gitignore
+.env
+.env.*
+**/.env
+**/.env.*
+*.log
+coverage
+.vercel
+.turbo
+next.config.ts.backup
