@@ -120,21 +120,15 @@ export default function PatientRegisterPage() {
         }),
       });
 
-      // Store non-sensitive profile metadata for client UI display (session is in HttpOnly cookie)
+      // Ensure clean state; user must sign in with credentials
       if (typeof window !== "undefined") {
-        localStorage.setItem("hc_user", JSON.stringify({
-          userId: data.userId,
-          fullName: data.fullName || fullName,
-          roles: data.roles || ["PATIENT"],
-          phone: data.phone || phone,
-          email: data.email || email,
-          verified: data.verified,
-          emailVerified: false,
-        }));
+        localStorage.removeItem("hc_user");
+        localStorage.removeItem("hc_token");
       }
       setSuccess(true);
 
       const trimmedEmail = email.trim();
+      const trimmedId = idNumber.trim().toUpperCase();
       if (trimmedEmail) {
         try {
           await apiFetch("/api/auth/email/send-otp", {
@@ -142,19 +136,21 @@ export default function PatientRegisterPage() {
             body: JSON.stringify({ email: trimmedEmail }),
           });
           setTimeout(() => {
-            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&registered=1`);
+            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&registered=1&id=${encodeURIComponent(trimmedId)}`);
           }, 1200);
           return;
         } catch {
           // If sending failed (e.g. SMTP unavailable or rate limited), forward to verification screen with warning, never fake success
           setTimeout(() => {
-            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&error=send_failed`);
+            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&error=send_failed&id=${encodeURIComponent(trimmedId)}`);
           }, 1200);
           return;
         }
       }
 
-      setTimeout(() => router.push("/portal/patient"), 1200);
+      setTimeout(() => {
+        router.push(`/auth/patient-login?registered=1&id=${encodeURIComponent(trimmedId)}`);
+      }, 1200);
 
     } catch (err: any) {
       setError(err.message || "Registration could not be completed. Please verify your details.");

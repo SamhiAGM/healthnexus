@@ -1,29 +1,35 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
 import { 
   User, 
   Lock, 
   ArrowRight, 
   AlertCircle, 
-  CheckCircle,
-  ShieldCheck,
-  Eye,
-  EyeOff,
-  Stethoscope,
-  Building2,
-  CalendarCheck,
-  CheckCircle2
+  CheckCircle, 
+  ShieldCheck, 
+  Eye, 
+  EyeOff, 
+  Building2, 
+  CalendarCheck, 
+  CheckCircle2,
+  MailCheck
 } from "lucide-react";
 
 import { apiFetch, AuthResponse } from "@/lib/api";
 
-export default function PatientLoginPage() {
+function PatientLoginForm() {
   const router = useRouter();
-  const [identifier, setIdentifier] = useState("");
+  const searchParams = useSearchParams();
+
+  const isRegistered = searchParams.get("registered") === "1" || searchParams.get("registered") === "true";
+  const isVerified = searchParams.get("verified") === "1" || searchParams.get("verified") === "true";
+  const queryId = searchParams.get("id") || "";
+
+  const [identifier, setIdentifier] = useState(queryId);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +78,7 @@ export default function PatientLoginPage() {
 
         <div className="relative z-10 max-w-lg space-y-6">
           <h1 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-tight">
-            Check Your Queues & Manage Hospital Consultations.
+            Check Your Queues &amp; Manage Hospital Consultations.
           </h1>
           <p className="text-sm xl:text-base text-slate-300 leading-relaxed">
             Log in to view your live clinic waiting tokens, download medical reports, and confirm upcoming specialist appointments.
@@ -106,7 +112,7 @@ export default function PatientLoginPage() {
           <div className="lg:hidden flex justify-between items-center pb-2 border-b border-slate-800">
             <Logo variant="light" size="sm" />
             <Link href="/" className="text-xs font-semibold text-teal-400 hover:text-teal-300">
-              ← Back to Home
+              &larr; Back to Home
             </Link>
           </div>
 
@@ -118,6 +124,28 @@ export default function PatientLoginPage() {
               Sign in with your Sri Lankan NIC, registered mobile number, or email.
             </p>
           </div>
+
+          {/* Registration Success Banner */}
+          {isRegistered && !isVerified && (
+            <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-800/70 text-emerald-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg animate-in fade-in">
+              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold block text-white">Registration Successful!</span>
+                <span>Your citizen profile has been created. Please sign in with your credentials to access your patient portal.</span>
+              </div>
+            </div>
+          )}
+
+          {/* Email Verified Banner */}
+          {isVerified && (
+            <div className="p-4 rounded-xl bg-teal-950/70 border border-teal-800/70 text-teal-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg animate-in fade-in">
+              <MailCheck className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold block text-white">Email Address Verified!</span>
+                <span>Your email is confirmed. Please sign in with your credentials to enter your patient portal.</span>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-4 rounded-xl bg-rose-950/70 border border-rose-800/70 text-rose-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
@@ -203,7 +231,7 @@ export default function PatientLoginPage() {
 
           <div className="pt-4 border-t border-slate-800 flex flex-col gap-2.5 text-center text-xs text-slate-400">
             <div>
-              Don't have a patient account?{" "}
+              Don&apos;t have a patient account?{" "}
               <Link href="/auth/patient-register" className="font-semibold text-teal-400 hover:text-teal-300">
                 Register as a Citizen
               </Link>
@@ -211,7 +239,7 @@ export default function PatientLoginPage() {
             <div>
               Hospital Staff or Medical Officer?{" "}
               <Link href="/auth/staff-login" className="font-semibold text-blue-400 hover:text-blue-300">
-                Healthcare Professional Portal →
+                Healthcare Professional Portal &rarr;
               </Link>
             </div>
           </div>
@@ -220,5 +248,19 @@ export default function PatientLoginPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function PatientLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#070F1E] flex items-center justify-center text-slate-400">
+          Loading sign in...
+        </div>
+      }
+    >
+      <PatientLoginForm />
+    </Suspense>
   );
 }

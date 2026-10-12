@@ -30,13 +30,15 @@ public class AuthController {
     }
 
     @PostMapping("/patients/register")
-    public ResponseEntity<?> registerPatient(@Valid @RequestBody PatientRegisterRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> registerPatient(@Valid @RequestBody PatientRegisterRequest request) {
         try {
             AuthResponse authResponse = authService.registerPatient(request);
-            if (authResponse.getToken() != null) {
-                attachHttpOnlyCookie(response, authResponse.getToken());
-            }
-            return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "userId", authResponse.getUserId(),
+                    "fullName", authResponse.getFullName(),
+                    "roles", authResponse.getRoles(),
+                    "message", "Patient account created successfully. Please sign in to continue."
+            ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

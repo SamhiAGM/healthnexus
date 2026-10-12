@@ -231,9 +231,11 @@ function VerifyEmailContent() {
         }
       }
 
-      // Automatically route to patient portal after celebration
+      // Route to patient sign in page after verification
+      const targetId = searchParams.get("id") || "";
+      const idQuery = targetId ? `&id=${encodeURIComponent(targetId)}` : "";
       setTimeout(() => {
-        router.push("/portal/patient");
+        router.push(`/auth/patient-login?verified=1${idQuery}`);
       }, 1600);
     } catch (err: any) {
       setError(err.message || "Verification failed. The code may be invalid or expired.");
@@ -294,8 +296,8 @@ function VerifyEmailContent() {
         <div className="w-full max-w-md space-y-6">
           <div className="lg:hidden flex justify-between items-center pb-2 border-b border-slate-800">
             <Logo variant="light" size="sm" />
-            <Link href="/portal/patient" className="text-xs font-semibold text-teal-400 hover:text-teal-300">
-              Skip to Portal &rarr;
+            <Link href="/auth/patient-login" className="text-xs font-semibold text-teal-400 hover:text-teal-300">
+              Sign In Instead &rarr;
             </Link>
           </div>
 
@@ -335,7 +337,7 @@ function VerifyEmailContent() {
               <CheckCircle className="w-6 h-6 text-emerald-400 shrink-0" />
               <div>
                 <div className="font-bold text-white">Email Address Verified!</div>
-                <div className="text-emerald-300 text-xs mt-0.5">Redirecting to your HealthNexus Patient Portal...</div>
+                <div className="text-emerald-300 text-xs mt-0.5">Redirecting to sign in with your credentials...</div>
               </div>
             </div>
           )}
@@ -487,10 +489,10 @@ function VerifyEmailContent() {
           {/* Navigation Links */}
           <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
             <Link
-              href="/portal/patient"
+              href="/auth/patient-login"
               className="text-slate-400 hover:text-slate-200 transition-colors"
             >
-              Skip to Portal
+              Skip to Sign In
             </Link>
             <Link
               href="/auth/patient-login"
