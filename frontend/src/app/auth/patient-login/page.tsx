@@ -61,109 +61,112 @@ function PatientLoginForm() {
   
 
   return (
-    <div className="min-h-screen bg-[#070F1E] text-slate-100 flex selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col lg:flex-row selection:bg-[#0F766E] selection:text-white">
       
-      {/* LEFT COLUMN: Visual & Status Branding (Desktop 50%) */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-[#0B1730] via-[#091529] to-[#040A14] border-r border-slate-800/80">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* LEFT COLUMN: Visual & Status Branding (Desktop 5/12) */}
+      <div className="hidden lg:flex lg:w-5/12 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-[#0F766E] via-[#0D6A63] to-[#0A4D48] text-white">
+        <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-teal-300/10 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="relative z-10">
           <Logo variant="light" size="lg" />
-          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-950/60 border border-teal-500/30 text-teal-300 text-xs font-semibold backdrop-blur-md">
-            <Building2 className="w-3.5 h-3.5 text-teal-400" />
+          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-teal-100 text-xs font-semibold backdrop-blur-md">
+            <Building2 className="w-3.5 h-3.5 text-teal-200" />
             Hospital Clinic Portal
           </div>
         </div>
 
-        <div className="relative z-10 max-w-lg space-y-6">
+        <div className="relative z-10 max-w-md space-y-6">
           <h1 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-tight">
             Check Your Queues &amp; Manage Hospital Consultations.
           </h1>
-          <p className="text-sm xl:text-base text-slate-300 leading-relaxed">
-            Log in to view your live clinic waiting tokens, download medical reports, and confirm upcoming specialist appointments.
+          <p className="text-sm xl:text-base text-teal-50/90 leading-relaxed">
+            Log in to view your live clinic waiting tokens, download medical reports, and confirm upcoming specialist appointments across NHSL and regional clinics.
           </p>
 
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md text-xs text-slate-300">
-              <CalendarCheck className="w-4 h-4 text-teal-400 shrink-0" />
-              <span>Real-time appointment schedule synchronization with NHSL and regional hospitals.</span>
+          <div className="grid grid-cols-1 gap-3.5 pt-2">
+            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md">
+              <CalendarCheck className="w-5 h-5 text-teal-200 mb-2" />
+              <div className="text-sm font-bold text-white">Live Queue Synchronization</div>
+              <div className="text-xs text-teal-100/80 mt-1">Real-time appointment schedule synchronization with NHSL and provincial hospitals.</div>
             </div>
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md text-xs text-slate-300">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Automated SMS notifications when your queue token is called.</span>
+
+            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md">
+              <CheckCircle2 className="w-5 h-5 text-teal-200 mb-2" />
+              <div className="text-sm font-bold text-white">Digital Health Record Vault</div>
+              <div className="text-xs text-teal-100/80 mt-1">Cryptographically hashed token authorization with automated patient reminders.</div>
             </div>
           </div>
         </div>
 
-        <div className="relative z-10 pt-6 border-t border-slate-800/70 flex items-center justify-between text-xs text-slate-400">
+        <div className="relative z-10 pt-6 border-t border-white/20 flex items-center justify-between text-xs text-teal-100/80">
           <span className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-teal-400" />
+            <ShieldCheck className="w-4 h-4 text-teal-200" />
             End-to-End Encrypted Session
           </span>
-          <span>Security Standard: TLS 1.3 / ISO 27001</span>
+          <span>HealthNexus LK</span>
         </div>
       </div>
 
       {/* RIGHT COLUMN: Sign In Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12">
+      <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto">
         <div className="w-full max-w-md space-y-6">
           
-          <div className="lg:hidden flex justify-between items-center pb-2 border-b border-slate-800">
-            <Logo variant="light" size="sm" />
-            <Link href="/" className="text-xs font-semibold text-teal-400 hover:text-teal-300">
-              &larr; Back to Home
+          <div className="lg:hidden flex justify-between items-center pb-3 border-b border-slate-200">
+            <Logo variant="dark" size="sm" />
+            <Link href="/" className="text-xs font-semibold text-[#0F766E] hover:underline">
+              ← Back to Home
             </Link>
           </div>
 
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#172B4D] tracking-tight">
               Patient Portal Sign In
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Sign in with your Sri Lankan NIC, registered mobile number, or email.
             </p>
           </div>
 
           {/* Registration Success Banner */}
           {isRegistered && !isVerified && (
-            <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-800/70 text-emerald-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg animate-in fade-in">
-              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
+              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold block text-white">Registration Successful!</span>
-                <span>Your citizen profile has been created. Please sign in with your credentials to access your patient portal.</span>
+                <span className="font-bold text-emerald-950 block">Registration Successful!</span>
+                <span className="text-emerald-800">Your citizen profile has been registered in the national directory. Please sign in below with your credentials.</span>
               </div>
             </div>
           )}
 
           {/* Email Verified Banner */}
           {isVerified && (
-            <div className="p-4 rounded-xl bg-teal-950/70 border border-teal-800/70 text-teal-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg animate-in fade-in">
-              <MailCheck className="w-5 h-5 text-teal-400 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-900 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
+              <MailCheck className="w-5 h-5 text-[#0F766E] shrink-0 mt-0.5" />
               <div>
-                <span className="font-semibold block text-white">Email Address Verified!</span>
-                <span>Your email is confirmed. Please sign in with your credentials to enter your patient portal.</span>
+                <span className="font-bold text-teal-950 block">Email Address Verified!</span>
+                <span className="text-teal-800">Your email is confirmed. Please sign in with your credentials to enter your patient portal.</span>
               </div>
             </div>
           )}
 
           {error && (
-            <div className="p-4 rounded-xl bg-rose-950/70 border border-rose-800/70 text-rose-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-800/70 text-emerald-200 text-xs sm:text-sm flex items-center gap-3 shadow-lg">
-              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-3 shadow-sm">
+              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>Login successful! Opening your patient workspace...</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 NIC / Mobile Number / Email *
               </label>
               <div className="relative">
@@ -173,21 +176,21 @@ function PatientLoginForm() {
                   required
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder="e.g. 199512345678, 0771234567"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
+                  placeholder="e.g. 199512345678, 0771234567, or email"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="text-xs font-semibold text-slate-300">
+                <label className="text-xs font-semibold text-slate-700">
                   Password *
                 </label>
                 <button
                   type="button"
-                  onClick={() => alert("Self-service OTP reset: Enter your mobile number on the next step.")}
-                  className="text-[11px] text-teal-400 hover:text-teal-300"
+                  onClick={() => alert("Self-service OTP reset: Enter your mobile number or NIC on the recovery step.")}
+                  className="text-[11px] text-[#0F766E] hover:underline font-semibold"
                 >
                   Forgot password?
                 </button>
@@ -200,15 +203,15 @@ function PatientLoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] transition"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                   aria-label="Toggle password visibility"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-slate-500" />}
                 </button>
               </div>
             </div>
@@ -216,7 +219,7 @@ function PatientLoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-6 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-teal-500/25 disabled:opacity-50 text-sm mt-3"
+              className="w-full py-3.5 px-6 bg-[#0F766E] hover:bg-[#14B8A6] text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow disabled:opacity-50 text-sm mt-3"
             >
               {loading ? (
                 <span>Authenticating...</span>
@@ -229,17 +232,17 @@ function PatientLoginForm() {
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-800 flex flex-col gap-2.5 text-center text-xs text-slate-400">
+          <div className="pt-4 border-t border-slate-200 flex flex-col gap-2.5 text-center text-xs text-slate-500">
             <div>
               Don&apos;t have a patient account?{" "}
-              <Link href="/auth/patient-register" className="font-semibold text-teal-400 hover:text-teal-300">
+              <Link href="/auth/patient-register" className="font-semibold text-[#0F766E] hover:underline">
                 Register as a Citizen
               </Link>
             </div>
             <div>
               Hospital Staff or Medical Officer?{" "}
-              <Link href="/auth/staff-login" className="font-semibold text-blue-400 hover:text-blue-300">
-                Healthcare Professional Portal &rarr;
+              <Link href="/auth/staff-login" className="font-semibold text-[#0F766E] hover:underline">
+                Healthcare Professional Portal →
               </Link>
             </div>
           </div>
@@ -255,7 +258,7 @@ export default function PatientLoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#070F1E] flex items-center justify-center text-slate-400">
+        <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center text-sm text-slate-500">
           Loading sign in...
         </div>
       }
