@@ -55,13 +55,16 @@ export default function PatientLoginPage() {
       setSuccess(true);
       setTimeout(() => router.push("/portal/patient"), 1000);
 
-   } catch (err: any) {
-    setError(
-      err.message || "Unable to sign in. Please try again."
-    );
-  } finally {
-    setLoading(false);
+ 
+    } catch (err: any) {
+      setError(
+        err.message || "Unable to sign in. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
+  
 
   return (
     <div className="min-h-screen bg-[#070F1E] text-slate-100 flex selection:bg-teal-500 selection:text-white">
