@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
     },
   },
   async rewrites() {
-    const rawBackendUrl = process.env.BACKEND_INTERNAL_URL || "http://localhost:8080";
+    const rawBackendUrl = process.env.BACKEND_INTERNAL_URL || "https://api.lankacare.me";
     const backendUrl = rawBackendUrl.replace(/\/+$/, "");
     return [
       {

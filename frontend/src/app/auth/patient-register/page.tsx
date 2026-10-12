@@ -18,10 +18,10 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  FileCheck2,
-  HeartPulse,
   Clock,
-  Sparkles
+  Sparkles,
+  Building2,
+  HeartPulse
 } from "lucide-react";
 
 type IdentificationType = "NIC" | "PASSPORT" | "ASSISTED_GUARDIAN";
@@ -84,7 +84,7 @@ export default function PatientRegisterPage() {
     }
 
     if (!phone.trim() || phone.trim().length < 9) {
-      setError("Please provide a valid Sri Lankan mobile phone number (e.g. 0771234567).");
+      setError("Please provide a valid Sri Lankan mobile phone number (e.g. 0771234567 or 0753999958).");
       return;
     }
 
@@ -106,29 +106,30 @@ export default function PatientRegisterPage() {
     setLoading(true);
 
     try {
-      const data = await apiFetch<any>("/api/auth/patients/register", {
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedId = idNumber.trim().toUpperCase();
+
+      await apiFetch<any>("/api/auth/patients/register", {
         method: "POST",
         body: JSON.stringify({
-          fullName,
+          fullName: fullName.trim(),
           identificationType: idType,
-          idNumber: idNumber.trim().toUpperCase(),
-          nic: idType === "NIC" ? idNumber.trim().toUpperCase() : undefined,
+          idNumber: trimmedId,
+          nic: idType === "NIC" ? trimmedId : undefined,
           phone: phone.trim(),
-          email: email.trim(),
+          email: trimmedEmail,
           dateOfBirth,
           password,
         }),
       });
 
-      // Ensure clean state; user must sign in with credentials
+      // Clear any stale local auth tokens
       if (typeof window !== "undefined") {
         localStorage.removeItem("hc_user");
         localStorage.removeItem("hc_token");
       }
       setSuccess(true);
 
-      const trimmedEmail = email.trim();
-      const trimmedId = idNumber.trim().toUpperCase();
       if (trimmedEmail) {
         try {
           await apiFetch("/api/auth/email/send-otp", {
@@ -140,7 +141,7 @@ export default function PatientRegisterPage() {
           }, 1200);
           return;
         } catch {
-          // If sending failed (e.g. SMTP unavailable or rate limited), forward to verification screen with warning, never fake success
+          // If sending email failed (e.g. unconfigured SMTP in dev), still forward to verification page with truthful notice
           setTimeout(() => {
             router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&error=send_failed&id=${encodeURIComponent(trimmedId)}`);
           }, 1200);
@@ -160,89 +161,89 @@ export default function PatientRegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070F1E] text-slate-100 flex selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col lg:flex-row selection:bg-[#0F766E] selection:text-white">
       
-      {/* LEFT COLUMN: Cinematic Healthcare Visual & Platform Assurance (Desktop 50%) */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-[#0B1730] via-[#091529] to-[#040A14] border-r border-slate-800/80">
-        {/* Glow Spheres */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* LEFT COLUMN: Cinematic Healthcare Visual Showcase (Desktop 45%) */}
+      <div className="hidden lg:flex lg:w-5/12 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-[#0F766E] via-[#0D6A63] to-[#0A4D48] text-white">
+        {/* Soft Background Accents */}
+        <div className="absolute top-[-10%] left-[-10%] w-[400px] h-[400px] bg-white/10 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[400px] h-[400px] bg-teal-300/10 rounded-full blur-[120px] pointer-events-none" />
 
         {/* Top Header / Brand */}
         <div className="relative z-10">
           <Logo variant="light" size="lg" />
-          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-950/60 border border-teal-500/30 text-teal-300 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-teal-400" />
+          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-teal-100 text-xs font-semibold backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 text-teal-200" />
             National Digital Healthcare Initiative
           </div>
         </div>
 
         {/* Center Presentation Info */}
-        <div className="relative z-10 max-w-lg space-y-6">
+        <div className="relative z-10 max-w-md space-y-6">
           <h1 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-tight">
             Seamless Healthcare Access For Every Sri Lankan Citizen.
           </h1>
-          <p className="text-sm xl:text-base text-slate-300 leading-relaxed">
+          <p className="text-sm xl:text-base text-teal-50/90 leading-relaxed">
             Create your unified patient profile to skip crowded waiting lines, book government hospital clinic sessions, and monitor live consultation tokens right from your phone.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
-              <Clock className="w-5 h-5 text-teal-400 mb-2" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md">
+              <Clock className="w-5 h-5 text-teal-200 mb-2" />
               <div className="text-sm font-bold text-white">Live Queue Tracking</div>
-              <div className="text-xs text-slate-400 mt-1">Real-time token updates across NHSL, Kandy, and Karapitiya.</div>
+              <div className="text-xs text-teal-100/80 mt-1">Real-time token updates across NHSL, Kandy, Kinniya, and Galle.</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
-              <ShieldCheck className="w-5 h-5 text-blue-400 mb-2" />
+            <div className="p-4 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-md">
+              <ShieldCheck className="w-5 h-5 text-teal-200 mb-2" />
               <div className="text-sm font-bold text-white">Cryptographic Privacy</div>
-              <div className="text-xs text-slate-400 mt-1">Salted SHA-256 identity hashing & secure HttpOnly credentials.</div>
+              <div className="text-xs text-teal-100/80 mt-1">Salted SHA-256 identity hashing & secure HttpOnly credentials.</div>
             </div>
           </div>
         </div>
 
-        {/* Bottom Hospital Partnership Trust Badge */}
-        <div className="relative z-10 pt-6 border-t border-slate-800/70 flex items-center justify-between text-xs text-slate-400">
+        {/* Bottom Trust Badge */}
+        <div className="relative z-10 pt-6 border-t border-white/20 flex items-center justify-between text-xs text-teal-100/80">
           <div className="flex items-center gap-2">
-            <HeartPulse className="w-4 h-4 text-rose-400" />
-            <span>Ministry of Health Integrated Partner Network</span>
+            <HeartPulse className="w-4 h-4 text-rose-300" />
+            <span>Ministry of Health 2026 Registry</span>
           </div>
-          <span>SL-CERT Compliant</span>
+          <span>HealthNexus LK</span>
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Interactive Registration Form (Desktop 50%, Full Mobile) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto">
+      {/* RIGHT COLUMN: Interactive Registration Form (Desktop 55%, Full Mobile) */}
+      <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto">
         <div className="w-full max-w-xl space-y-6">
           
           {/* Header Mobile Brand */}
-          <div className="lg:hidden flex justify-between items-center pb-2 border-b border-slate-800">
-            <Logo variant="light" size="sm" />
-            <Link href="/" className="text-xs font-semibold text-teal-400 hover:text-teal-300">
+          <div className="lg:hidden flex justify-between items-center pb-3 border-b border-slate-200">
+            <Logo variant="dark" size="sm" />
+            <Link href="/" className="text-xs font-semibold text-[#0F766E] hover:underline">
               ← Back to Home
             </Link>
           </div>
 
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#172B4D] tracking-tight">
               Create Patient Account
             </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Join HealthConnect LK with your verified national identity document.
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Join HealthNexus (LankaCare.me) with your verified national identity document.
             </p>
           </div>
 
           {/* Feedback Messages */}
           {error && (
-            <div className="p-4 rounded-xl bg-rose-950/70 border border-rose-800/70 text-rose-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-800/70 text-emerald-200 text-xs sm:text-sm flex items-center gap-3 shadow-lg">
-              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-3 shadow-sm">
+              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
               <span>{email.trim() ? "Account created! Routing to email OTP verification..." : "Account created successfully! Securely routing to patient portal..."}</span>
             </div>
           )}
@@ -251,17 +252,17 @@ export default function PatientRegisterPage() {
             
             {/* Identification Type Selector Tabs */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
+              <label className="block text-xs font-semibold text-slate-700">
                 Identification Method *
               </label>
-              <div className="grid grid-cols-3 gap-2 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+              <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   type="button"
                   onClick={() => { setIdType("NIC"); setError(null); }}
                   className={`py-2 px-2 text-xs font-medium rounded-lg transition-all ${
                     idType === "NIC"
-                      ? "bg-teal-600 text-white shadow-sm font-semibold"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-[#0F766E] text-white shadow-sm font-semibold"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   Sri Lankan NIC
@@ -271,8 +272,8 @@ export default function PatientRegisterPage() {
                   onClick={() => { setIdType("PASSPORT"); setError(null); }}
                   className={`py-2 px-2 text-xs font-medium rounded-lg transition-all ${
                     idType === "PASSPORT"
-                      ? "bg-teal-600 text-white shadow-sm font-semibold"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-[#0F766E] text-white shadow-sm font-semibold"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   Passport
@@ -282,8 +283,8 @@ export default function PatientRegisterPage() {
                   onClick={() => { setIdType("ASSISTED_GUARDIAN"); setError(null); }}
                   className={`py-2 px-2 text-xs font-medium rounded-lg transition-all ${
                     idType === "ASSISTED_GUARDIAN"
-                      ? "bg-teal-600 text-white shadow-sm font-semibold"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-[#0F766E] text-white shadow-sm font-semibold"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   Assisted / Guardian
@@ -293,7 +294,7 @@ export default function PatientRegisterPage() {
 
             {/* Full Legal Name */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Full Name (as stated on identity document) *
               </label>
               <div className="relative">
@@ -303,8 +304,8 @@ export default function PatientRegisterPage() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Kasun Chamara Perera"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
+                  placeholder="e.g. AGM Samhi"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                 />
               </div>
             </div>
@@ -312,12 +313,12 @@ export default function PatientRegisterPage() {
             {/* Dynamic ID Input */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="text-xs font-semibold text-slate-300">
+                <label className="text-xs font-semibold text-slate-700">
                   {idType === "NIC" && "National Identity Card (NIC) *"}
                   {idType === "PASSPORT" && "Passport Number *"}
                   {idType === "ASSISTED_GUARDIAN" && "Guardian NIC / Reference ID *"}
                 </label>
-                <span className="text-[10px] text-teal-400 font-medium">
+                <span className="text-[10px] text-[#0F766E] font-medium">
                   {idType === "NIC" && "Supports 9-digit (V/X) & modern 12-digit"}
                   {idType === "PASSPORT" && "International / Sri Lankan Travel Document"}
                   {idType === "ASSISTED_GUARDIAN" && "For pediatric or dependent registration"}
@@ -331,14 +332,14 @@ export default function PatientRegisterPage() {
                   value={idNumber}
                   onChange={(e) => setIdNumber(e.target.value)}
                   placeholder={
-                    idType === "NIC" ? "199512345678 or 951234567V" :
+                    idType === "NIC" ? "200334212365 or 951234567V" :
                     idType === "PASSPORT" ? "N1234567" : "Guardian's NIC / Reg No"
                   }
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm uppercase focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                 />
               </div>
-              <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+              <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#0F766E] shrink-0" />
                 Salted SHA-256 hash stored. Raw identity documents remain encrypted.
               </p>
             </div>
@@ -346,7 +347,7 @@ export default function PatientRegisterPage() {
             {/* Mobile & Date of Birth */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Mobile Number (SMS Alerts) *
                 </label>
                 <div className="relative">
@@ -356,14 +357,14 @@ export default function PatientRegisterPage() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="0771234567"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
+                    placeholder="0753999958"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Date of Birth *
                 </label>
                 <div className="relative">
@@ -373,15 +374,15 @@ export default function PatientRegisterPage() {
                     required
                     value={dateOfBirth}
                     onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-200"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] transition"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Optional Email */}
+            {/* Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Email Address (Required for account verification) *
               </label>
               <div className="relative">
@@ -391,8 +392,8 @@ export default function PatientRegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="kasun.perera@example.lk"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
+                  placeholder="mohamedsamhi1207@gmail.com"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                 />
               </div>
             </div>
@@ -400,7 +401,7 @@ export default function PatientRegisterPage() {
             {/* Password with Eye Toggle */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Password (min 8 chars) *
                 </label>
                 <div className="relative">
@@ -411,21 +412,21 @@ export default function PatientRegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                     aria-label="Toggle password visibility"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-slate-500" />}
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Confirm Password *
                 </label>
                 <div className="relative">
@@ -436,15 +437,15 @@ export default function PatientRegisterPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] transition"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                     aria-label="Toggle confirm password visibility"
                   >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-slate-500" />}
                   </button>
                 </div>
               </div>
@@ -458,10 +459,10 @@ export default function PatientRegisterPage() {
                 required
                 checked={consentAgreed}
                 onChange={(e) => setConsentAgreed(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-slate-700 text-teal-600 focus:ring-teal-500 bg-slate-900 cursor-pointer"
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-[#0F766E] focus:ring-[#0F766E] bg-white cursor-pointer"
               />
-              <label htmlFor="consentCheck" className="text-xs text-slate-400 leading-relaxed cursor-pointer select-none">
-                I agree to the HealthConnect LK privacy policy and give consent for verified identification to be used for hospital appointment scheduling and real-time live queue management.
+              <label htmlFor="consentCheck" className="text-xs text-slate-600 leading-relaxed cursor-pointer select-none">
+                I agree to the HealthNexus (LankaCare.me) privacy policy and consent to verified identification for hospital scheduling and real-time clinic queue management.
               </label>
             </div>
 
@@ -469,7 +470,7 @@ export default function PatientRegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-6 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-teal-500/25 disabled:opacity-50 text-sm mt-3"
+              className="w-full py-3.5 px-6 bg-[#0F766E] hover:bg-[#14B8A6] text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow disabled:opacity-50 text-sm mt-3"
             >
               {loading ? (
                 <span>Registering Citizen Profile...</span>
@@ -483,11 +484,11 @@ export default function PatientRegisterPage() {
           </form>
 
           {/* Footer Navigation */}
-          <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+          <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
             <span>Already have an account?</span>
             <Link 
               href="/auth/patient-login" 
-              className="font-semibold text-teal-400 hover:text-teal-300 transition-colors"
+              className="font-semibold text-[#0F766E] hover:underline transition-colors"
             >
               Sign In to Patient Portal →
             </Link>
