@@ -42,6 +42,8 @@ public class User {
 
     private boolean verified = false;
 
+    private boolean emailVerified = false;
+
     // Optional assigned hospital facility identifier for staff roles
     private String assignedFacilityId;
 
@@ -95,6 +97,9 @@ public class User {
 
     public boolean isVerified() { return verified; }
     public void setVerified(boolean verified) { this.verified = verified; }
+
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
     public String getAssignedFacilityId() { return assignedFacilityId; }
     public void setAssignedFacilityId(String assignedFacilityId) { this.assignedFacilityId = assignedFacilityId; }

@@ -128,10 +128,32 @@ export default function PatientRegisterPage() {
           roles: data.roles || ["PATIENT"],
           phone: data.phone || phone,
           email: data.email || email,
-          verified: data.verified
+          verified: data.verified,
+          emailVerified: false,
         }));
       }
       setSuccess(true);
+
+      const trimmedEmail = email.trim();
+      if (trimmedEmail) {
+        try {
+          await apiFetch("/api/auth/email/send-otp", {
+            method: "POST",
+            body: JSON.stringify({ email: trimmedEmail }),
+          });
+          setTimeout(() => {
+            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&registered=1`);
+          }, 1200);
+          return;
+        } catch {
+          // If sending failed (e.g. SMTP unavailable or rate limited), forward to verification screen with warning, never fake success
+          setTimeout(() => {
+            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&error=send_failed`);
+          }, 1200);
+          return;
+        }
+      }
+
       setTimeout(() => router.push("/portal/patient"), 1200);
 
     } catch (err: any) {
@@ -225,7 +247,7 @@ export default function PatientRegisterPage() {
           {success && (
             <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-800/70 text-emerald-200 text-xs sm:text-sm flex items-center gap-3 shadow-lg">
               <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span>Account created successfully! Securely routing to patient portal...</span>
+              <span>{email.trim() ? "Account created! Routing to email OTP verification..." : "Account created successfully! Securely routing to patient portal..."}</span>
             </div>
           )}
 

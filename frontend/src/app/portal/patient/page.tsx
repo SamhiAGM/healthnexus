@@ -20,7 +20,9 @@ import {
   FileText,
   ChevronRight,
   ShieldCheck,
-  Stethoscope
+  Stethoscope,
+  Mail,
+  CheckCircle
 } from "lucide-react";
 
 interface Appointment {
@@ -37,6 +39,8 @@ interface Appointment {
 export default function PatientDashboard() {
   const router = useRouter();
   const [userName, setUserName] = useState("Kasun Chamara");
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [emailVerified, setEmailVerified] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<"overview" | "book" | "history">("overview");
 
   // Live Queue Ticket State (Demonstration of live hospital queue tracker)
@@ -93,6 +97,10 @@ export default function PatientDashboard() {
         return;
       }
       if (user.fullName) setUserName(user.fullName);
+      if (user.email) {
+        setUserEmail(user.email);
+        setEmailVerified(user.emailVerified === true);
+      }
     });
     return () => {
       isMounted = false;
@@ -141,8 +149,20 @@ export default function PatientDashboard() {
                 <User className="w-4 h-4" />
               </div>
               <div className="hidden sm:block text-left">
-                <div className="font-semibold text-white leading-tight">{userName}</div>
-                <div className="text-slate-400 text-[10px]">NIC Verified Citizen</div>
+                <div className="font-semibold text-white leading-tight flex items-center gap-1.5">
+                  <span>{userName}</span>
+                  {userEmail && emailVerified && (
+                    <span title="Email Address Verified" className="text-teal-400">
+                      <CheckCircle className="w-3.5 h-3.5" />
+                    </span>
+                  )}
+                </div>
+                <div className="text-slate-400 text-[10px] flex items-center gap-1.5">
+                  <span>NIC Verified Citizen</span>
+                  {userEmail && !emailVerified && (
+                    <span className="text-amber-400 font-medium">&bull; Email Unverified</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -159,6 +179,29 @@ export default function PatientDashboard() {
 
       {/* Main Workspace Body */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+        
+        {/* Email Verification Action Banner if Unverified */}
+        {userEmail && !emailVerified && (
+          <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-600/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-lg animate-in fade-in">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 shrink-0">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="font-bold text-amber-200">Email Verification Pending</div>
+                <div className="text-slate-300 text-[11px] mt-0.5">
+                  Confirm your email ({userEmail}) to activate instant clinic notifications and digital medical receipts.
+                </div>
+              </div>
+            </div>
+            <Link
+              href={`/auth/verify-email?email=${encodeURIComponent(userEmail)}`}
+              className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl text-xs transition-colors shrink-0 text-center"
+            >
+              Verify Email Now &rarr;
+            </Link>
+          </div>
+        )}
         
         {/* Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-slate-800 pb-4">

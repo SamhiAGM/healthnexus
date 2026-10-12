@@ -34,4 +34,6 @@ public class TestRepositoryConfig {
     @Bean @Primary public QueueTicketRepository queueTicketRepository() { return Mockito.mock(QueueTicketRepository.class); }
     @Bean @Primary public ConsultationRecordRepository consultationRecordRepository() { return Mockito.mock(ConsultationRecordRepository.class); }
     @Bean @Primary public AppointmentRepository appointmentRepository() { return Mockito.mock(AppointmentRepository.class); }
+    @Bean @Primary public com.healthconnect.auth.EmailVerificationTokenRepository emailVerificationTokenRepository() { return Mockito.mock(com.healthconnect.auth.EmailVerificationTokenRepository.class); }
+    @Bean @Primary public org.springframework.mail.javamail.JavaMailSender javaMailSender() { return Mockito.mock(org.springframework.mail.javamail.JavaMailSender.class); }
 }

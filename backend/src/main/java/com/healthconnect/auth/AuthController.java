@@ -1,9 +1,6 @@
 package com.healthconnect.auth;
 
-import com.healthconnect.auth.dto.AuthResponse;
-import com.healthconnect.auth.dto.LoginRequest;
-import com.healthconnect.auth.dto.PatientRegisterRequest;
-import com.healthconnect.auth.dto.VerifyPhoneRequest;
+import com.healthconnect.auth.dto.*;
 import com.healthconnect.users.User;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -22,12 +19,14 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final EmailOtpService emailOtpService;
 
     @Value("${lankacare.cookie.secure:true}")
     private boolean secureCookie;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, EmailOtpService emailOtpService) {
         this.authService = authService;
+        this.emailOtpService = emailOtpService;
     }
 
     @PostMapping("/patients/register")
@@ -40,6 +39,43 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CREATED).body(authResponse);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/email/send-otp")
+    public ResponseEntity<?> sendEmailOtp(@Valid @RequestBody RequestEmailOtpRequest request) {
+        try {
+            emailOtpService.sendEmailOtp(request);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Verification code sent to your email address. Please check your inbox."
+            ));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/email/resend-otp")
+    public ResponseEntity<?> resendEmailOtp(@Valid @RequestBody RequestEmailOtpRequest request) {
+        return sendEmailOtp(request);
+    }
+
+    @PostMapping("/email/verify-otp")
+    public ResponseEntity<?> verifyEmailOtp(@Valid @RequestBody VerifyEmailOtpRequest request) {
+        try {
+            boolean verified = emailOtpService.verifyEmailOtp(request);
+            return ResponseEntity.ok(Map.of(
+                    "success", verified,
+                    "message", "Email address verified successfully."
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", e.getMessage()));
         }
     }
 
@@ -116,6 +152,7 @@ public class AuthController {
                 "maskedNic", user.getMaskedNic() != null ? user.getMaskedNic() : "",
                 "roles", user.getRoles(),
                 "verified", user.isVerified(),
+                "emailVerified", user.isEmailVerified(),
                 "assignedFacilityId", user.getAssignedFacilityId() != null ? user.getAssignedFacilityId() : "",
                 "department", user.getDepartment() != null ? user.getDepartment() : ""
         ));

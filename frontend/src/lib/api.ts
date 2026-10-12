@@ -15,6 +15,7 @@ export interface UserProfile {
   maskedNic?: string;
   roles: string[];
   verified: boolean;
+  emailVerified?: boolean;
   assignedFacilityId?: string;
   department?: string;
 }
