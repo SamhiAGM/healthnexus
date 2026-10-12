@@ -18,9 +18,12 @@ public class JwtService {
     private final long jwtExpirationMs;
 
     public JwtService(
-            @Value("${jwt.secret:HealthConnectLKSuperSecretSecureKeyForJWTSigningMustBe256BitsLong2026!}") String secret,
+            @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration-ms:86400000}") long jwtExpirationMs // 24 hours
     ) {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET must be configured before the application can start.");
+        }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.jwtExpirationMs = jwtExpirationMs;
     }

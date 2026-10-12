@@ -114,7 +114,7 @@ export default function PatientRegisterPage() {
           idNumber: idNumber.trim().toUpperCase(),
           nic: idType === "NIC" ? idNumber.trim().toUpperCase() : undefined,
           phone: phone.trim(),
-          email: email.trim() || undefined,
+          email: email.trim(),
           dateOfBirth,
           password,
         }),
@@ -382,12 +382,13 @@ export default function PatientRegisterPage() {
             {/* Optional Email */}
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Email Address (Optional for digital receipts)
+                Email Address (Required for account verification) *
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="email"
+                  required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="kasun.perera@example.lk"

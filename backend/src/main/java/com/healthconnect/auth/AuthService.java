@@ -97,7 +97,8 @@ public class AuthService {
             maskedNic = "ASSISTED-" + UUID.randomUUID().toString().substring(0, 6).toUpperCase();
         }
 
-        if (request.getEmail() != null && !request.getEmail().isBlank() && userRepository.existsByEmail(request.getEmail())) {
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("An account with this email address already exists.");
         }
         if (userRepository.existsByPhone(request.getPhone())) {
@@ -108,7 +109,7 @@ public class AuthService {
 
         User user = new User(
                 request.getFullName(),
-                request.getEmail(),
+                email,
                 request.getPhone(),
                 nicHash,
                 maskedNic,
@@ -130,10 +131,8 @@ public class AuthService {
         }
 
         List<String> roles = savedUser.getRoles().stream().map(Enum::name).collect(Collectors.toList());
-        String token = jwtService.generateToken(savedUser.getId(), savedUser.getEmail(), roles);
-
         return new AuthResponse(
-                token,
+                null,
                 savedUser.getId(),
                 savedUser.getFullName(),
                 savedUser.getEmail(),
@@ -195,6 +194,10 @@ public class AuthService {
             throw new IllegalStateException("Your account is pending administrative approval or has been suspended.");
         }
 
+        if (user.getRoles().contains(Role.PATIENT) && !user.isEmailVerified()) {
+            throw new IllegalStateException("Please verify your email address before signing in.");
+        }
+
         List<String> roles = user.getRoles().stream().map(Enum::name).collect(Collectors.toList());
 
         // Check if the account has privileged staff roles (anything other than solely PATIENT)
@@ -248,35 +251,9 @@ public class AuthService {
         entry.attempts++;
 
         // Fail-closed requirement: If MFA infrastructure is unconfigured, do not bypass
-        if (!mfaConfigured) {
-            throw new IllegalStateException("Multifactor authentication is required for privileged clinical access, but an authorized MFA provider (TOTP / SMS) is not configured in this environment. Privileged session cannot be established without verified second factor.");
-        }
-
-        // When configured, validate code against enrolled TOTP / SMS credential
-        if (code == null || code.trim().length() < 6) {
-            throw new IllegalArgumentException("Invalid verification code format.");
-        }
-
-        mfaChallengeRegistry.remove(mfaSessionId);
-
-        User user = userRepository.findById(entry.userId)
-                .orElseThrow(() -> new IllegalArgumentException("User record not found."));
-
-        if (!user.isEnabled()) {
-            throw new IllegalStateException("Your account is pending administrative approval or has been suspended.");
-        }
-
-        List<String> roles = user.getRoles().stream().map(Enum::name).collect(Collectors.toList());
-        String token = jwtService.generateToken(user.getId(), user.getEmail(), roles);
-
-        return new AuthResponse(
-                token,
-                user.getId(),
-                user.getFullName(),
-                user.getEmail() != null ? user.getEmail() : user.getPhone(),
-                roles,
-                user.getAssignedFacilityId()
-        );
+        // A boolean configuration switch is not a second factor. No enrolled TOTP
+        // verifier exists in this application yet, so privileged access fails closed.
+        throw new IllegalStateException("Staff multifactor authentication is unavailable. Privileged access remains disabled until a verified MFA provider is configured.");
     }
 
     public User getCurrentUserProfile(String userId) {

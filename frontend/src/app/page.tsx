@@ -11,7 +11,7 @@ import { ContactSection } from "@/components/home/ContactSection";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B1730] text-slate-100 selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#F8FAFC] text-[#172B4D] selection:bg-teal-500 selection:text-white">
       {/* Sticky Responsive Navigation Bar */}
       <Navbar />
 

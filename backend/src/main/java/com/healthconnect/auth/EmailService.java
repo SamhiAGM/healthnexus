@@ -56,7 +56,7 @@ public class EmailService {
             helper.setSubject("Verify Your HealthNexus Account");
 
             String htmlBody = buildOtpHtmlTemplate(recipientName, otp);
-            helper.setText(htmlBody, true);
+            helper.setText(buildOtpPlainText(recipientName, otp), htmlBody);
 
             mailSender.send(message);
             log.info("Verification OTP email dispatched successfully to recipient domain: {}", getEmailDomain(toEmail));
@@ -64,6 +64,14 @@ public class EmailService {
             log.error("Failed to transmit verification email: {}", e.getMessage());
             throw new RuntimeException("Unable to deliver verification code. Please verify your email address or try again shortly.", e);
         }
+    }
+
+    private String buildOtpPlainText(String recipientName, String otp) {
+        String greeting = recipientName == null || recipientName.isBlank()
+                ? "Hello," : "Hello " + recipientName.trim() + ",";
+        return greeting + "\n\nYour HealthNexus verification code is " + otp
+                + ". It expires in five minutes. Never share this code with anyone.\n\n"
+                + "If you did not request this code, you can ignore this email.\n\nHealthNexus Support Team";
     }
 
     private String getEmailDomain(String email) {
@@ -87,25 +95,25 @@ public class EmailService {
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <title>Verify Your HealthNexus Account</title>
               <style>
-                body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #070F1E; color: #E2E8F0; }
-                .wrapper { width: 100%%; table-layout: fixed; background-color: #070F1E; padding: 40px 10px; }
-                .main { background-color: #0B1730; margin: 0 auto; max-width: 580px; border-radius: 16px; border: 1px solid #1E293B; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-                .header { background: linear-gradient(135deg, #0B1730 0%%, #0F2347 100%%); padding: 32px 36px 24px 36px; border-bottom: 1px solid #1E293B; text-align: left; }
-                .logo-text { font-size: 24px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.5px; text-decoration: none; }
-                .logo-highlight { color: #14B8A6; }
-                .badge { display: inline-block; padding: 4px 12px; background-color: rgba(20, 184, 166, 0.15); border: 1px solid rgba(20, 184, 166, 0.3); border-radius: 9999px; color: #2DD4BF; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 10px; }
+                body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F6F9FC; color: #172B4D; }
+                .wrapper { width: 100%%; table-layout: fixed; background-color: #F6F9FC; padding: 40px 10px; }
+                .main { background-color: #FFFFFF; margin: 0 auto; max-width: 580px; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 10px 30px rgba(23,43,77,0.10); }
+                .header { background: #FFFFFF; padding: 32px 36px 24px 36px; border-bottom: 1px solid #E2E8F0; text-align: left; }
+                .logo-text { font-size: 24px; font-weight: 800; color: #172B4D; letter-spacing: -0.5px; text-decoration: none; }
+                .logo-highlight { color: #0F766E; }
+                .badge { display: inline-block; padding: 4px 12px; background-color: #EAFBF5; border: 1px solid #B7EEE0; border-radius: 9999px; color: #0F766E; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 10px; }
                 .content { padding: 36px; }
-                .greeting { font-size: 18px; font-weight: 700; color: #FFFFFF; margin: 0 0 16px 0; }
-                .copy { font-size: 14px; line-height: 24px; color: #94A3B8; margin: 0 0 24px 0; }
-                .otp-card { background: linear-gradient(180deg, #070F1E 0%%, #0A162B 100%%); border: 1px solid #14B8A6; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0; }
-                .otp-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #14B8A6; margin-bottom: 10px; }
-                .otp-code { font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace; font-size: 38px; font-weight: 800; letter-spacing: 12px; color: #FFFFFF; margin: 0; padding: 8px 0; text-indent: 12px; }
-                .expiry-pill { display: inline-block; font-size: 12px; color: #CBD5E1; background-color: #1E293B; padding: 4px 12px; border-radius: 6px; margin-top: 12px; }
-                .security-notice { background-color: rgba(15, 23, 42, 0.6); border-left: 3px solid #14B8A6; padding: 14px 16px; border-radius: 0 8px 8px 0; margin: 24px 0; }
-                .security-notice p { margin: 0; font-size: 12px; line-height: 18px; color: #94A3B8; }
-                .security-notice strong { color: #E2E8F0; }
-                .footer { background-color: #050B15; padding: 24px 36px; border-top: 1px solid #1E293B; font-size: 12px; color: #64748B; line-height: 18px; text-align: center; }
-                .footer a { color: #14B8A6; text-decoration: none; }
+                .greeting { font-size: 18px; font-weight: 700; color: #172B4D; margin: 0 0 16px 0; }
+                .copy { font-size: 14px; line-height: 24px; color: #52657F; margin: 0 0 24px 0; }
+                .otp-card { background: #F8FAFC; border: 1px solid #14B8A6; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0; }
+                .otp-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #0F766E; margin-bottom: 10px; }
+                .otp-code { font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace; font-size: 38px; font-weight: 800; letter-spacing: 12px; color: #172B4D; margin: 0; padding: 8px 0; text-indent: 12px; }
+                .expiry-pill { display: inline-block; font-size: 12px; color: #52657F; background-color: #EAF5FF; padding: 4px 12px; border-radius: 6px; margin-top: 12px; }
+                .security-notice { background-color: #F8FAFC; border-left: 3px solid #14B8A6; padding: 14px 16px; border-radius: 0 8px 8px 0; margin: 24px 0; }
+                .security-notice p { margin: 0; font-size: 12px; line-height: 18px; color: #52657F; }
+                .security-notice strong { color: #172B4D; }
+                .footer { background-color: #F8FAFC; padding: 24px 36px; border-top: 1px solid #E2E8F0; font-size: 12px; color: #64748B; line-height: 18px; text-align: center; }
+                .footer a { color: #0F766E; text-decoration: none; }
               </style>
             </head>
             <body>
@@ -114,7 +122,7 @@ public class EmailService {
                   <tr>
                     <td class="header">
                       <div class="logo-text">Health<span class="logo-highlight">Nexus</span></div>
-                      <div class="badge">Official Verification Service</div>
+                      <div class="badge">Email verification</div>
                     </td>
                   </tr>
                   <tr>

@@ -53,11 +53,14 @@ public class AuthController {
                     "message", "Verification code sent to your email address. Please check your inbox."
             ));
         } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("error", e.getMessage()));
+            boolean throttled = e.getMessage() != null && (e.getMessage().startsWith("Please wait")
+                    || e.getMessage().contains("Hourly verification"));
+            return ResponseEntity.status(throttled ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", e.getMessage()));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", "Email delivery failed. Your account remains pending verification. Please try again later."));
         }
     }
 

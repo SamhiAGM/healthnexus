@@ -24,6 +24,7 @@ public class PatientRegisterRequest {
     )
     private String phone;
 
+    @NotBlank(message = "Email address is required for account verification")
     @Email(message = "Invalid email address format")
     private String email;
 

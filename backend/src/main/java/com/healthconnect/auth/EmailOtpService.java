@@ -12,11 +12,16 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.Optional;
+import java.util.Arrays;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 public class EmailOtpService {
@@ -32,15 +37,23 @@ public class EmailOtpService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final SecureRandom secureRandom = new SecureRandom();
+    private final String otpHmacSecret;
 
+    @Autowired
     public EmailOtpService(
             EmailVerificationTokenRepository tokenRepository,
             UserRepository userRepository,
-            EmailService emailService
+            EmailService emailService,
+            @Value("${lankacare.otp.hmac-secret:}") String otpHmacSecret
     ) {
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.otpHmacSecret = otpHmacSecret;
+    }
+
+    EmailOtpService(EmailVerificationTokenRepository tokenRepository, UserRepository userRepository, EmailService emailService) {
+        this(tokenRepository, userRepository, emailService, "unit-test-only-hmac-key-not-for-production");
     }
 
     /**
@@ -48,6 +61,7 @@ public class EmailOtpService {
      * Enforces hourly rate limits and a 60-second resend cooldown.
      */
     public void sendEmailOtp(RequestEmailOtpRequest request) {
+        requireHmacSecret();
         String email = request.getEmail().trim().toLowerCase();
         Instant now = Instant.now();
 
@@ -115,6 +129,7 @@ public class EmailOtpService {
      * Marks the user's email verified upon success.
      */
     public boolean verifyEmailOtp(VerifyEmailOtpRequest request) {
+        requireHmacSecret();
         String email = request.getEmail().trim().toLowerCase();
         String code = request.getCode().trim();
         Instant now = Instant.now();
@@ -137,7 +152,7 @@ public class EmailOtpService {
         token.setAttempts(token.getAttempts() + 1);
 
         String inputHash = hashOtp(email, code);
-        if (!inputHash.equals(token.getOtpHash())) {
+        if (!MessageDigest.isEqual(inputHash.getBytes(StandardCharsets.US_ASCII), token.getOtpHash().getBytes(StandardCharsets.US_ASCII))) {
             tokenRepository.save(token);
             int remaining = MAX_ATTEMPTS - token.getAttempts();
             if (remaining > 0) {
@@ -152,26 +167,34 @@ public class EmailOtpService {
         tokenRepository.delete(token);
 
         // Mark user email verified in database
-        userRepository.findByEmail(email).ifPresent(user -> {
-            user.setEmailVerified(true);
-            userRepository.save(user);
-            log.info("Email address marked verified for user: {}", user.getId());
-        });
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Verification code has expired or was not requested."));
+        user.setEmailVerified(true);
+        user.setVerified(true);
+        userRepository.save(user);
+        log.info("Email address verified for account.");
 
         return true;
     }
 
     /**
-     * Computes a salted SHA-256 hash of the OTP scoped to the email address.
+     * Computes an HMAC-SHA-256 hash of the OTP scoped to its normalized email.
      */
     public String hashOtp(String email, String otp) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            String combined = "HealthNexus_OTP_Salt:" + email.trim().toLowerCase() + ":" + otp.trim();
-            byte[] encodedHash = digest.digest(combined.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(encodedHash);
-        } catch (NoSuchAlgorithmException e) {
+            requireHmacSecret();
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(new SecretKeySpec(otpHmacSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            String combined = email.trim().toLowerCase() + ":" + otp.trim();
+            return HexFormat.of().formatHex(mac.doFinal(combined.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
             throw new RuntimeException("Error computing OTP hash", e);
+        }
+    }
+
+    private void requireHmacSecret() {
+        if (otpHmacSecret == null || otpHmacSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("Email verification is unavailable because OTP_HMAC_SECRET is not configured.");
         }
     }
 }
