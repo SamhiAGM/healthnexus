@@ -84,7 +84,7 @@ export default function PatientRegisterPage() {
     }
 
     if (!phone.trim() || phone.trim().length < 9) {
-      setError("Please provide a valid Sri Lankan mobile phone number (e.g. 0771234567 or 0753999958).");
+      setError("Please provide a valid Sri Lankan mobile phone number (e.g. 0771234567 or 0712345678).");
       return;
     }
 
@@ -304,7 +304,7 @@ export default function PatientRegisterPage() {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. AGM Samhi"
+                  placeholder="e.g. Kasun Chamara Perera"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                 />
               </div>
@@ -332,7 +332,7 @@ export default function PatientRegisterPage() {
                   value={idNumber}
                   onChange={(e) => setIdNumber(e.target.value)}
                   placeholder={
-                    idType === "NIC" ? "200334212365 or 951234567V" :
+                    idType === "NIC" ? "199512345678 or 951234567V" :
                     idType === "PASSPORT" ? "N1234567" : "Guardian's NIC / Reg No"
                   }
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
@@ -357,7 +357,7 @@ export default function PatientRegisterPage() {
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="0753999958"
+                    placeholder="0771234567"
                     className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                   />
                 </div>
@@ -392,7 +392,7 @@ export default function PatientRegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="mohamedsamhi1207@gmail.com"
+                  placeholder="kasun.perera@example.lk"
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E] placeholder:text-slate-400 transition"
                 />
               </div>
