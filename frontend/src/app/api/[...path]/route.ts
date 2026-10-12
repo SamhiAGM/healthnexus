@@ -3,24 +3,38 @@ import { NextRequest, NextResponse } from "next/server";
 const rawBackendUrl = process.env.BACKEND_INTERNAL_URL || "https://api.lankacare.me";
 const BACKEND_URL = rawBackendUrl.replace(/\/+$/, "");
 
-async function handleProxy(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
-  const resolvedParams = await params;
-  const path = resolvedParams.path ? resolvedParams.path.join("/") : "";
+async function handleProxy(req: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+  const resolvedParams = await context.params;
+  const pathSegments = resolvedParams.path || [];
+  const path = pathSegments.join("/");
   const search = req.nextUrl.search || "";
   const targetUrl = `${BACKEND_URL}/api/${path}${search}`;
 
-  const forwardHeaders = new Headers();
-  req.headers.forEach((value, key) => {
-    const lowerKey = key.toLowerCase();
-    // Exclude hop-by-hop headers and original host
-    if (!["host", "connection", "content-length"].includes(lowerKey)) {
-      forwardHeaders.set(key, value);
-    }
-  });
+  const forwardHeaders: Record<string, string> = {
+    "Accept": req.headers.get("accept") || "application/json",
+    "Origin": "https://www.lankacare.me",
+    "Referer": "https://www.lankacare.me/",
+  };
 
-  // Ensure origin is set to authorized production domain to prevent Azure CORS 403 rejections
-  forwardHeaders.set("Origin", "https://www.lankacare.me");
-  forwardHeaders.set("Referer", "https://www.lankacare.me/");
+  const contentType = req.headers.get("content-type");
+  if (contentType) {
+    forwardHeaders["Content-Type"] = contentType;
+  }
+
+  const cookie = req.headers.get("cookie");
+  if (cookie) {
+    forwardHeaders["Cookie"] = cookie;
+  }
+
+  const auth = req.headers.get("authorization");
+  if (auth) {
+    forwardHeaders["Authorization"] = auth;
+  }
+
+  const xsrf = req.headers.get("x-xsrf-token");
+  if (xsrf) {
+    forwardHeaders["X-XSRF-TOKEN"] = xsrf;
+  }
 
   const method = req.method.toUpperCase();
   const init: RequestInit = {
@@ -31,12 +45,12 @@ async function handleProxy(req: NextRequest, { params }: { params: Promise<{ pat
 
   if (!["GET", "HEAD"].includes(method)) {
     try {
-      const bodyBlob = await req.blob();
-      if (bodyBlob.size > 0) {
-        init.body = bodyBlob;
+      const textBody = await req.text();
+      if (textBody && textBody.length > 0) {
+        init.body = textBody;
       }
     } catch {
-      // Body already read or empty
+      // Body empty or already consumed
     }
   }
 
@@ -45,9 +59,8 @@ async function handleProxy(req: NextRequest, { params }: { params: Promise<{ pat
 
     const responseHeaders = new Headers();
     backendRes.headers.forEach((value, key) => {
-      const lowerKey = key.toLowerCase();
-      // Forward all response headers except hop-by-hop
-      if (!["content-encoding", "transfer-encoding", "connection"].includes(lowerKey)) {
+      const lower = key.toLowerCase();
+      if (!["content-encoding", "transfer-encoding", "connection"].includes(lower)) {
         responseHeaders.append(key, value);
       }
     });
@@ -60,9 +73,10 @@ async function handleProxy(req: NextRequest, { params }: { params: Promise<{ pat
       headers: responseHeaders,
     });
   } catch (error: any) {
+    console.error("API Proxy Gateway error to", targetUrl, error);
     return NextResponse.json(
       {
-        error: `Backend gateway unavailable: ${error?.message || "Failed to connect to healthcare backend"}`,
+        error: `Backend gateway unavailable: ${error?.message || "Failed to connect to backend"}`,
       },
       { status: 502 }
     );
