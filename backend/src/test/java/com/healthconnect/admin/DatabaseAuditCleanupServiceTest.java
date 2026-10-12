@@ -1,9 +1,7 @@
 package com.healthconnect.admin;
 
-import com.healthconnect.auth.EmailVerificationToken;
 import com.healthconnect.auth.EmailVerificationTokenRepository;
 import com.healthconnect.users.Role;
-import com.healthconnect.users.StaffAccessRequest;
 import com.healthconnect.users.StaffAccessRequestRepository;
 import com.healthconnect.users.User;
 import com.healthconnect.users.UserRepository;
@@ -14,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class DatabaseAuditCleanupServiceTest {
 
     @Mock

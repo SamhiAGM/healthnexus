@@ -2,7 +2,6 @@ package com.healthconnect.admin;
 
 import com.healthconnect.auth.EmailVerificationToken;
 import com.healthconnect.auth.EmailVerificationTokenRepository;
-import com.healthconnect.users.Role;
 import com.healthconnect.users.StaffAccessRequest;
 import com.healthconnect.users.StaffAccessRequestRepository;
 import com.healthconnect.users.User;
@@ -15,6 +14,7 @@ import java.time.Instant;
 import java.util.*;
 
 @Service
+@SuppressWarnings("null")
 public class DatabaseAuditCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseAuditCleanupService.class);

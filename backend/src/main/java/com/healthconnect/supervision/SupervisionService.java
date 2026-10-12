@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@SuppressWarnings("null")
 public class SupervisionService {
 
     private final InspectionFindingRepository repository;
@@ -17,7 +18,12 @@ public class SupervisionService {
     }
 
     public List<InspectionFinding> getAllFindings() {
-        return repository.findAllByOrderByCreatedAtDesc();
+        List<InspectionFinding> existing = repository.findAllByOrderByCreatedAtDesc();
+        if (existing.isEmpty() && repository.count() == 0) {
+            initSeedFindings();
+            return repository.findAllByOrderByCreatedAtDesc();
+        }
+        return existing;
     }
 
     public InspectionFinding createFinding(

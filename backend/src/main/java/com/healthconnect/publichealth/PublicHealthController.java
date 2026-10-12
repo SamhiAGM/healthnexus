@@ -1,7 +1,6 @@
 package com.healthconnect.publichealth;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -11,6 +10,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/public-health")
 @CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000"}, allowCredentials = "true")
+@SuppressWarnings("null")
 public class PublicHealthController {
 
     private final PublicHealthService service;

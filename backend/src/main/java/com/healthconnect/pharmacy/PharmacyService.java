@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@SuppressWarnings("null")
 public class PharmacyService {
 
     private final PrescriptionRepository prescriptionRepository;
@@ -19,7 +20,12 @@ public class PharmacyService {
 
     public List<Prescription> getPrescriptions(String facilityId) {
         String safeFacility = (facilityId != null && !facilityId.isBlank()) ? facilityId : "NHSL";
-        return prescriptionRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
+        List<Prescription> existing = prescriptionRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
+        if (existing.isEmpty() && prescriptionRepository.count() == 0) {
+            initSeedPrescriptions(safeFacility);
+            return prescriptionRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
+        }
+        return existing;
     }
 
     public Prescription dispensePrescription(String idOrNumber, String pharmacistName) {
@@ -37,7 +43,12 @@ public class PharmacyService {
 
     public List<MedicationStock> getInventory(String facilityId) {
         String safeFacility = (facilityId != null && !facilityId.isBlank()) ? facilityId : "NHSL";
-        return stockRepository.findByFacilityId(safeFacility);
+        List<MedicationStock> existing = stockRepository.findByFacilityId(safeFacility);
+        if (existing.isEmpty() && stockRepository.count() == 0) {
+            initSeedInventory(safeFacility);
+            return stockRepository.findByFacilityId(safeFacility);
+        }
+        return existing;
     }
 
     public MedicationStock adjustStock(String stockId, int quantityChange) {

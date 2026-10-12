@@ -1,6 +1,5 @@
 package com.healthconnect.auth;
 
-import com.healthconnect.users.Role;
 import com.healthconnect.users.User;
 import com.healthconnect.users.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +15,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("null")
 class DevelopmentDataSeederTest {
 
     @Mock

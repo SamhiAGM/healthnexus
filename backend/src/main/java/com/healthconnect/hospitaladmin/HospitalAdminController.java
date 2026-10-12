@@ -1,7 +1,6 @@
 package com.healthconnect.hospitaladmin;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,6 +9,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/hospital-admin")
 @CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000"}, allowCredentials = "true")
+@SuppressWarnings("null")
 public class HospitalAdminController {
 
     private final HospitalAdminService service;
