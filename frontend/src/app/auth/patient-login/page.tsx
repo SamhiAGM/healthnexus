@@ -56,14 +56,11 @@ export default function PatientLoginPage() {
       setTimeout(() => router.push("/portal/patient"), 1000);
 
    } catch (err: any) {
-  setError(
-    err.message || "Unable to sign in. Please try again."
-  );
-} finally {
-  setLoading(false);
-}finally {
-      setLoading(false);
-    }
+    setError(
+      err.message || "Unable to sign in. Please try again."
+    );
+  } finally {
+    setLoading(false);
   };
 
   return (
