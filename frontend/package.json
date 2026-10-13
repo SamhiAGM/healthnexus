@@ -28,5 +28,8 @@
     "playwright": "^1.64.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "unrs-resolver": true
   }
 }
