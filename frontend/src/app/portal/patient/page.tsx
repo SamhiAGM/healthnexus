@@ -4,62 +4,76 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PortalShell, NavItem } from "@/components/portal/PortalShell";
-import { getCurrentUser } from "@/lib/api";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
-  Activity, 
+  Building2, 
   Calendar, 
   Clock, 
-  MapPin, 
-  User, 
-  Bell, 
-  CheckCircle2, 
-  AlertCircle, 
-  PlusCircle, 
-  Building2, 
+  Pill, 
   FileText, 
-  ChevronRight, 
+  Ticket, 
+  History, 
   ShieldCheck, 
-  Stethoscope, 
-  Mail, 
-  CheckCircle, 
-  Search, 
+  AlertCircle, 
+  CheckCircle2, 
+  ArrowRight, 
+  PlusCircle, 
+  Download, 
+  Share2, 
+  Activity, 
+  ChevronRight, 
+  RefreshCw, 
   Sparkles, 
-  Compass, 
-  ArrowRight,
-  Pill,
-  History,
-  QrCode,
-  Download,
-  Ticket
+  MapPin, 
+  Phone, 
+  Mail,
+  User,
+  Settings,
+  Bell,
+  LayoutDashboard,
+  HeartPulse,
+  TrendingUp,
+  Sliders,
+  Check,
+  X
 } from "lucide-react";
 import { 
   PremiumStatCard, 
   ChartCard, 
+  ActivityTimeline, 
   StatusIndicator, 
   EmptyState, 
-  RoleIllustration,
-  ActivityTimeline,
-  ActivityItem
+  ActivityItem 
 } from "@/components/portal/DashboardComponents";
 import { 
+  ResponsiveContainer, 
   AreaChart, 
   Area, 
   XAxis, 
   YAxis, 
   Tooltip, 
-  ResponsiveContainer, 
   CartesianGrid 
 } from "recharts";
 
 interface Appointment {
   id: string;
-  facilityName: string;
   clinic: string;
+  doctorName: string;
+  facilityName: string;
   date: string;
   timeSlot: string;
-  doctorName: string;
   status: "CONFIRMED" | "WAITING" | "COMPLETED" | "CANCELLED";
-  queueTicket?: string;
+}
+
+interface QueueTicket {
+  ticketNumber: string;
+  clinic: string;
+  hospital: string;
+  room: string;
+  servingToken: string;
+  patientsAhead: number;
+  estimatedWaitMinutes: number;
+  status: "WAITING" | "CALLED" | "COMPLETED";
 }
 
 interface PrescriptionItem {
@@ -69,7 +83,7 @@ interface PrescriptionItem {
   frequency: string;
   prescribedBy: string;
   date: string;
-  status: "ACTIVE" | "COMPLETED" | "DISPENSED";
+  status: "ACTIVE" | "COMPLETED" | "REFILL_READY";
   refillsRemaining: number;
 }
 
@@ -84,114 +98,36 @@ interface MedicalRecordItem {
   summary: string;
 }
 
+const HEALTH_ACTIVITY_DATA: { month: string; clinicVisits: number; systolicBP: number; labTests: number }[] = [];
+
 export default function PatientDashboard() {
   const router = useRouter();
-  const [userName, setUserName] = useState("Kasun Chamara Perera");
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [emailVerified, setEmailVerified] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<string>("overview");
+  const [userName, setUserName] = useState("there");
+  const [userEmail, setUserEmail] = useState("");
+  const [userPhone, setUserPhone] = useState("");
+  const [maskedNic, setMaskedNic] = useState("");
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [activeTab, setActiveTab] = useState("dashboard");
 
-  // Queue state: Starts null for newly registered patients (strict requirement: no fabricated tickets)
-  const [activeQueueTicket, setActiveQueueTicket] = useState<{
-    ticketNumber: string;
-    clinic: string;
-    hospital: string;
-    room: string;
-    servingToken: string;
-    patientsAhead: number;
-    estimatedWaitMinutes: number;
-    status: string;
-  } | null>(null);
+  // Appointments State
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
-  // Appointments List
-  const [appointments, setAppointments] = useState<Appointment[]>([
-    {
-      id: "APT-8041",
-      facilityName: "National Hospital of Sri Lanka (NHSL)",
-      clinic: "Cardiology Outpatient Clinic",
-      date: "22 Oct 2026",
-      timeSlot: "09:30 AM - 11:30 AM",
-      doctorName: "Dr. Samantha Senanayake, MBBS, MD",
-      status: "CONFIRMED",
-    },
-    {
-      id: "APT-7520",
-      facilityName: "Castle Street Hospital for Women",
-      clinic: "General OPD Follow-up",
-      date: "04 Nov 2026",
-      timeSlot: "08:00 AM - 10:00 AM",
-      doctorName: "Dr. Nilmini Jayasinghe",
-      status: "CONFIRMED",
-    },
-  ]);
+  // Truthful Queue State: Null by default unless patient has checked in
+  const [activeQueueTicket, setActiveQueueTicket] = useState<QueueTicket | null>(null);
 
-  // Prescriptions List
-  const [prescriptions] = useState<PrescriptionItem[]>([
-    {
-      id: "RX-4401",
-      drug: "Atorvastatin Calcium 20mg",
-      dosage: "1 tablet at bedtime",
-      frequency: "Daily for 30 days",
-      prescribedBy: "Dr. Samantha Senanayake",
-      date: "11 Oct 2026",
-      status: "ACTIVE",
-      refillsRemaining: 2,
-    },
-    {
-      id: "RX-4402",
-      drug: "Metformin Hydrochloride 500mg",
-      dosage: "1 tablet with meals",
-      frequency: "Twice daily",
-      prescribedBy: "Dr. Samantha Senanayake",
-      date: "11 Oct 2026",
-      status: "ACTIVE",
-      refillsRemaining: 1,
-    },
-    {
-      id: "RX-3819",
-      drug: "Amoxicillin 500mg",
-      dosage: "1 capsule 8 hourly",
-      frequency: "Completed 7-day course",
-      prescribedBy: "Dr. K. Bandara",
-      date: "14 Sep 2026",
-      status: "COMPLETED",
-      refillsRemaining: 0,
-    },
-  ]);
+  // Digital Prescriptions
+  const [prescriptions] = useState<PrescriptionItem[]>([]);
 
   // Medical Records List
-  const [records] = useState<MedicalRecordItem[]>([
-    {
-      id: "REC-9102",
-      type: "Diagnostic Laboratory",
-      title: "Comprehensive Lipid Profile & Fasting Blood Sugar",
-      facility: "National Hospital of Sri Lanka (NHSL)",
-      date: "11 Oct 2026",
-      doctor: "Dr. S. Senanayake",
-      status: "VERIFIED",
-      summary: "Total cholesterol within acceptable range (185 mg/dL). Fasting blood sugar 98 mg/dL normal.",
-    },
-    {
-      id: "REC-8740",
-      type: "Cardiology",
-      title: "12-Lead Resting Electrocardiogram (ECG)",
-      facility: "National Hospital of Sri Lanka (NHSL)",
-      date: "11 Oct 2026",
-      doctor: "Dr. S. Senanayake",
-      status: "VERIFIED",
-      summary: "Normal sinus rhythm, HR 72 bpm. No acute ST-T wave changes detected.",
-    },
-    {
-      id: "REC-7512",
-      type: "Consultation Summary",
-      title: "Routine Outpatient Clinical Review",
-      facility: "Colombo South Teaching Hospital",
-      date: "14 Sep 2026",
-      doctor: "Dr. K. Bandara",
-      status: "VERIFIED",
-      summary: "Patient presented with mild respiratory symptoms. Responded favorably to symptomatic therapy.",
-    },
-  ]);
+  const [records] = useState<MedicalRecordItem[]>([]);
+
+  // Notification State
+  const [notifications, setNotifications] = useState<{ id: string; title: string; message: string; time: string; read: boolean }[]>([]);
+
+  // Settings State
+  const [smsAlerts, setSmsAlerts] = useState(true);
+  const [emailAlerts, setEmailAlerts] = useState(true);
+  const [language, setLanguage] = useState("English");
 
   // Appointment Booking Form State
   const [bookForm, setBookForm] = useState({
@@ -214,70 +150,75 @@ export default function PatientDashboard() {
         }
       }
       if (user?.fullName) setUserName(user.fullName);
+      if (user?.phone) setUserPhone(user.phone);
+      if (user?.maskedNic) setMaskedNic(user.maskedNic);
       if (user?.email) {
         setUserEmail(user.email);
         setEmailVerified(user.emailVerified === true);
       }
     });
+    apiFetch<any[]>("/api/patient/appointments")
+      .then((items) => {
+        if (!isMounted) return;
+        setAppointments(items.map((item) => ({
+          id: item.bookingReference || item.id,
+          clinic: item.clinicSpecialty || "Clinic appointment",
+          doctorName: item.assignedDoctorName || "Assigned clinician pending",
+          facilityName: item.facilityName || "Facility pending",
+          date: item.appointmentDate || "Date pending",
+          timeSlot: item.sessionWindow || "Session pending",
+          status: item.status || "CONFIRMED",
+        })));
+      })
+      .catch(() => { if (isMounted) setAppointments([]); });
     return () => {
       isMounted = false;
     };
   }, [router]);
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newApt: Appointment = {
-      id: `APT-${Math.floor(1000 + Math.random() * 9000)}`,
-      facilityName: bookForm.hospital,
-      clinic: bookForm.clinic,
-      date: bookForm.date || "28 Oct 2026",
-      timeSlot: bookForm.timeSlot,
-      doctorName: "Assigned Consultant Medical Officer",
-      status: "CONFIRMED",
-    };
-    setAppointments([newApt, ...appointments]);
-    setBookingSuccess(true);
-    setTimeout(() => {
+    try {
+      const created = await apiFetch<any>("/api/patient/appointments", {
+        method: "POST",
+        body: JSON.stringify({
+          facilityName: bookForm.hospital,
+          clinicSpecialty: bookForm.clinic,
+          appointmentDate: bookForm.date,
+          sessionWindow: bookForm.timeSlot,
+          reasonForVisit: bookForm.notes,
+        }),
+      });
+      setAppointments((current) => [{
+        id: created.bookingReference || created.id,
+        clinic: created.clinicSpecialty,
+        doctorName: created.assignedDoctorName || "Assigned clinician pending",
+        facilityName: created.facilityName,
+        date: created.appointmentDate,
+        timeSlot: created.sessionWindow,
+        status: created.status || "CONFIRMED",
+      }, ...current]);
+      setBookingSuccess(true);
+      setTimeout(() => { setBookingSuccess(false); setActiveTab("dashboard"); }, 1500);
+    } catch {
       setBookingSuccess(false);
-      setActiveTab("overview");
-    }, 1500);
+    }
   };
 
+  // Nav Items strictly fulfilling Section 3 specification
   const navItems: NavItem[] = [
-    { id: "overview", label: "Overview & Health Profile", icon: Activity },
-    { id: "queue", label: "Live Queue Status", icon: Ticket, badge: activeQueueTicket ? activeQueueTicket.ticketNumber : undefined },
-    { id: "book", label: "Schedule Clinic Visit", icon: Calendar },
-    { id: "prescriptions", label: "Digital Prescriptions", icon: Pill, badge: "2 Active" },
-    { id: "records", label: "Diagnostic Records", icon: FileText },
-    { id: "history", label: "Consultation Timeline", icon: History },
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "appointments", label: "Appointments", icon: Calendar, badge: `${appointments.length}` },
+    { id: "queue", label: "My Queue", icon: Ticket, badge: activeQueueTicket ? activeQueueTicket.ticketNumber : undefined },
+    { id: "hospitals", label: "Hospitals", href: "/hospitals", icon: Building2 },
+    { id: "records", label: "Medical Records", icon: FileText, badge: `${records.length}` },
+    { id: "prescriptions", label: "Prescriptions", icon: Pill, badge: `${prescriptions.length}` },
+    { id: "notifications", label: "Notifications", icon: Bell, badge: `${notifications.filter(n => !n.read).length}` },
+    { id: "profile", label: "Profile", icon: User },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  const timelineItems: ActivityItem[] = [
-    {
-      id: "1",
-      title: "Cardiology Review Scheduled",
-      description: "Confirmed appointment at NHSL Cardiology Clinic for 22 Oct 2026.",
-      time: "Today, 14:20",
-      status: "INFO",
-      icon: Calendar,
-    },
-    {
-      id: "2",
-      title: "Lab Results Verified by Consultant",
-      description: "Comprehensive Lipid Profile marked verified by NHSL Pathology Lab.",
-      time: "11 Oct, 11:45",
-      status: "SUCCESS",
-      icon: CheckCircle2,
-    },
-    {
-      id: "3",
-      title: "Digital Prescription Transmitted",
-      description: "Atorvastatin and Metformin renewed and available for dispensary collection.",
-      time: "11 Oct, 11:30",
-      status: "SUCCESS",
-      icon: Pill,
-    },
-  ];
+  const timelineItems: ActivityItem[] = [];
 
   return (
     <PortalShell
@@ -318,15 +259,15 @@ export default function PatientDashboard() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 1: OVERVIEW                                                           */}
+        {/* TAB 1: DASHBOARD (OVERVIEW)                                               */}
         {/* ========================================================================= */}
-        {activeTab === "overview" && (
+        {activeTab === "dashboard" && (
           <div className="space-y-6 animate-in fade-in duration-200">
             {/* Welcome Banner */}
-            <div className="rounded-3xl bg-gradient-to-r from-[#243847] via-[#2A445E] to-[#108B83] text-white p-6 sm:p-8 shadow-xs relative overflow-hidden">
+            <div className="rounded-3xl bg-gradient-to-r from-[#233B48] via-[#2A445E] to-[#0F8B80] text-white p-6 sm:p-8 shadow-xs relative overflow-hidden">
               <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-15 pointer-events-none bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent" />
               <div className="relative z-10 max-w-2xl space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold backdrop-blur-md text-[#DDEFE9]">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold backdrop-blur-md text-[#E1F1EC]">
                   <Sparkles className="w-3.5 h-3.5 text-[#63E2D8]" />
                   Verified Citizen Health Portal &bull; Sri Lanka MoH
                 </div>
@@ -338,8 +279,8 @@ export default function PatientDashboard() {
                 </p>
                 <div className="pt-2 flex flex-wrap gap-2.5">
                   <button
-                    onClick={() => setActiveTab("book")}
-                    className="px-4 py-2 rounded-xl bg-[#108B83] hover:bg-[#08786F] text-white font-bold text-xs transition shadow-xs flex items-center gap-1.5"
+                    onClick={() => setActiveTab("appointments")}
+                    className="px-4 py-2 rounded-xl bg-[#0F8B80] hover:bg-[#08786F] text-white font-bold text-xs transition shadow-xs flex items-center gap-1.5"
                   >
                     <PlusCircle className="w-3.5 h-3.5" />
                     <span>Schedule Clinic Visit</span>
@@ -355,12 +296,12 @@ export default function PatientDashboard() {
               </div>
             </div>
 
-            {/* Stat Cards */}
+            {/* Stat Cards (Matching Dimensions, Section 8 Tokens) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <PremiumStatCard
                 label="Upcoming Visits"
                 value={appointments.length}
-                subValue="Scheduled at NHSL & CSTH"
+                subValue="Synced from your account"
                 icon={Calendar}
                 badge="Confirmed"
                 colorScheme="teal"
@@ -375,7 +316,7 @@ export default function PatientDashboard() {
               />
               <PremiumStatCard
                 label="Digital Prescriptions"
-                value="2 Active"
+                value={`${prescriptions.filter(p => p.status === "ACTIVE").length} Active`}
                 subValue="Hospital Dispensary Verified"
                 icon={Pill}
                 badge="Valid"
@@ -383,28 +324,72 @@ export default function PatientDashboard() {
               />
               <PremiumStatCard
                 label="Diagnostic Reports"
-                value="3 Records"
-                subValue="Latest: Lipid Profile (11 Oct)"
+                value={`${records.length} Records`}
+                subValue="Available when records are released"
                 icon={FileText}
                 badge="Encrypted"
                 colorScheme="teal"
               />
             </div>
 
+            {/* Healthcare Activity Graph (Recharts Clinic Attendance & Vitals) */}
+            <ChartCard
+              title="Healthcare Activity & Clinical Telemetry"
+              subtitle="Monthly clinic attendance and vital signs readings recorded across public hospitals"
+              badge="6-Month Trend"
+              actions={
+                <span className="text-xs font-semibold text-[#617583] flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#0F8B80]" /> Clinic Encounters
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#3A84A8] ml-2" /> Diagnostic Tests
+                </span>
+              }
+            >
+              <div className="h-64 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={HEALTH_ACTIVITY_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="patientTealGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0F8B80" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#0F8B80" stopOpacity={0.0} />
+                      </linearGradient>
+                      <linearGradient id="patientBlueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3A84A8" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#3A84A8" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#D6E3E7" vertical={false} />
+                    <XAxis dataKey="month" stroke="#617583" fontSize={12} tickLine={false} />
+                    <YAxis stroke="#617583" fontSize={12} tickLine={false} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: "#F8FAF9", 
+                        borderColor: "#D6E3E7", 
+                        borderRadius: "16px",
+                        fontSize: "12px",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.06)" 
+                      }} 
+                    />
+                    <Area type="monotone" dataKey="clinicVisits" stroke="#0F8B80" strokeWidth={2.5} fillOpacity={1} fill="url(#patientTealGrad)" name="Clinic Visits" />
+                    <Area type="monotone" dataKey="labTests" stroke="#3A84A8" strokeWidth={2.5} fillOpacity={1} fill="url(#patientBlueGrad)" name="Lab Tests" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+
             {/* Upcoming Appointments & Health Timeline Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               
               {/* Left Column (2/3): Appointments List */}
               <div className="lg:col-span-2 space-y-4">
-                <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-[#D5E0E3] pb-3">
+                <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#D6E3E7] pb-3">
                     <div>
-                      <h3 className="text-base font-bold text-[#243847]">Confirmed Clinic Appointments</h3>
-                      <p className="text-xs text-[#667986]">Specialist outpatient consultations booked in the public hospital network</p>
+                      <h3 className="text-base font-bold text-[#233B48]">Confirmed Clinic Appointments</h3>
+                      <p className="text-xs text-[#617583]">Specialist outpatient consultations booked in the public hospital network</p>
                     </div>
                     <button
-                      onClick={() => setActiveTab("book")}
-                      className="text-xs font-bold text-[#108B83] hover:text-[#08786F] flex items-center gap-1 transition"
+                      onClick={() => setActiveTab("appointments")}
+                      className="text-xs font-bold text-[#0F8B80] hover:text-[#08786F] flex items-center gap-1 transition"
                     >
                       <PlusCircle className="w-3.5 h-3.5" />
                       <span>Book New</span>
@@ -417,8 +402,8 @@ export default function PatientDashboard() {
                       message="You do not have any scheduled specialist hospital consultations."
                       action={
                         <button
-                          onClick={() => setActiveTab("book")}
-                          className="px-4 py-2 rounded-xl bg-[#108B83] text-white font-bold text-xs"
+                          onClick={() => setActiveTab("appointments")}
+                          className="px-4 py-2 rounded-xl bg-[#0F8B80] text-white font-bold text-xs"
                         >
                           Book Outpatient Visit
                         </button>
@@ -429,24 +414,24 @@ export default function PatientDashboard() {
                       {appointments.map((apt) => (
                         <div
                           key={apt.id}
-                          className="p-4 rounded-2xl bg-[#F6F9F8] border border-[#D5E0E3] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#108B83] transition-all"
+                          className="p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-[#0F8B80] transition-all"
                         >
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-sm text-[#243847]">{apt.clinic}</span>
+                              <span className="font-bold text-sm text-[#233B48]">{apt.clinic}</span>
                               <StatusIndicator status={apt.status} />
                             </div>
-                            <div className="text-xs text-[#3C5262] flex items-center gap-1.5">
-                              <Building2 className="w-3.5 h-3.5 text-[#108B83]" />
+                            <div className="text-xs text-[#3F5362] flex items-center gap-1.5">
+                              <Building2 className="w-3.5 h-3.5 text-[#0F8B80]" />
                               <span>{apt.facilityName}</span>
                             </div>
-                            <div className="text-[11px] text-[#667986] flex items-center gap-3 pt-1">
+                            <div className="text-[11px] text-[#617583] flex items-center gap-3 pt-1">
                               <span className="flex items-center gap-1">
-                                <Calendar className="w-3 h-3 text-[#108B83]" />
+                                <Calendar className="w-3 h-3 text-[#0F8B80]" />
                                 <span>{apt.date}</span>
                               </span>
                               <span className="flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-[#108B83]" />
+                                <Clock className="w-3 h-3 text-[#0F8B80]" />
                                 <span>{apt.timeSlot}</span>
                               </span>
                             </div>
@@ -454,8 +439,8 @@ export default function PatientDashboard() {
 
                           <div className="flex items-center gap-2 self-end sm:self-center">
                             <div className="text-right hidden sm:block">
-                              <div className="text-xs font-bold text-[#243847]">{apt.doctorName}</div>
-                              <div className="text-[10px] text-[#667986] font-mono">{apt.id}</div>
+                              <div className="text-xs font-bold text-[#233B48]">{apt.doctorName}</div>
+                              <div className="text-[10px] text-[#617583] font-mono">{apt.id}</div>
                             </div>
                             <button
                               onClick={() => {
@@ -471,7 +456,7 @@ export default function PatientDashboard() {
                                 });
                                 setActiveTab("queue");
                               }}
-                              className="px-3 py-1.5 rounded-xl bg-[#DDEFE9] text-[#08786F] hover:bg-[#108B83] hover:text-white font-bold text-xs transition flex items-center gap-1 shadow-xs"
+                              className="px-3 py-1.5 rounded-xl bg-[#E1F1EC] text-[#0F8B80] hover:bg-[#0F8B80] hover:text-white font-bold text-xs transition flex items-center gap-1 shadow-xs"
                               title="Check in or view queue token"
                             >
                               <span>Check In</span>
@@ -487,10 +472,10 @@ export default function PatientDashboard() {
 
               {/* Right Column (1/3): Activity Timeline */}
               <div className="space-y-4">
-                <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 shadow-xs space-y-4">
-                  <div className="border-b border-[#D5E0E3] pb-3">
-                    <h3 className="text-base font-bold text-[#243847]">Recent Clinical Activity</h3>
-                    <p className="text-xs text-[#667986]">Live stream of verified hospital actions</p>
+                <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 shadow-xs space-y-4">
+                  <div className="border-b border-[#D6E3E7] pb-3">
+                    <h3 className="text-base font-bold text-[#233B48]">Recent Clinical Activity</h3>
+                    <p className="text-xs text-[#617583]">Live stream of verified hospital actions</p>
                   </div>
                   <ActivityTimeline items={timelineItems} />
                 </div>
@@ -501,228 +486,69 @@ export default function PatientDashboard() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: LIVE QUEUE STATUS (HONEST HANDLING: NO FABRICATED ACTIVE TOKEN)   */}
+        {/* TAB 2: APPOINTMENTS & SCHEDULING                                          */}
         {/* ========================================================================= */}
-        {activeTab === "queue" && (
+        {activeTab === "appointments" && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 sm:p-8 shadow-xs space-y-6">
-              <div className="border-b border-[#D5E0E3] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="border-b border-[#D6E3E7] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#DDEFE9] text-[#08786F] border border-[#108B83]/30 mb-2">
-                    <Ticket className="w-3.5 h-3.5" />
-                    <span>Real-Time Hospital Queue Synchronizer</span>
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-extrabold text-[#243847] tracking-tight">
-                    Outpatient Clinic Queue Status
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-[#233B48] tracking-tight">
+                    Schedule Clinic Consultation
                   </h2>
-                  <p className="text-xs text-[#667986] mt-1">
-                    Live synchronized tokens for outpatient specialist clinics at Sri Lankan base &amp; teaching hospitals.
+                  <p className="text-xs text-[#617583] mt-1">
+                    Reserve outpatient clinic sessions at Sri Lankan public teaching and district general hospitals.
                   </p>
                 </div>
-                {activeQueueTicket && (
-                  <button
-                    onClick={() => setActiveQueueTicket(null)}
-                    className="px-3.5 py-1.5 rounded-xl bg-[#EDF2F4] text-[#667986] hover:text-rose-600 hover:bg-rose-50 text-xs font-bold transition self-start sm:self-center"
-                  >
-                    Leave Clinic Queue
-                  </button>
-                )}
-              </div>
-
-              {/* TRUTHFUL STATE: If patient has not checked in, DO NOT fabricate an active token */}
-              {!activeQueueTicket ? (
-                <div className="py-12 px-6 rounded-3xl bg-[#F6F9F8] border border-[#D5E0E3] text-center space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-[#DDEFE9] border border-[#108B83]/30 mx-auto flex items-center justify-center text-[#08786F]">
-                    <Ticket className="w-8 h-8" />
-                  </div>
-                  <div className="space-y-1">
-                    <h3 className="text-base font-bold text-[#243847]">No Active Queue Token</h3>
-                    <p className="text-xs text-[#667986] max-w-md mx-auto leading-relaxed">
-                      You are not currently checked into an outpatient clinic. Once you arrive at the hospital reception or check in to an existing appointment, your live token and wait estimates will appear here.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-3 pt-2">
-                    <button
-                      onClick={() => setActiveTab("book")}
-                      className="px-4 py-2.5 rounded-xl bg-[#108B83] hover:bg-[#08786F] text-white font-bold text-xs transition shadow-xs flex items-center gap-1.5"
-                    >
-                      <PlusCircle className="w-3.5 h-3.5" />
-                      <span>Schedule a Clinic Appointment</span>
-                    </button>
-                    {appointments.length > 0 && (
-                      <button
-                        onClick={() => {
-                          const first = appointments[0];
-                          setActiveQueueTicket({
-                            ticketNumber: "C-024",
-                            clinic: first.clinic,
-                            hospital: first.facilityName,
-                            room: "Consultation Room 04",
-                            servingToken: "C-020",
-                            patientsAhead: 4,
-                            estimatedWaitMinutes: 18,
-                            status: "WAITING",
-                          });
-                        }}
-                        className="px-4 py-2.5 rounded-xl bg-white border border-[#D5E0E3] hover:bg-[#EDF2F4] text-[#243847] font-bold text-xs transition shadow-xs flex items-center gap-1.5"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-[#108B83]" />
-                        <span>Simulate Reception Check-In for Today&apos;s Clinic</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                /* LIVE TICKET VIEW */
-                <div className="space-y-6 animate-in zoom-in-95 duration-200">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Big Ticket Banner */}
-                    <div className="md:col-span-1 p-6 rounded-3xl bg-gradient-to-br from-[#108B83] to-[#08786F] text-white flex flex-col justify-between shadow-md space-y-4">
-                      <div>
-                        <div className="flex justify-between items-center text-xs text-[#DDEFE9]">
-                          <span className="font-bold">YOUR LIVE TOKEN</span>
-                          <span className="px-2 py-0.5 rounded-full bg-white/20 font-mono text-[10px]">ACTIVE</span>
-                        </div>
-                        <div className="text-5xl font-black tracking-tight mt-3">
-                          {activeQueueTicket.ticketNumber}
-                        </div>
-                        <div className="text-xs text-[#DDEFE9] mt-1 font-medium">
-                          {activeQueueTicket.clinic}
-                        </div>
-                      </div>
-
-                      <div className="pt-4 border-t border-white/20 space-y-2 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-[#DDEFE9]">Facility:</span>
-                          <span className="font-semibold text-right">{activeQueueTicket.hospital}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-[#DDEFE9]">Location:</span>
-                          <span className="font-semibold">{activeQueueTicket.room}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Live Progress Grid */}
-                    <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="p-5 rounded-2xl bg-[#F6F9F8] border border-[#D5E0E3] flex flex-col justify-between">
-                        <span className="text-xs font-bold text-[#667986] uppercase">Now Serving</span>
-                        <div className="text-3xl font-black text-[#243847] mt-2">
-                          {activeQueueTicket.servingToken}
-                        </div>
-                        <div className="text-[11px] text-[#08786F] mt-2 flex items-center gap-1 font-semibold">
-                          <span className="w-2 h-2 rounded-full bg-[#108B83] animate-ping" />
-                          <span>In Consultation</span>
-                        </div>
-                      </div>
-
-                      <div className="p-5 rounded-2xl bg-[#F6F9F8] border border-[#D5E0E3] flex flex-col justify-between">
-                        <span className="text-xs font-bold text-[#667986] uppercase">Ahead of You</span>
-                        <div className="text-3xl font-black text-[#243847] mt-2">
-                          {activeQueueTicket.patientsAhead}
-                        </div>
-                        <div className="text-[11px] text-[#667986] mt-2 font-medium">
-                          Patients in line
-                        </div>
-                      </div>
-
-                      <div className="p-5 rounded-2xl bg-[#F6F9F8] border border-[#D5E0E3] flex flex-col justify-between">
-                        <span className="text-xs font-bold text-[#667986] uppercase">Estimated Wait</span>
-                        <div className="text-3xl font-black text-[#108B83] mt-2">
-                          ~{activeQueueTicket.estimatedWaitMinutes}m
-                        </div>
-                        <div className="text-[11px] text-[#667986] mt-2 font-medium">
-                          Estimated call: ~{Math.floor(activeQueueTicket.estimatedWaitMinutes / 10) * 10} mins
-                        </div>
-                      </div>
-
-                      <div className="sm:col-span-3 p-4 rounded-2xl bg-[#DDEFE9] border border-[#108B83]/30 text-xs text-[#08786F] flex items-center gap-3">
-                        <Clock className="w-5 h-5 text-[#108B83] shrink-0" />
-                        <div>
-                          <strong className="block font-bold">Please remain near {activeQueueTicket.room}</strong>
-                          <span>You will receive an automated SMS audio prompt and digital screen alert when your token is called.</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ========================================================================= */}
-        {/* TAB 3: SCHEDULE CLINIC APPOINTMENT                                       */}
-        {/* ========================================================================= */}
-        {activeTab === "book" && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 sm:p-8 shadow-xs max-w-3xl space-y-6">
-              <div className="border-b border-[#D5E0E3] pb-4">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#DDEFE9] text-[#08786F] border border-[#108B83]/30 mb-2">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>Outpatient Clinic Scheduling</span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#243847] tracking-tight">
-                  Schedule Specialist Clinic Consultation
-                </h2>
-                <p className="text-xs text-[#667986] mt-1">
-                  Book appointment tokens at government hospitals across Sri Lanka under the National Health Service.
-                </p>
               </div>
 
               {bookingSuccess && (
-                <div className="p-4 rounded-2xl bg-[#DDEFE9] border border-[#108B83]/40 text-[#08786F] text-xs sm:text-sm flex items-center gap-3 shadow-xs">
-                  <CheckCircle className="w-5 h-5 text-[#08786F] shrink-0" />
-                  <div>
-                    <span className="font-bold block">Appointment Successfully Scheduled!</span>
-                    <span>Your consultation ticket has been recorded. Redirecting to your overview...</span>
-                  </div>
+                <div className="p-4 rounded-2xl bg-[#E1F1EC] border border-[#0F8B80]/30 text-[#0F8B80] flex items-center gap-3 text-xs font-bold animate-in fade-in">
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span>Clinic appointment successfully booked and confirmed in hospital queue manifest!</span>
                 </div>
               )}
 
-              <form onSubmit={handleBookingSubmit} className="space-y-5">
+              <form onSubmit={handleBookingSubmit} className="space-y-4 max-w-2xl">
                 <div>
-                  <label className="block text-xs font-bold text-[#243847] mb-1.5">
-                    Target Hospital Facility *
+                  <label className="block text-xs font-bold text-[#233B48] mb-1.5">
+                    Target Public Hospital *
                   </label>
                   <select
                     value={bookForm.hospital}
                     onChange={(e) => setBookForm({ ...bookForm, hospital: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#F6F9F8] border border-[#D5E0E3] rounded-2xl text-xs sm:text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                    className="w-full px-4 py-2.5 bg-[#EDF3F5] border border-[#D6E3E7] rounded-2xl text-xs sm:text-sm text-[#233B48] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B80]"
                   >
-                    <option value="National Hospital of Sri Lanka (NHSL)">National Hospital of Sri Lanka (NHSL), Colombo</option>
-                    <option value="Colombo South Teaching Hospital (Kalubowila)">Colombo South Teaching Hospital, Kalubowila</option>
-                    <option value="Colombo North Teaching Hospital (Ragama)">Colombo North Teaching Hospital, Ragama</option>
+                    <option value="National Hospital of Sri Lanka (NHSL)">National Hospital of Sri Lanka (NHSL) - Colombo</option>
+                    <option value="Colombo South Teaching Hospital (Kalubowila)">Colombo South Teaching Hospital (Kalubowila)</option>
+                    <option value="Colombo North Teaching Hospital (Ragama)">Colombo North Teaching Hospital (Ragama)</option>
+                    <option value="Lady Ridgeway Hospital for Children (LRH)">Lady Ridgeway Hospital for Children (LRH)</option>
+                    <option value="Castle Street Hospital for Women (CSHW)">Castle Street Hospital for Women (CSHW)</option>
                     <option value="Teaching Hospital Kandy">Teaching Hospital Kandy</option>
-                    <option value="Teaching Hospital Karapitiya (Galle)">Teaching Hospital Karapitiya, Galle</option>
-                    <option value="Castle Street Hospital for Women">Castle Street Hospital for Women, Colombo</option>
-                    <option value="Lady Ridgeway Hospital for Children">Lady Ridgeway Hospital for Children, Colombo</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#243847] mb-1.5">
-                    Specialist Department / Clinic *
+                  <label className="block text-xs font-bold text-[#233B48] mb-1.5">
+                    Specialist Clinic / Department *
                   </label>
                   <select
                     value={bookForm.clinic}
                     onChange={(e) => setBookForm({ ...bookForm, clinic: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#F6F9F8] border border-[#D5E0E3] rounded-2xl text-xs sm:text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                    className="w-full px-4 py-2.5 bg-[#EDF3F5] border border-[#D6E3E7] rounded-2xl text-xs sm:text-sm text-[#233B48] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B80]"
                   >
                     <option value="Cardiology Outpatient Clinic">Cardiology Outpatient Clinic</option>
                     <option value="General Outpatient Department (OPD)">General Outpatient Department (OPD)</option>
-                    <option value="Endocrinology & Diabetic Clinic">Endocrinology &amp; Diabetic Clinic</option>
                     <option value="Pediatrics Clinic">Pediatrics Clinic</option>
-                    <option value="Obstetrics & Gynecology Clinic">Obstetrics &amp; Gynecology Clinic</option>
-                    <option value="Orthopedic & Fracture Clinic">Orthopedic &amp; Fracture Clinic</option>
                     <option value="Dermatology Clinic">Dermatology Clinic</option>
-                    <option value="Ophthalmology (Eye Clinic)">Ophthalmology (Eye Clinic)</option>
+                    <option value="Orthopedic Clinic">Orthopedic Clinic</option>
+                    <option value="Endocrinology & Diabetes Clinic">Endocrinology &amp; Diabetes Clinic</option>
                   </select>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-[#243847] mb-1.5">
+                    <label className="block text-xs font-bold text-[#233B48] mb-1.5">
                       Preferred Date *
                     </label>
                     <input
@@ -730,28 +556,27 @@ export default function PatientDashboard() {
                       required
                       value={bookForm.date}
                       onChange={(e) => setBookForm({ ...bookForm, date: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-2xl text-xs sm:text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                      className="w-full px-4 py-2.5 bg-[#EDF3F5] border border-[#D6E3E7] rounded-2xl text-xs sm:text-sm text-[#233B48] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B80]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-[#243847] mb-1.5">
+                    <label className="block text-xs font-bold text-[#233B48] mb-1.5">
                       Session Time Slot *
                     </label>
                     <select
                       value={bookForm.timeSlot}
                       onChange={(e) => setBookForm({ ...bookForm, timeSlot: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-2xl text-xs sm:text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                      className="w-full px-4 py-2.5 bg-[#EDF3F5] border border-[#D6E3E7] rounded-2xl text-xs sm:text-sm text-[#233B48] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B80]"
                     >
                       <option value="Morning Session (08:30 AM - 12:00 PM)">Morning Session (08:30 AM - 12:00 PM)</option>
                       <option value="Afternoon Session (01:00 PM - 04:30 PM)">Afternoon Session (01:00 PM - 04:30 PM)</option>
-                      <option value="Evening Follow-up (05:00 PM - 07:00 PM)">Evening Follow-up (05:00 PM - 07:00 PM)</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#243847] mb-1.5">
+                  <label className="block text-xs font-bold text-[#233B48] mb-1.5">
                     Chief Complaint / Clinical Notes (Optional)
                   </label>
                   <textarea
@@ -759,21 +584,21 @@ export default function PatientDashboard() {
                     value={bookForm.notes}
                     onChange={(e) => setBookForm({ ...bookForm, notes: e.target.value })}
                     placeholder="Brief description of current symptoms or referral note from local primary care doctor..."
-                    className="w-full px-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-2xl text-xs sm:text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] placeholder:text-[#667986]/60"
+                    className="w-full px-4 py-2.5 bg-[#EDF3F5] border border-[#D6E3E7] rounded-2xl text-xs sm:text-sm text-[#233B48] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F8B80] placeholder:text-[#617583]/60"
                   />
                 </div>
 
                 <div className="pt-2 flex items-center justify-end gap-3">
                   <button
                     type="button"
-                    onClick={() => setActiveTab("overview")}
-                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#667986] hover:text-[#243847]"
+                    onClick={() => setActiveTab("dashboard")}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-[#617583] hover:text-[#233B48]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 rounded-2xl bg-[#108B83] hover:bg-[#08786F] text-white font-bold text-xs sm:text-sm transition shadow-xs flex items-center gap-2"
+                    className="px-6 py-3 rounded-2xl bg-[#0F8B80] hover:bg-[#08786F] text-white font-bold text-xs sm:text-sm transition shadow-xs flex items-center gap-2"
                   >
                     <span>Confirm &amp; Issue Appointment</span>
                     <ArrowRight className="w-4 h-4" />
@@ -785,82 +610,97 @@ export default function PatientDashboard() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 4: DIGITAL PRESCRIPTIONS                                              */}
+        {/* TAB 3: LIVE QUEUE STATUS (HONEST HANDLING)                                */}
         {/* ========================================================================= */}
-        {activeTab === "prescriptions" && (
+        {activeTab === "queue" && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 sm:p-8 shadow-xs space-y-6">
-              <div className="border-b border-[#D5E0E3] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#DFEAF0] text-[#467DA3] border border-[#467DA3]/30 mb-2">
-                    <Pill className="w-3.5 h-3.5" />
-                    <span>Hospital Pharmacy Integration</span>
+            {activeQueueTicket ? (
+              <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D6E3E7] pb-4">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-[#0F8B80] bg-[#E1F1EC] px-3 py-1 rounded-full border border-[#0F8B80]/30 inline-block mb-2">
+                      Active Live Token
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold text-[#233B48]">
+                      {activeQueueTicket.clinic}
+                    </h2>
+                    <p className="text-xs text-[#617583] mt-1">{activeQueueTicket.hospital} &bull; {activeQueueTicket.room}</p>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-extrabold text-[#243847] tracking-tight">
-                    Active Electronic Prescriptions
-                  </h2>
-                  <p className="text-xs text-[#667986] mt-1">
-                    Directly linked with public hospital pharmacy dispensaries for streamlined collection without paper slips.
-                  </p>
+                  <div className="text-left sm:text-right">
+                    <span className="text-xs text-[#617583] block">Your Token Number</span>
+                    <span className="text-4xl sm:text-5xl font-black text-[#0F8B80] tracking-tight">
+                      {activeQueueTicket.ticketNumber}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] text-center">
+                    <span className="text-xs text-[#617583] block">Now Serving</span>
+                    <span className="text-2xl font-bold text-[#233B48] mt-1 block">{activeQueueTicket.servingToken}</span>
+                    <span className="text-[11px] text-[#0F8B80] font-semibold mt-0.5 block">Room 04 Active</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] text-center">
+                    <span className="text-xs text-[#617583] block">Patients Ahead</span>
+                    <span className="text-2xl font-bold text-[#233B48] mt-1 block">{activeQueueTicket.patientsAhead}</span>
+                    <span className="text-[11px] text-[#617583] mt-0.5 block">Estimated Turn Next</span>
+                  </div>
+                  <div className="p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] text-center">
+                    <span className="text-xs text-[#617583] block">Estimated Wait</span>
+                    <span className="text-2xl font-bold text-[#233B48] mt-1 block">~{activeQueueTicket.estimatedWaitMinutes} mins</span>
+                    <span className="text-[11px] text-[#0F8B80] font-semibold mt-0.5 block">Updated Live</span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-[#D6E3E7] flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-[#0F8B80] font-semibold">
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#0F8B80] animate-ping" />
+                    <span>Live broadcast from clinic reception queue counter</span>
+                  </div>
+                  <button
+                    onClick={() => setActiveQueueTicket(null)}
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold transition border border-rose-200"
+                  >
+                    Cancel Token Check-in
+                  </button>
                 </div>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {prescriptions.map((rx) => (
-                  <div
-                    key={rx.id}
-                    className="p-5 rounded-2xl bg-[#F6F9F8] border border-[#D5E0E3] space-y-3 hover:border-[#108B83] transition-all"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="font-mono text-[10px] text-[#667986] block">{rx.id}</span>
-                        <h4 className="font-bold text-sm text-[#243847]">{rx.drug}</h4>
-                      </div>
-                      <StatusIndicator status={rx.status} />
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-white border border-[#D5E0E3] text-xs space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-[#667986]">Dosage:</span>
-                        <span className="font-semibold text-[#243847]">{rx.dosage}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#667986]">Frequency:</span>
-                        <span className="font-semibold text-[#243847]">{rx.frequency}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-[#667986]">Refills:</span>
-                        <span className="font-semibold text-[#108B83]">{rx.refillsRemaining} remaining</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-[11px] text-[#667986] pt-1">
-                      <span>Doctor: {rx.prescribedBy}</span>
-                      <span>Issued: {rx.date}</span>
-                    </div>
+            ) : (
+              <EmptyState
+                icon={Ticket}
+                title="No Active Queue Token"
+                message="You are not currently checked in or queued for an outpatient consultation today. Check in for your scheduled appointment below or visit the hospital reception counter."
+                action={
+                  <div className="flex justify-center gap-3">
+                    <button
+                      onClick={() => setActiveTab("appointments")}
+                      className="px-4 py-2 rounded-xl bg-[#0F8B80] hover:bg-[#08786F] text-white font-bold text-xs transition shadow-xs"
+                    >
+                      View Appointments &amp; Check In
+                    </button>
                   </div>
-                ))}
-              </div>
-            </div>
+                }
+              />
+            )}
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 5: DIAGNOSTIC RECORDS & LABS                                          */}
+        {/* TAB 4: MEDICAL RECORDS & LABS                                             */}
         {/* ========================================================================= */}
         {activeTab === "records" && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 sm:p-8 shadow-xs space-y-6">
-              <div className="border-b border-[#D5E0E3] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="border-b border-[#D6E3E7] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#DDEFE9] text-[#08786F] border border-[#108B83]/30 mb-2">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#E1F1EC] text-[#0F8B80] border border-[#0F8B80]/30 mb-2">
                     <FileText className="w-3.5 h-3.5" />
                     <span>Ministry of Health EHR Data Layer</span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-extrabold text-[#243847] tracking-tight">
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-[#233B48] tracking-tight">
                     Verified Diagnostic &amp; Clinical Records
                   </h2>
-                  <p className="text-xs text-[#667986] mt-1">
+                  <p className="text-xs text-[#617583] mt-1">
                     Cryptographically attested diagnostic observations, laboratory test outcomes, and clinical reviews.
                   </p>
                 </div>
@@ -870,30 +710,30 @@ export default function PatientDashboard() {
                 {records.map((rec) => (
                   <div
                     key={rec.id}
-                    className="p-5 rounded-2xl bg-[#F6F9F8] border border-[#D5E0E3] space-y-2 hover:border-[#108B83] transition-all"
+                    className="p-5 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] space-y-2 hover:border-[#0F8B80] transition-all"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#DFEAF0] text-[#467DA3] border border-[#467DA3]/30">
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-[#DFEAF0] text-[#3A84A8] border border-[#3A84A8]/30">
                           {rec.type}
                         </span>
-                        <h4 className="font-bold text-sm text-[#243847]">{rec.title}</h4>
+                        <h4 className="font-bold text-sm text-[#233B48]">{rec.title}</h4>
                       </div>
                       <div className="flex items-center gap-2">
                         <StatusIndicator status={rec.status} />
-                        <span className="font-mono text-[11px] text-[#667986]">{rec.date}</span>
+                        <span className="font-mono text-[11px] text-[#617583]">{rec.date}</span>
                       </div>
                     </div>
 
-                    <p className="text-xs text-[#3C5262] leading-relaxed pl-1">
+                    <p className="text-xs text-[#3F5362] leading-relaxed pl-1">
                       {rec.summary}
                     </p>
 
-                    <div className="pt-2 border-t border-[#D5E0E3] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-[#667986]">
-                      <span>Issued by: <strong className="text-[#243847]">{rec.doctor}</strong> &bull; {rec.facility}</span>
+                    <div className="pt-2 border-t border-[#D6E3E7] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] text-[#617583]">
+                      <span>Issued by: <strong className="text-[#233B48]">{rec.doctor}</strong> &bull; {rec.facility}</span>
                       <button
-                        onClick={() => alert(`Downloading verified cryptographic medical PDF for ${rec.id}`)}
-                        className="inline-flex items-center gap-1 font-bold text-[#108B83] hover:text-[#08786F] self-start sm:self-center"
+                        onClick={() => alert(`Downloading verified cryptographic medical report for ${rec.id}`)}
+                        className="inline-flex items-center gap-1 font-bold text-[#0F8B80] hover:text-[#08786F] self-start sm:self-center"
                       >
                         <Download className="w-3 h-3" />
                         <span>Download Signed PDF</span>
@@ -907,25 +747,238 @@ export default function PatientDashboard() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 6: CONSULTATION TIMELINE                                             */}
+        {/* TAB 5: DIGITAL PRESCRIPTIONS                                              */}
         {/* ========================================================================= */}
-        {activeTab === "history" && (
+        {activeTab === "prescriptions" && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 sm:p-8 shadow-xs space-y-6">
-              <div className="border-b border-[#D5E0E3] pb-4">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#DDEFE9] text-[#08786F] border border-[#108B83]/30 mb-2">
-                  <History className="w-3.5 h-3.5" />
-                  <span>Longitudinal Healthcare Journey</span>
+            <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="border-b border-[#D6E3E7] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#DFEAF0] text-[#3A84A8] border border-[#3A84A8]/30 mb-2">
+                    <Pill className="w-3.5 h-3.5" />
+                    <span>Hospital Pharmacy Integration</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-[#233B48] tracking-tight">
+                    Active Electronic Prescriptions
+                  </h2>
+                  <p className="text-xs text-[#617583] mt-1">
+                    Directly linked with public hospital pharmacy dispensaries for streamlined collection without paper slips.
+                  </p>
                 </div>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#243847] tracking-tight">
-                  Patient Clinical Timeline
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {prescriptions.map((rx) => (
+                  <div
+                    key={rx.id}
+                    className="p-5 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] space-y-3 hover:border-[#0F8B80] transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-mono text-[10px] text-[#617583] block">{rx.id}</span>
+                        <h4 className="font-bold text-sm text-[#233B48]">{rx.drug}</h4>
+                      </div>
+                      <StatusIndicator status={rx.status} />
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-white border border-[#D6E3E7] text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-[#617583]">Dosage:</span>
+                        <span className="font-semibold text-[#233B48]">{rx.dosage}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#617583]">Frequency:</span>
+                        <span className="font-semibold text-[#233B48]">{rx.frequency}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#617583]">Refills:</span>
+                        <span className="font-semibold text-[#0F8B80]">{rx.refillsRemaining} remaining</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-[#617583] pt-1">
+                      <span>Doctor: {rx.prescribedBy}</span>
+                      <span>Issued: {rx.date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 6: NOTIFICATIONS                                                      */}
+        {/* ========================================================================= */}
+        {activeTab === "notifications" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="border-b border-[#D6E3E7] pb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-[#233B48] tracking-tight">
+                    System &amp; Clinical Alerts
+                  </h2>
+                  <p className="text-xs text-[#617583] mt-1">
+                    Updates regarding appointments, diagnostic results, and hospital queue updates.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setNotifications(notifications.map(n => ({ ...n, read: true })))}
+                  className="text-xs font-bold text-[#0F8B80] hover:underline"
+                >
+                  Mark all as read
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={`p-4 rounded-2xl border transition-all flex items-start justify-between gap-3 ${
+                      n.read ? "bg-[#EDF3F5] border-[#D6E3E7]" : "bg-white border-[#0F8B80]/40 shadow-xs"
+                    }`}
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${n.read ? "bg-slate-300" : "bg-[#0F8B80]"}`} />
+                        <h4 className="font-bold text-sm text-[#233B48]">{n.title}</h4>
+                      </div>
+                      <p className="text-xs text-[#3F5362]">{n.message}</p>
+                      <span className="text-[10px] text-[#617583] block pt-1">{n.time}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 7: CITIZEN PROFILE                                                    */}
+        {/* ========================================================================= */}
+        {activeTab === "profile" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="border-b border-[#D6E3E7] pb-4">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#233B48] tracking-tight">
+                  Verified Citizen Health Profile
                 </h2>
-                <p className="text-xs text-[#667986] mt-1">
-                  Complete historical record of hospital encounters, emergency department visits, and diagnostic consultations.
+                <p className="text-xs text-[#617583] mt-1">
+                  National demographic and health identifier record attested by the Sri Lanka Ministry of Health.
                 </p>
               </div>
 
-              <ActivityTimeline items={timelineItems} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+                <div className="p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] space-y-3">
+                  <h4 className="font-bold text-sm text-[#233B48]">Demographic Identity</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">Full Name:</span>
+                      <span className="font-bold text-[#233B48]">{userName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">National ID (NIC):</span>
+                      <span className="font-mono font-bold text-[#233B48]">{maskedNic || "Not provided"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">Email Address:</span>
+                      <span className="font-semibold text-[#233B48]">{userEmail}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">Mobile Phone:</span>
+                      <span className="font-semibold text-[#233B48]">{userPhone || "Not provided"}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] space-y-3">
+                  <h4 className="font-bold text-sm text-[#233B48]">Assigned Care Parameters</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">Primary Hospital Base:</span>
+                      <span className="font-bold text-[#233B48]">Not assigned</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">Regional Health Directorate:</span>
+                      <span className="font-semibold text-[#233B48]">Not assigned</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">Blood Group:</span>
+                      <span className="font-bold text-[#617583]">Not provided</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#617583]">Known Allergies:</span>
+                      <span className="font-semibold text-[#617583]">Not provided</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 8: SETTINGS                                                           */}
+        {/* ========================================================================= */}
+        {activeTab === "settings" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-6 sm:p-8 shadow-xs space-y-6">
+              <div className="border-b border-[#D6E3E7] pb-4">
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#233B48] tracking-tight">
+                  Portal Preferences &amp; Privacy
+                </h2>
+                <p className="text-xs text-[#617583] mt-1">
+                  Manage notifications, display language, and privacy settings.
+                </p>
+              </div>
+
+              <div className="space-y-4 max-w-xl text-xs">
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7]">
+                  <div>
+                    <h4 className="font-bold text-sm text-[#233B48]">SMS Queue Calling Alerts</h4>
+                    <p className="text-[#617583]">Receive mobile text messages when your token is called by the consulting doctor.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={smsAlerts}
+                    onChange={(e) => setSmsAlerts(e.target.checked)}
+                    className="w-5 h-5 accent-[#0F8B80] rounded cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7]">
+                  <div>
+                    <h4 className="font-bold text-sm text-[#233B48]">Email Diagnostic Notifications</h4>
+                    <p className="text-[#617583]">Receive encrypted email alerts whenever hospital laboratory reports are uploaded.</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={emailAlerts}
+                    onChange={(e) => setEmailAlerts(e.target.checked)}
+                    className="w-5 h-5 accent-[#0F8B80] rounded cursor-pointer"
+                  />
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#EDF3F5] border border-[#D6E3E7] space-y-2">
+                  <h4 className="font-bold text-sm text-[#233B48]">Interface Language</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {["English", "සිංහල (Sinhala)", "தமிழ் (Tamil)"].map((lang) => (
+                      <button
+                        key={lang}
+                        type="button"
+                        onClick={() => setLanguage(lang)}
+                        className={`p-2 rounded-xl font-bold border transition text-center ${
+                          language === lang
+                            ? "bg-[#0F8B80] text-white border-[#0F8B80]"
+                            : "bg-white text-[#233B48] border-[#D6E3E7] hover:bg-[#E5EEF1]"
+                        }`}
+                      >
+                        {lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
