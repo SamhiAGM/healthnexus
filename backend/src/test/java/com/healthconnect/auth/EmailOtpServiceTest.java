@@ -74,7 +74,8 @@ class EmailOtpServiceTest {
         doThrow(new IllegalStateException("SMTP unavailable"))
                 .when(emailService).sendVerificationOtp(eq("citizen@healthnexus.lk"), eq("Kasun Perera"), anyString());
 
-        assertThrows(IllegalStateException.class, () -> emailOtpService.sendEmailOtp(request));
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> emailOtpService.sendEmailOtp(request));
+        assertEquals("SMTP unavailable", ex.getMessage());
         verify(tokenRepository, never()).save(any(EmailVerificationToken.class));
     }
 
