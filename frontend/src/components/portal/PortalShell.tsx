@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { Logo } from "@/components/brand/Logo";
@@ -16,16 +16,22 @@ import {
   LucideIcon,
   Search,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  ChevronDown,
+  Lock,
+  Layers,
+  Sparkles
 } from "lucide-react";
 import { GlobalSearchModal } from "@/components/search/GlobalSearchModal";
 
 export interface NavItem {
+  id?: string;
   label: string;
-  href: string;
+  href?: string;
   icon: LucideIcon;
   badge?: string;
   active?: boolean;
+  onClick?: () => void;
 }
 
 interface PortalShellProps {
@@ -35,8 +41,11 @@ interface PortalShellProps {
   department?: string;
   facility?: string;
   userName?: string;
+  userEmail?: string;
   breadcrumbs?: { label: string; href?: string }[];
   navItems?: NavItem[];
+  activeTabId?: string;
+  onTabChange?: (tabId: string) => void;
   children: React.ReactNode;
   headerActions?: React.ReactNode;
 }
@@ -48,8 +57,11 @@ export function PortalShell({
   department,
   facility = "National Hospital of Sri Lanka (NHSL)",
   userName,
+  userEmail,
   breadcrumbs,
   navItems = [],
+  activeTabId,
+  onTabChange,
   children,
   headerActions
 }: PortalShellProps) {
@@ -57,10 +69,27 @@ export function PortalShell({
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   const displayRoleTitle = roleTitle || role.replace(/_/g, " ");
   const displayName = userName || "Authorized Personnel";
+
+  // Close menus on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -75,49 +104,55 @@ export function PortalShell({
     }
   };
 
-  const getRoleBadgeColor = () => {
+  const getRoleBadgeStyle = () => {
     switch (role.toUpperCase()) {
       case "DOCTOR":
-        return "bg-[#E8F0F4] text-[#426DA9] border-[#426DA9]/30";
-      case "NURSE":
-        return "bg-[#EBE8F5] text-[#43566C] border-[#D9E3E9]";
-      case "PHARMACIST":
-        return "bg-[#DFEFEC] text-[#159B94] border-[#159B94]/30";
-      case "LAB_TECHNICIAN":
-      case "LAB_STAFF":
-        return "bg-[#E8F0F4] text-[#426DA9] border-[#426DA9]/30";
-      case "PUBLIC_HEALTH_OFFICER":
-      case "FIELD_SUPERVISOR":
-        return "bg-[#DFEFEC] text-[#087F79] border-[#159B94]/30";
-      case "HOSPITAL_ADMIN":
-      case "SYSTEM_ADMIN":
-        return "bg-[#20364C] text-[#DFEFEC] border-[#159B94]/30";
       case "CLINIC_COORDINATOR":
       case "RECEPTIONIST":
-        return "bg-[#E8F0F4] text-[#426DA9] border-[#426DA9]/30";
+      case "LAB_TECHNICIAN":
+      case "LAB_STAFF":
+        return "bg-[#DFEAF0] text-[#467DA3] border-[#467DA3]/30";
+      case "NURSE":
+        return "bg-rose-50 text-[#E26D5C] border-[#E26D5C]/30";
+      case "PHARMACIST":
       case "PATIENT":
-        return "bg-[#DFEFEC] text-[#087F79] border-[#159B94]/30";
+        return "bg-[#DDEFE9] text-[#08786F] border-[#108B83]/30";
+      case "PUBLIC_HEALTH_OFFICER":
+        return "bg-[#DDEFE9] text-[#08786F] border-[#108B83]/30";
+      case "FIELD_SUPERVISOR":
+        return "bg-amber-50 text-amber-800 border-amber-300";
+      case "HOSPITAL_ADMIN":
+        return "bg-[#243847] text-[#DDEFE9] border-[#108B83]/40";
+      case "SYSTEM_ADMIN":
+        return "bg-[#243847] text-[#63E2D8] border-[#63E2D8]/40";
       default:
-        return "bg-[#DFEFEC] text-[#087F79] border-[#159B94]/30";
+        return "bg-[#DDEFE9] text-[#08786F] border-[#108B83]/30";
     }
   };
 
   const effectiveNavItems: NavItem[] = navItems.length > 0 ? navItems : [
-    { label: "Overview & Worklist", href: pathname, icon: ShieldCheck, active: true },
-    { label: "Public Hospitals", href: "/hospitals", icon: Building2 }
+    { id: "overview", label: "Overview & Worklist", href: pathname, icon: ShieldCheck, active: true },
+    { id: "hospitals", label: "Public Hospitals", href: "/hospitals", icon: Building2 }
   ];
 
   return (
-    <div className="min-h-screen bg-[#F0F4F7] text-[#364A5D] flex flex-col selection:bg-[#159B94] selection:text-white">
+    <div className="min-h-screen bg-[#EDF2F4] text-[#3C5262] flex flex-col selection:bg-[#108B83] selection:text-white relative">
       
+      {/* Soft Ambient Healthcare Background Glow */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute -top-32 -right-32 w-[550px] h-[550px] bg-[#108B83]/5 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute top-1/2 -left-40 w-[600px] h-[600px] bg-[#467DA3]/5 rounded-full blur-[140px] pointer-events-none" />
+        <div className="absolute -bottom-40 right-1/4 w-[500px] h-[500px] bg-[#108B83]/4 rounded-full blur-[160px] pointer-events-none" />
+      </div>
+
       {/* Top Universal Navbar */}
-      <header className="bg-[#F8FAFB]/95 border-b border-[#D9E3E9] sticky top-0 z-40 backdrop-blur-md shadow-xs">
+      <header className="bg-[#F6F9F8]/95 border-b border-[#D5E0E3] sticky top-0 z-40 backdrop-blur-md shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           
           <div className="flex items-center gap-4">
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden p-2 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] text-[#43566C] hover:text-[#20364C]"
+              className="lg:hidden p-2 rounded-xl bg-[#EDF2F4] border border-[#D5E0E3] text-[#3C5262] hover:text-[#243847]"
               aria-label="Toggle navigation"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -125,11 +160,11 @@ export function PortalShell({
 
             <Logo variant="dark" size="sm" />
 
-            <div className="hidden sm:flex items-center gap-2 pl-2">
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getRoleBadgeColor()}`}>
+            <div className="hidden sm:flex items-center gap-2 pl-3 border-l border-[#D5E0E3]">
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${getRoleBadgeStyle()}`}>
                 {displayRoleTitle}
               </span>
-              <span className="hidden md:inline-block text-xs text-[#43566C]">
+              <span className="hidden md:inline-block text-xs text-[#667986] truncate max-w-xs">
                 &bull; {facility}
               </span>
             </div>
@@ -139,82 +174,137 @@ export function PortalShell({
             {/* Quick Search Shortcut */}
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F0F4F7] hover:bg-[#E8F0F4] border border-[#D9E3E9] text-xs text-[#43566C] transition"
+              className="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#EDF2F4] hover:bg-[#E7EFF1] border border-[#D5E0E3] text-xs text-[#667986] transition"
               title="Global Search (Ctrl+K)"
             >
-              <Search className="w-3.5 h-3.5 text-[#087F79]" />
-              <span>Search Hospitals &amp; Records...</span>
-              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white border border-[#D9E3E9] rounded text-[#43566C]">⌘K</kbd>
+              <Search className="w-3.5 h-3.5 text-[#108B83]" />
+              <span>Search Facility &amp; Records...</span>
+              <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white border border-[#D5E0E3] rounded text-[#667986]">⌘K</kbd>
             </button>
 
             {headerActions}
 
             {/* Notification Bell */}
-            <div className="relative">
+            <div className="relative" ref={notifRef}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 text-[#43566C] hover:text-[#20364C] hover:bg-[#F0F4F7] rounded-xl transition-colors relative"
+                className="p-2 text-[#667986] hover:text-[#243847] hover:bg-[#EDF2F4] rounded-xl transition-colors relative"
                 title="System Notifications"
               >
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#159B94] ring-2 ring-white" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#108B83] ring-2 ring-white" />
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] shadow-xl p-4 z-50 text-xs space-y-2 text-[#364A5D]">
-                  <div className="flex items-center justify-between font-bold text-[#20364C] border-b border-[#D9E3E9] pb-2">
-                    <span>Clinical Notifications</span>
-                    <span className="text-[10px] text-[#087F79] font-bold">Active</span>
+                <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-[#FAFBFA] border border-[#D5E0E3] shadow-xl p-4 z-50 text-xs space-y-2 text-[#3C5262] animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between font-bold text-[#243847] border-b border-[#D5E0E3] pb-2">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#108B83]" />
+                      Clinical &amp; System Alerts
+                    </span>
+                    <span className="text-[10px] text-[#08786F] bg-[#DDEFE9] px-2 py-0.5 rounded-full font-bold">Active</span>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] space-y-1">
-                    <p className="font-bold text-[#20364C]">Healthcare Mesh Connected</p>
-                    <p className="text-[11px] text-[#43566C]">Verified connection with Sri Lanka MoH 2026 data layer.</p>
+                  <div className="p-2.5 rounded-xl bg-[#F6F9F8] border border-[#D5E0E3] space-y-1">
+                    <p className="font-bold text-[#243847] flex items-center justify-between">
+                      <span>Healthcare Mesh Synchronized</span>
+                      <span className="text-[10px] text-[#667986]">Live</span>
+                    </p>
+                    <p className="text-[11px] text-[#667986]">Verified bidirectional connectivity with Sri Lanka MoH 2026 perimeter.</p>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] space-y-1">
-                    <p className="font-bold text-[#20364C]">Session Authenticated</p>
-                    <p className="text-[11px] text-[#43566C]">Secure HttpOnly session with cryptographic role authorization.</p>
+                  <div className="p-2.5 rounded-xl bg-[#F6F9F8] border border-[#D5E0E3] space-y-1">
+                    <p className="font-bold text-[#243847] flex items-center justify-between">
+                      <span>Cryptographic Session Active</span>
+                      <span className="text-[10px] text-[#108B83] font-bold">HttpOnly</span>
+                    </p>
+                    <p className="text-[11px] text-[#667986]">Zero credentials in browser storage. Token lifecycle server-enforced.</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* User Profile Info */}
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-[#20364C] flex items-center gap-1.5 justify-end">
-                <span>{displayName}</span>
-              </div>
-              <div className="text-[10px] text-[#087F79] font-semibold">
-                {department ? department : facility}
-              </div>
+            {/* User Profile Dropdown */}
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-[#EDF2F4] hover:bg-[#E7EFF1] border border-[#D5E0E3] transition text-left"
+              >
+                <div className="w-7 h-7 rounded-lg bg-[#DDEFE9] border border-[#108B83]/30 text-[#08786F] font-bold text-xs flex items-center justify-center shrink-0">
+                  {displayName.charAt(0)}
+                </div>
+                <div className="hidden sm:block text-right">
+                  <div className="text-xs font-bold text-[#243847] truncate max-w-[120px] leading-tight">
+                    {displayName}
+                  </div>
+                  <div className="text-[10px] text-[#108B83] font-semibold truncate max-w-[120px]">
+                    {department || displayRoleTitle}
+                  </div>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-[#667986]" />
+              </button>
+
+              {showProfileMenu && (
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-[#FAFBFA] border border-[#D5E0E3] shadow-xl p-4 z-50 text-xs space-y-3 text-[#3C5262] animate-in fade-in zoom-in-95 duration-150">
+                  <div className="border-b border-[#D5E0E3] pb-3">
+                    <div className="font-bold text-[#243847] text-sm">{displayName}</div>
+                    <div className="text-[11px] text-[#667986] mt-0.5">{userEmail || `${role.toLowerCase()}@lankacare.me`}</div>
+                    <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#108B83]/30 bg-[#DDEFE9] text-[#08786F]">
+                      <ShieldCheck className="w-3 h-3" />
+                      <span>{displayRoleTitle}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 text-[11px] text-[#667986]">
+                    <div className="flex justify-between">
+                      <span>Hospital:</span>
+                      <span className="font-semibold text-[#243847] truncate max-w-[120px]">{facility}</span>
+                    </div>
+                    {department && (
+                      <div className="flex justify-between">
+                        <span>Department:</span>
+                        <span className="font-semibold text-[#243847]">{department}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span>Perimeter:</span>
+                      <span className="font-semibold text-[#08786F]">MoH End-to-End Encrypted</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-[#D5E0E3]">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition"
+                    >
+                      <span className="flex items-center gap-2">
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out of Session</span>
+                      </span>
+                      <span>&rarr;</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="p-2 text-[#43566C] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </header>
 
       {/* Main Container */}
-      <div className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6">
+      <div className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex gap-6 relative z-10">
         
-        {/* Desktop Sidebar (Balanced Aesthetic) */}
-        <aside className="hidden lg:flex flex-col w-64 shrink-0 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] p-4 space-y-6 self-start sticky top-20 shadow-xs">
+        {/* Desktop Sidebar (Balanced Middle-Tone Aesthetic) */}
+        <aside className="hidden lg:flex flex-col w-64 shrink-0 rounded-3xl bg-[#F6F9F8] border border-[#D5E0E3] p-4 space-y-6 self-start sticky top-20 shadow-xs">
           
-          <div className="p-3.5 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] space-y-1">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-[#43566C]">Active Facility</span>
-            <div className="text-xs font-bold text-[#20364C] flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-[#087F79] shrink-0" />
+          <div className="p-3.5 rounded-2xl bg-[#EDF2F4] border border-[#D5E0E3] space-y-1">
+            <span className="text-[10px] uppercase tracking-wider font-bold text-[#667986]">Facility Operational Base</span>
+            <div className="text-xs font-bold text-[#243847] flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-[#108B83] shrink-0" />
               <span className="truncate">{facility}</span>
             </div>
             {department && (
-              <div className="text-[11px] text-[#43566C] font-medium">
-                Dept: {department}
+              <div className="text-[11px] text-[#667986] font-medium truncate">
+                Ward / Unit: {department}
               </div>
             )}
           </div>
@@ -222,45 +312,65 @@ export function PortalShell({
           {/* Navigation Links */}
           <nav className="space-y-1.5 flex-grow">
             {effectiveNavItems.map((item, idx) => {
-              const isActive = item.active !== undefined ? item.active : pathname === item.href;
+              const isItemActive = item.id && activeTabId 
+                ? item.id === activeTabId 
+                : item.active !== undefined 
+                  ? item.active 
+                  : item.href ? pathname === item.href : false;
               const Icon = item.icon;
-              return (
-                <Link
-                  key={idx}
-                  href={item.href}
-                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${
-                    isActive
-                      ? "bg-[#087F79] text-white font-bold shadow-md shadow-[#087F79]/20"
-                      : "text-[#43566C] hover:bg-[#F0F4F7] hover:text-[#20364C]"
+
+              const content = (
+                <div
+                  className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-medium transition-all cursor-pointer ${
+                    isItemActive
+                      ? "bg-[#108B83] text-white font-bold shadow-xs shadow-[#108B83]/20"
+                      : "text-[#667986] hover:bg-[#EDF2F4] hover:text-[#243847]"
                   }`}
+                  onClick={() => {
+                    if (item.onClick) {
+                      item.onClick();
+                    } else if (item.id && onTabChange) {
+                      onTabChange(item.id);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-[#087F79]"}`} />
+                    <Icon className={`w-4 h-4 ${isItemActive ? "text-white" : "text-[#108B83]"}`} />
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                      isActive ? "bg-white/20 text-white" : "bg-[#DFEFEC] text-[#087F79]"
+                      isItemActive ? "bg-white/20 text-white" : "bg-[#DDEFE9] text-[#08786F]"
                     }`}>
                       {item.badge}
                     </span>
                   )}
-                </Link>
+                </div>
               );
+
+              if (item.href && (!onTabChange || !item.id)) {
+                return (
+                  <Link key={idx} href={item.href}>
+                    {content}
+                  </Link>
+                );
+              }
+
+              return <div key={idx}>{content}</div>;
             })}
           </nav>
 
-          {/* User ID & Session Guard Card */}
-          <div className="pt-4 border-t border-[#D9E3E9] space-y-2">
-            <div className="flex items-center gap-2 text-xs text-[#087F79] font-medium">
-              <ShieldCheck className="w-4 h-4 text-[#087F79] shrink-0" />
-              <span>Role-Enforced Session</span>
+          {/* Session Security Guard Card */}
+          <div className="pt-4 border-t border-[#D5E0E3] space-y-2">
+            <div className="flex items-center gap-2 text-xs text-[#08786F] font-semibold">
+              <ShieldCheck className="w-4 h-4 text-[#108B83] shrink-0" />
+              <span>Role-Enforced RBAC</span>
             </div>
             <Link
               href="/hospitals"
-              className="flex items-center justify-between text-[11px] text-[#43566C] hover:text-[#087F79] pt-1"
+              className="flex items-center justify-between text-[11px] text-[#667986] hover:text-[#108B83] pt-1 transition"
             >
-              <span>Explore Hospital Network</span>
+              <span>Explore Public Hospitals</span>
               <ExternalLink className="w-3 h-3" />
             </Link>
           </div>
@@ -271,90 +381,76 @@ export function PortalShell({
         {mobileOpen && (
           <div className="fixed inset-0 z-50 lg:hidden flex">
             <div className="fixed inset-0 bg-black/40 backdrop-blur-xs" onClick={() => setMobileOpen(false)} />
-            <div className="relative w-72 max-w-[80vw] bg-[#F8FAFB] border-r border-[#D9E3E9] p-6 flex flex-col justify-between z-10 shadow-2xl">
+            <div className="relative w-72 max-w-[80vw] bg-[#F6F9F8] border-r border-[#D5E0E3] p-6 flex flex-col justify-between z-10 shadow-2xl animate-in slide-in-from-left duration-200">
               <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-[#D9E3E9] pb-4">
+                <div className="flex items-center justify-between border-b border-[#D5E0E3] pb-4">
                   <Logo variant="dark" size="sm" />
-                  <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg hover:bg-[#F0F4F7]">
-                    <X className="w-5 h-5 text-[#43566C]" />
+                  <button onClick={() => setMobileOpen(false)} className="p-1 rounded-lg hover:bg-[#EDF2F4]">
+                    <X className="w-5 h-5 text-[#667986]" />
                   </button>
                 </div>
 
-                <div className="p-3 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] text-xs">
-                  <span className="text-[10px] font-bold uppercase text-[#43566C]">Active Role</span>
-                  <div className="font-bold text-[#20364C] mt-0.5">{displayRoleTitle}</div>
-                  <div className="text-[11px] text-[#087F79] mt-0.5">{facility}</div>
+                <div className="p-3.5 rounded-2xl bg-[#EDF2F4] border border-[#D5E0E3] space-y-1">
+                  <div className="text-xs font-bold text-[#243847]">{displayName}</div>
+                  <div className="text-[11px] text-[#08786F] font-semibold">{displayRoleTitle}</div>
+                  <div className="text-[10px] text-[#667986] truncate">{facility}</div>
                 </div>
 
-                <nav className="space-y-1">
+                <nav className="space-y-1.5">
                   {effectiveNavItems.map((item, idx) => {
-                    const isActive = item.active !== undefined ? item.active : pathname === item.href;
+                    const isItemActive = item.id && activeTabId ? item.id === activeTabId : item.active;
                     const Icon = item.icon;
                     return (
-                      <Link
+                      <div
                         key={idx}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold ${
-                          isActive
-                            ? "bg-[#087F79] text-white"
-                            : "text-[#43566C] hover:bg-[#F0F4F7]"
+                        className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-medium cursor-pointer ${
+                          isItemActive
+                            ? "bg-[#108B83] text-white font-bold"
+                            : "text-[#667986] hover:bg-[#EDF2F4] hover:text-[#243847]"
                         }`}
+                        onClick={() => {
+                          if (item.onClick) item.onClick();
+                          else if (item.id && onTabChange) onTabChange(item.id);
+                          setMobileOpen(false);
+                          if (item.href && (!onTabChange || !item.id)) router.push(item.href);
+                        }}
                       >
                         <div className="flex items-center gap-2.5">
-                          <Icon className="w-4 h-4" />
+                          <Icon className={`w-4 h-4 ${isItemActive ? "text-white" : "text-[#108B83]"}`} />
                           <span>{item.label}</span>
                         </div>
-                        {item.badge && <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/20">{item.badge}</span>}
-                      </Link>
+                        {item.badge && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#DDEFE9] text-[#08786F]">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
                     );
                   })}
                 </nav>
               </div>
 
-              <button
-                onClick={handleLogout}
-                className="w-full py-2.5 rounded-xl border border-rose-200 text-rose-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-rose-50"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out of Workspace
-              </button>
+              <div className="pt-4 border-t border-[#D5E0E3]">
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold hover:bg-rose-100 transition"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Content Pane */}
+        {/* Primary Main Content Area */}
         <main className="flex-grow min-w-0 space-y-6">
-          {pageTitle && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#D9E3E9] pb-4">
-              <div>
-                <h1 className="text-2xl font-extrabold text-[#20364C] tracking-tight">{pageTitle}</h1>
-                {breadcrumbs && (
-                  <div className="flex items-center gap-1.5 text-xs text-[#43566C] mt-1">
-                    {breadcrumbs.map((b, i) => (
-                      <React.Fragment key={i}>
-                        {i > 0 && <ChevronRight className="w-3 h-3 text-[#D9E3E9]" />}
-                        {b.href ? (
-                          <Link href={b.href} className="hover:text-[#087F79]">{b.label}</Link>
-                        ) : (
-                          <span className="text-[#20364C] font-semibold">{b.label}</span>
-                        )}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {children}
         </main>
 
       </div>
 
-      {/* Global Search Modal */}
       <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-
     </div>
   );
 }

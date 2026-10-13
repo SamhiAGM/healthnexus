@@ -144,11 +144,13 @@ export default function ReceptionDashboard() {
     getCurrentUser().then((user) => {
       if (!isMounted) return;
       if (!user || (!user.roles?.includes("RECEPTIONIST") && !user.roles?.includes("SYSTEM_ADMIN") && !user.roles?.includes("HOSPITAL_ADMIN"))) {
-        router.push("/auth/staff-login");
-        return;
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
       }
-      if (user.fullName) setUserName(user.fullName);
-      if (user.assignedFacilityId) setFacilityName(user.assignedFacilityId);
+      if (user?.fullName) setUserName(user.fullName);
+      if (user?.assignedFacilityId) setFacilityName(user.assignedFacilityId);
       fetchQueue();
     });
     return () => {

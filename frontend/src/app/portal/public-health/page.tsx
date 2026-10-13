@@ -91,8 +91,10 @@ export default function PublicHealthPortalPage() {
     getCurrentUser().then((user) => {
       if (!isMounted) return;
       if (!user || !user.roles?.some(r => ["PUBLIC_HEALTH_OFFICER", "FIELD_SUPERVISOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
-        router.push("/auth/staff-login");
-        return;
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
       }
       fetchData();
     });

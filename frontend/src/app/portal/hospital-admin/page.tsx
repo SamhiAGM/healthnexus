@@ -98,8 +98,10 @@ export default function HospitalAdminPortalPage() {
     getCurrentUser().then((user) => {
       if (!isMounted) return;
       if (!user || (!user.roles?.includes("HOSPITAL_ADMIN") && !user.roles?.includes("SYSTEM_ADMIN"))) {
-        router.push("/auth/staff-login");
-        return;
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
       }
       fetchData();
     });

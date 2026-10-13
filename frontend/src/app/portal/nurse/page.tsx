@@ -133,11 +133,13 @@ export default function NurseDashboard() {
     getCurrentUser().then((user) => {
       if (!isMounted) return;
       if (!user || !user.roles?.some(r => ["NURSE", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
-        router.push("/auth/staff-login");
-        return;
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
       }
-      if (user.fullName) setUserName(user.fullName);
-      if (user.assignedFacilityId) setFacilityName(user.assignedFacilityId);
+      if (user?.fullName) setUserName(user.fullName);
+      if (user?.assignedFacilityId) setFacilityName(user.assignedFacilityId);
       fetchLiveTriage();
     });
     return () => {
@@ -244,7 +246,7 @@ export default function NurseDashboard() {
             value="1 Patient"
             subValue="Expedited directly to Consultant"
             icon={AlertTriangle}
-            colorScheme="purple"
+            colorScheme="coral"
           />
         </div>
 

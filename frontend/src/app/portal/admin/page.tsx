@@ -133,10 +133,12 @@ export default function AdminDashboard() {
     getCurrentUser().then((user) => {
       if (!isMounted) return;
       if (!user || !user.roles?.some(r => ["SYSTEM_ADMIN", "HOSPITAL_ADMIN"].includes(r))) {
-        router.push("/auth/staff-login");
-        return;
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
       }
-      if (user.fullName) setUserName(user.fullName);
+      if (user?.fullName) setUserName(user.fullName);
       fetchLiveRequests();
     });
     return () => {

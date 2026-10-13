@@ -63,8 +63,10 @@ export default function LaboratoryPortalPage() {
     getCurrentUser().then((user) => {
       if (!isMounted) return;
       if (!user || !user.roles?.some(r => ["LAB_TECHNICIAN", "LAB_STAFF", "DOCTOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
-        router.push("/auth/staff-login");
-        return;
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
       }
       fetchOrders();
     });

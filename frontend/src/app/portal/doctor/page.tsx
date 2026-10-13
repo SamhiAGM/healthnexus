@@ -149,11 +149,13 @@ export default function DoctorDashboard() {
     getCurrentUser().then((user) => {
       if (!isMounted) return;
       if (!user || !user.roles?.some(r => ["DOCTOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
-        router.push("/auth/staff-login");
-        return;
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
       }
-      if (user.fullName) setUserName(user.fullName);
-      if (user.assignedFacilityId) setFacilityName(user.assignedFacilityId);
+      if (user?.fullName) setUserName(user.fullName);
+      if (user?.assignedFacilityId) setFacilityName(user.assignedFacilityId);
       fetchLiveQueue();
     });
     return () => {
