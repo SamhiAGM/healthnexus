@@ -108,8 +108,6 @@ public class EmailOtpService {
         token.setAttempts(0);
         token.setVerified(false);
 
-        tokenRepository.save(token);
-
         // Determine recipient display name if not explicitly passed
         String recipientName = request.getRecipientName();
         if (recipientName == null || recipientName.isBlank()) {
@@ -120,6 +118,10 @@ public class EmailOtpService {
 
         // Transmit HTML email
         emailService.sendVerificationOtp(email, recipientName, otp);
+
+        // Persist the token only after SMTP accepts the message. If dispatch fails,
+        // the user can retry immediately instead of being blocked by a stale cooldown.
+        tokenRepository.save(token);
     }
 
     /**

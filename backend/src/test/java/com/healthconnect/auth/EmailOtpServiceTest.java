@@ -67,6 +67,18 @@ class EmailOtpServiceTest {
     }
 
     @Test
+    @DisplayName("Email OTP: Does not persist a cooldown token when SMTP dispatch fails")
+    void testSendEmailOtp_DeliveryFailure_DoesNotPersistToken() {
+        RequestEmailOtpRequest request = new RequestEmailOtpRequest("citizen@healthnexus.lk", "Kasun Perera");
+        when(tokenRepository.findByEmail("citizen@healthnexus.lk")).thenReturn(Optional.empty());
+        doThrow(new IllegalStateException("SMTP unavailable"))
+                .when(emailService).sendVerificationOtp(eq("citizen@healthnexus.lk"), eq("Kasun Perera"), anyString());
+
+        assertThrows(IllegalStateException.class, () -> emailOtpService.sendEmailOtp(request));
+        verify(tokenRepository, never()).save(any(EmailVerificationToken.class));
+    }
+
+    @Test
     @DisplayName("Rate Limiting: Enforces 60-second cooldown on OTP resend requests")
     void testSendEmailOtp_ResendCooldown_ThrowsException() {
         RequestEmailOtpRequest request = new RequestEmailOtpRequest("citizen@healthnexus.lk", "Kasun Perera");
