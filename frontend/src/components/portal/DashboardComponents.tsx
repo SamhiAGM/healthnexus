@@ -42,63 +42,63 @@ export function PremiumStatCard({
 }: PremiumStatCardProps) {
   const schemeStyles = {
     teal: {
-      bg: "bg-[#FAFBFA]",
-      border: "border-[#D5E0E3] hover:border-[#108B83]",
-      iconBg: "bg-[#DDEFE9] text-[#08786F] border-[#108B83]/30",
-      accent: "text-[#08786F]"
+      bg: "bg-[#F8FAF9]",
+      border: "border-[#D6E3E7] hover:border-[#0F8B80]",
+      iconBg: "bg-[#E1F1EC] text-[#0F8B80] border-[#0F8B80]/30",
+      accent: "text-[#0F8B80]"
     },
     blue: {
-      bg: "bg-[#FAFBFA]",
-      border: "border-[#D5E0E3] hover:border-[#467DA3]",
-      iconBg: "bg-[#DFEAF0] text-[#467DA3] border-[#467DA3]/30",
-      accent: "text-[#467DA3]"
+      bg: "bg-[#F8FAF9]",
+      border: "border-[#D6E3E7] hover:border-[#3A84A8]",
+      iconBg: "bg-[#DFEAF0] text-[#3A84A8] border-[#3A84A8]/30",
+      accent: "text-[#3A84A8]"
     },
     coral: {
-      bg: "bg-[#FAFBFA]",
-      border: "border-[#D5E0E3] hover:border-rose-400",
+      bg: "bg-[#F8FAF9]",
+      border: "border-[#D6E3E7] hover:border-rose-400",
       iconBg: "bg-rose-50 text-rose-700 border-rose-200",
       accent: "text-rose-700"
     },
     amber: {
-      bg: "bg-[#FAFBFA]",
-      border: "border-[#D5E0E3] hover:border-amber-400",
+      bg: "bg-[#F8FAF9]",
+      border: "border-[#D6E3E7] hover:border-amber-400",
       iconBg: "bg-amber-50 text-amber-800 border-amber-200",
       accent: "text-amber-800"
     },
     purple: {
-      bg: "bg-[#FAFBFA]",
-      border: "border-[#D5E0E3] hover:border-purple-400",
+      bg: "bg-[#F8FAF9]",
+      border: "border-[#D6E3E7] hover:border-purple-400",
       iconBg: "bg-purple-50 text-purple-700 border-purple-200",
       accent: "text-purple-700"
     },
     slate: {
-      bg: "bg-[#FAFBFA]",
-      border: "border-[#D5E0E3] hover:border-[#667986]",
-      iconBg: "bg-[#EDF2F4] text-[#3C5262] border-[#D5E0E3]",
-      accent: "text-[#3C5262]"
+      bg: "bg-[#F8FAF9]",
+      border: "border-[#D6E3E7] hover:border-[#617583]",
+      iconBg: "bg-[#EDF3F5] text-[#3F5362] border-[#D6E3E7]",
+      accent: "text-[#3F5362]"
     }
   }[colorScheme];
 
   return (
     <div className={`p-5 sm:p-6 rounded-3xl ${schemeStyles.bg} border ${schemeStyles.border} shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between`}>
       <div className="flex items-start justify-between gap-2">
-        <span className="text-xs font-bold text-[#667986] uppercase tracking-wider">{label}</span>
+        <span className="text-xs font-bold text-[#617583] uppercase tracking-wider">{label}</span>
         <div className={`w-10 h-10 rounded-2xl ${schemeStyles.iconBg} border flex items-center justify-center shrink-0 shadow-xs`}>
           <Icon className="w-5 h-5" />
         </div>
       </div>
 
       <div className="mt-3">
-        <div className="text-2xl sm:text-3xl font-extrabold text-[#243847] tracking-tight">{value}</div>
+        <div className="text-2xl sm:text-3xl font-extrabold text-[#233B48] tracking-tight">{value}</div>
         {subValue && (
-          <div className="text-xs text-[#667986] mt-1 font-medium">{subValue}</div>
+          <div className="text-xs text-[#617583] mt-1 font-medium">{subValue}</div>
         )}
       </div>
 
       {(trend || badge) && (
-        <div className="mt-4 pt-3 border-t border-[#D5E0E3] flex items-center justify-between text-xs">
+        <div className="mt-4 pt-3 border-t border-[#D6E3E7] flex items-center justify-between text-xs">
           {trend ? (
-            <span className={`flex items-center gap-1 font-bold ${trend.positive ? "text-[#08786F]" : "text-rose-600"}`}>
+            <span className={`flex items-center gap-1 font-bold ${trend.positive ? "text-[#0F8B80]" : "text-rose-600"}`}>
               {trend.positive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
               <span>{trend.value}</span>
             </span>
@@ -127,65 +127,83 @@ export interface ChartCardProps {
 
 export function ChartCard({ title, subtitle, badge, children, actions }: ChartCardProps) {
   return (
-    <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-5 sm:p-6 shadow-xs space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D5E0E3] pb-4">
+    <div className="rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] p-5 sm:p-6 shadow-xs space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D6E3E7] pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-base sm:text-lg font-bold text-[#243847]">{title}</h3>
+            <h3 className="text-base sm:text-lg font-bold text-[#233B48]">{title}</h3>
             {badge && (
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#08786F] bg-[#DDEFE9] border border-[#108B83]/30 px-2.5 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-[#0F8B80] bg-[#E1F1EC] border border-[#0F8B80]/30 px-2.5 py-0.5 rounded-full">
                 {badge}
               </span>
             )}
           </div>
-          {subtitle && <p className="text-xs text-[#667986]">{subtitle}</p>}
+          {subtitle && (
+            <p className="text-xs text-[#617583]">{subtitle}</p>
+          )}
         </div>
-        {actions && <div className="shrink-0">{actions}</div>}
+        {actions && (
+          <div className="flex items-center gap-2">
+            {actions}
+          </div>
+        )}
       </div>
-      <div>{children}</div>
+
+      <div className="w-full">
+        {children}
+      </div>
     </div>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* 3. ACTIVITY TIMELINE                                                        */
+/* 3. ACTIVITY TIMELINE ITEM                                                   */
 /* -------------------------------------------------------------------------- */
 export interface ActivityItem {
   id: string;
   title: string;
   description: string;
   time: string;
+  status?: "SUCCESS" | "WARNING" | "INFO" | "ALERT";
   icon?: LucideIcon;
-  status?: "SUCCESS" | "INFO" | "WARNING" | "CRITICAL";
 }
 
 export function ActivityTimeline({ items }: { items: ActivityItem[] }) {
-  if (!items || items.length === 0) {
-    return <EmptyState title="No recent activity" message="No operational events recorded in this timeframe." />;
-  }
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case "SUCCESS":
+        return "text-[#0F8B80] bg-[#E1F1EC] border-[#0F8B80]/30";
+      case "WARNING":
+        return "text-amber-800 bg-amber-50 border-amber-300";
+      case "ALERT":
+        return "text-rose-700 bg-rose-50 border-rose-200";
+      default:
+        return "text-[#3A84A8] bg-[#DFEAF0] border-[#3A84A8]/30";
+    }
+  };
 
   return (
-    <div className="space-y-4 relative before:absolute before:left-3.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#D5E0E3]">
-      {items.map((item) => {
+    <div className="space-y-4">
+      {items.map((item, index) => {
         const Icon = item.icon || Clock;
-        const statusColors = {
-          SUCCESS: "text-[#08786F] bg-[#DDEFE9] border-[#108B83]/30",
-          INFO: "text-[#467DA3] bg-[#DFEAF0] border-[#467DA3]/30",
-          WARNING: "text-amber-800 bg-amber-50 border-amber-300",
-          CRITICAL: "text-rose-800 bg-rose-50 border-rose-300"
-        }[item.status || "INFO"];
+        const isLast = index === items.length - 1;
 
         return (
-          <div key={item.id} className="relative flex items-start gap-3 pl-8">
-            <div className={`absolute left-1.5 top-0.5 w-5 h-5 rounded-full border ${statusColors} flex items-center justify-center shrink-0`}>
-              <Icon className="w-3 h-3" />
+          <div key={item.id} className="relative flex items-start gap-4">
+            {!isLast && (
+              <span className="absolute top-8 left-4 -ml-px h-full w-0.5 bg-[#D6E3E7]" aria-hidden="true" />
+            )}
+
+            <div className={`relative flex h-8 w-8 items-center justify-center rounded-2xl border ${getStatusColor(item.status)} shadow-xs shrink-0`}>
+              <Icon className="h-4 w-4" />
             </div>
-            <div className="flex-grow space-y-0.5">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-[#243847]">{item.title}</span>
-                <span className="text-[11px] text-[#667986] font-mono">{item.time}</span>
+
+            <div className="min-w-0 flex-1 pt-0.5 space-y-0.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs sm:text-sm font-bold text-[#233B48] truncate">{item.title}</p>
+                <span className="text-[10px] text-[#617583] whitespace-nowrap">{item.time}</span>
               </div>
-              <p className="text-xs text-[#3C5262] leading-relaxed">{item.description}</p>
+              <p className="text-xs text-[#617583] leading-relaxed">{item.description}</p>
             </div>
           </div>
         );
@@ -207,13 +225,13 @@ export function StatusIndicator({ status }: { status: string }) {
       case "VERIFIED_CLOSED":
       case "CONFIRMED":
       case "RESOLVED":
-        return { label: status, bg: "bg-[#DDEFE9]", text: "text-[#08786F]", border: "border-[#108B83]/30", dot: "bg-[#08786F]" };
+        return { label: status, bg: "bg-[#E1F1EC]", text: "text-[#0F8B80]", border: "border-[#0F8B80]/30", dot: "bg-[#0F8B80]" };
       case "IN_PROGRESS":
       case "IN_CONSULTATION":
       case "PROCESSING":
       case "OPEN":
       case "WAITING":
-        return { label: status, bg: "bg-[#DFEAF0]", text: "text-[#467DA3]", border: "border-[#467DA3]/30", dot: "bg-[#467DA3] animate-pulse" };
+        return { label: status, bg: "bg-[#DFEAF0]", text: "text-[#3A84A8]", border: "border-[#3A84A8]/30", dot: "bg-[#3A84A8] animate-pulse" };
       case "PENDING":
       case "PENDING_APPROVAL":
       case "CALLED":
@@ -226,7 +244,7 @@ export function StatusIndicator({ status }: { status: string }) {
       case "EXPIRED":
         return { label: status, bg: "bg-rose-50", text: "text-rose-800", border: "border-rose-300", dot: "bg-rose-500" };
       default:
-        return { label: status, bg: "bg-[#EDF2F4]", text: "text-[#3C5262]", border: "border-[#D5E0E3]", dot: "bg-[#667986]" };
+        return { label: status, bg: "bg-[#EDF3F5]", text: "text-[#3F5362]", border: "border-[#D6E3E7]", dot: "bg-[#617583]" };
     }
   })();
 
@@ -254,12 +272,12 @@ export function EmptyState({
 }) {
   const Icon = CustomIcon || Info;
   return (
-    <div className="py-12 px-6 rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] text-center space-y-3 shadow-xs">
-      <div className="w-12 h-12 rounded-2xl bg-[#DDEFE9] border border-[#108B83]/30 mx-auto flex items-center justify-center text-[#08786F]">
-        <Icon className="w-6 h-6 text-[#08786F]" />
+    <div className="py-12 px-6 rounded-3xl bg-[#F8FAF9] border border-[#D6E3E7] text-center space-y-3 shadow-xs">
+      <div className="w-12 h-12 rounded-2xl bg-[#E1F1EC] border border-[#0F8B80]/30 mx-auto flex items-center justify-center text-[#0F8B80]">
+        <Icon className="w-6 h-6 text-[#0F8B80]" />
       </div>
-      <h4 className="text-sm font-bold text-[#243847]">{title}</h4>
-      <p className="text-xs text-[#667986] max-w-sm mx-auto leading-relaxed">{message}</p>
+      <h4 className="text-sm font-bold text-[#233B48]">{title}</h4>
+      <p className="text-xs text-[#617583] max-w-sm mx-auto leading-relaxed">{message}</p>
       {action && <div className="pt-2">{action}</div>}
     </div>
   );
@@ -272,7 +290,7 @@ export function LoadingSkeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="space-y-3 animate-pulse">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="h-16 rounded-2xl bg-[#E7EFF1] border border-[#D5E0E3]" />
+        <div key={i} className="h-16 rounded-2xl bg-[#E5EEF1] border border-[#D6E3E7]" />
       ))}
     </div>
   );
@@ -289,21 +307,21 @@ export function RoleIllustration({ role, size = "md" }: { role: string; size?: "
   }[size];
 
   const roleConfigs: Record<string, { initials: string; bg: string; text: string; border: string }> = {
-    PATIENT: { initials: "PT", bg: "bg-[#DDEFE9]", text: "text-[#08786F]", border: "border-[#108B83]/30" },
-    DOCTOR: { initials: "DR", bg: "bg-[#DFEAF0]", text: "text-[#467DA3]", border: "border-[#467DA3]/30" },
+    PATIENT: { initials: "PT", bg: "bg-[#E1F1EC]", text: "text-[#0F8B80]", border: "border-[#0F8B80]/30" },
+    DOCTOR: { initials: "DR", bg: "bg-[#DFEAF0]", text: "text-[#3A84A8]", border: "border-[#3A84A8]/30" },
     NURSE: { initials: "NS", bg: "bg-rose-50", text: "text-[#E26D5C]", border: "border-[#E26D5C]/30" },
-    RECEPTIONIST: { initials: "RC", bg: "bg-[#DFEAF0]", text: "text-[#467DA3]", border: "border-[#467DA3]/30" },
-    PHARMACIST: { initials: "PH", bg: "bg-[#DDEFE9]", text: "text-[#108B83]", border: "border-[#108B83]/30" },
-    LAB_TECHNICIAN: { initials: "LB", bg: "bg-[#DFEAF0]", text: "text-[#467DA3]", border: "border-[#467DA3]/30" },
-    LAB_STAFF: { initials: "LB", bg: "bg-[#DFEAF0]", text: "text-[#467DA3]", border: "border-[#467DA3]/30" },
-    PUBLIC_HEALTH_OFFICER: { initials: "PH", bg: "bg-[#DDEFE9]", text: "text-[#08786F]", border: "border-[#108B83]/30" },
+    RECEPTIONIST: { initials: "RC", bg: "bg-[#DFEAF0]", text: "text-[#3A84A8]", border: "border-[#3A84A8]/30" },
+    PHARMACIST: { initials: "PH", bg: "bg-[#E1F1EC]", text: "text-[#0F8B80]", border: "border-[#0F8B80]/30" },
+    LAB_TECHNICIAN: { initials: "LB", bg: "bg-[#DFEAF0]", text: "text-[#3A84A8]", border: "border-[#3A84A8]/30" },
+    LAB_STAFF: { initials: "LB", bg: "bg-[#DFEAF0]", text: "text-[#3A84A8]", border: "border-[#3A84A8]/30" },
+    PUBLIC_HEALTH_OFFICER: { initials: "PH", bg: "bg-[#E1F1EC]", text: "text-[#0F8B80]", border: "border-[#0F8B80]/30" },
     FIELD_SUPERVISOR: { initials: "FS", bg: "bg-amber-50", text: "text-amber-800", border: "border-amber-300" },
-    HOSPITAL_ADMIN: { initials: "HA", bg: "bg-[#243847]", text: "text-[#DDEFE9]", border: "border-[#108B83]/40" },
-    SYSTEM_ADMIN: { initials: "SA", bg: "bg-[#243847]", text: "text-[#63E2D8]", border: "border-[#63E2D8]/40" },
-    CLINIC_COORDINATOR: { initials: "CC", bg: "bg-[#DFEAF0]", text: "text-[#467DA3]", border: "border-[#467DA3]/30" },
+    HOSPITAL_ADMIN: { initials: "HA", bg: "bg-[#233B48]", text: "text-[#E1F1EC]", border: "border-[#0F8B80]/40" },
+    SYSTEM_ADMIN: { initials: "SA", bg: "bg-[#233B48]", text: "text-[#63E2D8]", border: "border-[#63E2D8]/40" },
+    CLINIC_COORDINATOR: { initials: "CC", bg: "bg-[#DFEAF0]", text: "text-[#3A84A8]", border: "border-[#3A84A8]/30" },
   };
 
-  const cfg = roleConfigs[role.toUpperCase()] || { initials: "HN", bg: "bg-[#DDEFE9]", text: "text-[#08786F]", border: "border-[#108B83]/30" };
+  const cfg = roleConfigs[role.toUpperCase()] || { initials: "HN", bg: "bg-[#E1F1EC]", text: "text-[#0F8B80]", border: "border-[#0F8B80]/30" };
 
   return (
     <div className={`${sizeMap} rounded-2xl ${cfg.bg} ${cfg.text} border ${cfg.border} font-extrabold flex items-center justify-center shrink-0 shadow-xs select-none`}>
@@ -338,20 +356,20 @@ export function ConfirmationDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="bg-[#FAFBFA] border border-[#D5E0E3] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-        <h3 className="text-lg font-bold text-[#243847]">{title}</h3>
-        <p className="text-xs sm:text-sm text-[#3C5262] leading-relaxed">{message}</p>
-        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#D5E0E3]">
+      <div className="bg-[#F8FAF9] border border-[#D6E3E7] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <h3 className="text-lg font-bold text-[#233B48]">{title}</h3>
+        <p className="text-xs sm:text-sm text-[#3F5362] leading-relaxed">{message}</p>
+        <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#D6E3E7]">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-xs font-semibold text-[#667986] hover:text-[#243847] transition"
+            className="px-4 py-2 text-xs font-semibold text-[#617583] hover:text-[#233B48] transition"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             className={`px-4 py-2 text-xs font-bold rounded-xl text-white transition ${
-              isDestructive ? "bg-rose-600 hover:bg-rose-700" : "bg-[#108B83] hover:bg-[#08786F]"
+              isDestructive ? "bg-rose-600 hover:bg-rose-700" : "bg-[#0F8B80] hover:bg-[#08786F]"
             }`}
           >
             {confirmLabel}

@@ -2,27 +2,30 @@
 
 @layer base {
   :root {
-    /* Balanced Color Palette Tokens (Section 3 Specification) */
-    --color-bg-primary: #F0F4F7;
-    --color-bg-secondary: #E8F0F4;
-    --color-surface-ivory: #F8F7F3;
-    --color-surface-card: #F8FAFB;
-    --color-teal-soft: #DFEFEC;
-    --color-turquoise-muted: #159B94;
-    --color-teal-deep: #087F79;
-    --color-blue-medical: #426DA9;
-    --color-lavender-soft: #EBE8F5;
-    --color-slate-muted: #43566C;
-    --color-heading-primary: #20364C;
-    --color-text-main: #364A5D;
-    --color-border-subtle: #D9E3E9;
+    /* Balanced Color Palette Tokens (Section 3 Master Specification) */
+    --color-bg-main: #EDF2F4;
+    --color-bg-secondary: #E7EFF1;
+    --color-surface-premium: #F6F9F8;
+    --color-surface-card: #FAFBFA;
+    --color-mist-blue: #DFEAF0;
+    --color-soft-mint: #DDEFE9;
+    --color-primary-teal: #108B83;
+    --color-deep-teal: #08786F;
+    --color-medical-blue: #467DA3;
+    --color-slate-blue: #698399;
+    --color-accent-lavender: #E5E5F2;
+    --color-muted-coral: #C97972;
+    --color-primary-heading: #243847;
+    --color-main-body: #3C5262;
+    --color-secondary-text: #667986;
+    --color-border: #D5E0E3;
 
     /* Theme Aliases */
-    --background: #F0F4F7;
-    --foreground: #20364C;
-    --card: #F8FAFB;
-    --card-foreground: #364A5D;
-    --border: #D9E3E9;
+    --background: #EDF2F4;
+    --foreground: #243847;
+    --card: #FAFBFA;
+    --card-foreground: #3C5262;
+    --border: #D5E0E3;
   }
 }
 
@@ -31,31 +34,49 @@ html {
 }
 
 body {
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-main);
+  background-color: var(--color-bg-main);
+  color: var(--color-main-body);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Custom Balanced Utility Classes */
-.bg-nexus-primary { background-color: #F0F4F7; }
-.bg-nexus-secondary { background-color: #E8F0F4; }
-.bg-nexus-ivory { background-color: #F8F7F3; }
-.bg-nexus-card { background-color: #F8FAFB; }
-.bg-nexus-teal-soft { background-color: #DFEFEC; }
-.bg-nexus-lavender { background-color: #EBE8F5; }
-.text-nexus-heading { color: #20364C; }
-.text-nexus-main { color: #364A5D; }
-.text-nexus-slate { color: #43566C; }
-.text-nexus-teal { color: #087F79; }
-.text-nexus-turquoise { color: #159B94; }
-.text-nexus-blue { color: #426DA9; }
-.border-nexus { border-color: #D9E3E9; }
+/* Custom Balanced Utility Classes matching Section 3 Tokens */
+.bg-nexus-main { background-color: #EDF2F4; }
+.bg-nexus-secondary { background-color: #E7EFF1; }
+.bg-nexus-surface { background-color: #F6F9F8; }
+.bg-nexus-card { background-color: #FAFBFA; }
+.bg-nexus-mist { background-color: #DFEAF0; }
+.bg-nexus-mint { background-color: #DDEFE9; }
+.bg-nexus-lavender { background-color: #E5E5F2; }
+
+.text-nexus-heading { color: #243847; }
+.text-nexus-body { color: #3C5262; }
+.text-nexus-secondary { color: #667986; }
+.text-nexus-teal { color: #108B83; }
+.text-nexus-deep-teal { color: #08786F; }
+.text-nexus-blue { color: #467DA3; }
+.text-nexus-slate { color: #698399; }
+.text-nexus-coral { color: #C97972; }
+
+.border-nexus { border-color: #D5E0E3; }
+
+/* Subtle Ambient Gradient Backgrounds */
+.bg-mesh-subtle {
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(223, 234, 240, 0.7) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(221, 239, 233, 0.6) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(229, 229, 242, 0.4) 0px, transparent 50%);
+}
+
+.bg-hero-cinematic {
+  background-image: 
+    linear-gradient(135deg, rgba(237, 242, 244, 0.95) 0%, rgba(231, 239, 241, 0.92) 50%, rgba(223, 234, 240, 0.95) 100%);
+}
 
 /* Accessible focus ring standards */
 :focus-visible {
-  outline: 2px solid #087F79;
+  outline: 2px solid #108B83;
   outline-offset: 2px;
 }
 
@@ -65,7 +86,7 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #E8F0F4;
+  background: #E7EFF1;
 }
 ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
@@ -75,6 +96,17 @@ body {
   background: #94A3B8;
 }
 
+/* Ken Burns Subtle Motion Effect for Cinematic Imagery */
+@keyframes kenburns {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.04) translate(-0.5%, -0.5%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+.animate-kenburns {
+  animation: kenburns 24s ease-in-out infinite alternate;
+}
+
 /* Reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
@@ -82,5 +114,8 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .animate-kenburns {
+    animation: none !important;
   }
 }

@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/brand/Logo";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import { apiFetch } from "@/lib/api";
 import { 
   Building2, 
@@ -19,14 +19,15 @@ import {
   CheckCircle2, 
   AlertCircle, 
   Clock, 
-  Sparkles, 
-  ArrowLeft 
+  UserPlus, 
+  FileCheck2, 
+  Search 
 } from "lucide-react";
 
 export default function StaffRegisterPage() {
   const router = useRouter();
 
-  // Multi-step stage tracking: 1: Personal & Role, 2: Facility & Credentials, 3: Security & Consent, 4: Submitted
+  // Multi-step tracking: 1: Personal & Role, 2: Facility & Credentials, 3: Security & Consent, 4: Submitted
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Form state
@@ -51,6 +52,14 @@ export default function StaffRegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submittedData, setSubmittedData] = useState<any>(null);
+
+  // Status check modal/state
+  const [checkingStatus, setCheckingStatus] = useState(false);
+  const [lookupRequestId, setLookupRequestId] = useState("");
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [statusResult, setStatusResult] = useState<any>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
 
   const hospitals = [
     { id: "NHSL", name: "National Hospital of Sri Lanka (NHSL)" },
@@ -143,215 +152,285 @@ export default function StaffRegisterPage() {
     }
   };
 
+  const handleStatusLookup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLookupError(null);
+    setLookupLoading(true);
+
+    try {
+      const res = await apiFetch<any>(`/api/staff/access-requests/status?requestId=${encodeURIComponent(lookupRequestId.trim())}&email=${encodeURIComponent(lookupEmail.trim().toLowerCase())}`);
+      setStatusResult(res);
+    } catch (err: any) {
+      setLookupError(err.message || "No matching access request found for these credentials.");
+    } finally {
+      setLookupLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#172B4D] flex flex-col lg:flex-row selection:bg-blue-600 selection:text-white">
-      
-      {/* LEFT COLUMN: Visual Branding & Institutional Assurance (Desktop 45%) */}
-      <div className="hidden lg:flex lg:w-5/12 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-[#1E3A8A] via-[#1E40AF] to-[#0F766E] text-white">
-        <div className="absolute top-[-10%] left-[-10%] w-[450px] h-[450px] bg-white/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[450px] h-[450px] bg-teal-400/10 rounded-full blur-[120px] pointer-events-none" />
-
-        <div className="relative z-10">
-          <Logo variant="light" size="lg" />
-          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-blue-100 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-blue-200" />
-            Healthcare Professional Onboarding
-          </div>
-        </div>
-
-        <div className="relative z-10 max-w-md space-y-6">
-          <h1 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-tight">
-            Institutional Verification For Healthcare Practitioners.
-          </h1>
-          <p className="text-sm xl:text-base text-blue-100/90 leading-relaxed">
-            HealthNexus requires all clinicians, nursing officers, and administrative personnel to undergo verified credential approval before receiving clinical access.
-          </p>
-
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md text-xs text-blue-50">
-              <ShieldCheck className="w-4 h-4 text-emerald-300 shrink-0" />
-              <span>Sri Lanka Medical Council (SLMC) & SLNC registration validation required for clinical duties.</span>
+    <AuthLayout
+      badgeText="Staff Credentialing"
+      badgeIcon={ShieldCheck}
+      badgeVariant="blue"
+      imageSrc="/images/staff_collaboration.jpg"
+      imageAlt="Sri Lankan Healthcare Team Collaborating on Clinical Case"
+      headline="Verified Healthcare Professional Registration."
+      headlineDescription="Submit official medical credentials for administrative verification. Access is role-enforced and gated by institutional approval."
+      featureCards={[
+        {
+          icon: Stethoscope,
+          title: "SLMC / SLNC Governance",
+          desc: "Clinical roles require validation against official professional registries.",
+          iconColor: "text-teal-200",
+        },
+        {
+          icon: ShieldCheck,
+          title: "Administrative Approval Gate",
+          desc: "Hospital directors verify staff identities prior to clinical privilege grants.",
+          iconColor: "text-blue-200",
+        },
+      ]}
+      title="Hospital Staff Application"
+      subtitle="Register as a medical officer, nurse, pharmacist, lab technologist, or hospital administrator."
+      backHref="/"
+      backLabel="Back to Home"
+    >
+      <div className="space-y-5">
+        
+        {/* Step Indicator (Steps 1 to 3) */}
+        {step < 4 && !checkingStatus && (
+          <div className="flex items-center justify-between pb-3 border-b border-[#D5E0E3] text-xs">
+            <span className="font-bold text-[#243847]">Step {step} of 3</span>
+            <div className="flex gap-1.5">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={`w-8 h-1.5 rounded-full transition-all ${
+                    step >= s ? "bg-[#108B83]" : "bg-[#D5E0E3]"
+                  }`}
+                />
+              ))}
             </div>
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md text-xs text-blue-50">
-              <Building2 className="w-4 h-4 text-blue-200 shrink-0" />
-              <span>Multi-hospital assignment scoping prevents unauthorized inter-facility access.</span>
+            <button
+              type="button"
+              onClick={() => setCheckingStatus(true)}
+              className="text-[#108B83] hover:underline font-semibold flex items-center gap-1"
+            >
+              <Search className="w-3 h-3" />
+              <span>Check Status</span>
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-start gap-3 shadow-2xs">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* APPLICATION STATUS LOOKUP VIEW */}
+        {checkingStatus && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-bold text-[#243847] flex items-center gap-2">
+                <Search className="w-4 h-4 text-[#108B83]" />
+                Check Staff Application Status
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setCheckingStatus(false);
+                  setStatusResult(null);
+                  setLookupError(null);
+                }}
+                className="text-xs text-[#667986] hover:text-[#243847]"
+              >
+                &larr; Back to Form
+              </button>
             </div>
-            <div className="flex items-center gap-3 p-3.5 rounded-xl bg-white/10 border border-white/15 backdrop-blur-md text-xs text-blue-50">
-              <Lock className="w-4 h-4 text-teal-200 shrink-0" />
-              <span>Accounts remain inactive in PENDING_APPROVAL until officially authorized by Hospital Administration.</span>
-            </div>
-          </div>
-        </div>
 
-        <div className="relative z-10 pt-6 border-t border-white/20 flex items-center justify-between text-xs text-blue-100/80">
-          <span>Hospital Staff Governance • Role Enforced</span>
-          <Link href="/auth/staff-login" className="text-teal-200 hover:text-white font-semibold">
-            Already verified? Sign In →
-          </Link>
-        </div>
-      </div>
+            {lookupError && (
+              <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+                {lookupError}
+              </div>
+            )}
 
-      {/* RIGHT COLUMN: Multi-Step Registration Form (Desktop 55%, Full Mobile) */}
-      <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto">
-        <div className="w-full max-w-xl space-y-6">
-          
-          <div className="lg:hidden flex justify-between items-center pb-3 border-b border-slate-200">
-            <Logo variant="dark" size="sm" />
-            <Link href="/auth/staff-login" className="text-xs font-semibold text-blue-600 hover:underline">
-              ← Staff Sign In
-            </Link>
-          </div>
+            {statusResult && (
+              <div className="p-4 rounded-2xl bg-[#DFEAF0] border border-[#467DA3]/30 text-xs space-y-2 text-[#243847]">
+                <div className="flex items-center justify-between font-bold">
+                  <span>Application: {statusResult.requestId}</span>
+                  <span className={`px-2 py-0.5 rounded-full ${statusResult.status === "APPROVED" ? "bg-[#DDEFE9] text-[#08786F]" : "bg-amber-100 text-amber-900"}`}>
+                    {statusResult.status}
+                  </span>
+                </div>
+                <div>Facility: {statusResult.facility}</div>
+                <div>Requested Role: {statusResult.requestedRole}</div>
+                <p className="text-[#667986] pt-1">
+                  {statusResult.status === "PENDING"
+                    ? "Your application is currently under administrative credential verification."
+                    : "Your application has been processed. If approved, you can sign in directly."}
+                </p>
+              </div>
+            )}
 
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#172B4D] tracking-tight">
-              Request Healthcare Staff Access
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Submit your professional credentials for official Hospital Administrator review and role activation.
-            </p>
-          </div>
-
-          {/* Step Progress Indicators */}
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <div className={`h-1.5 rounded-full transition-all ${step >= 1 ? "bg-blue-600" : "bg-slate-200"}`} />
-            <div className={`h-1.5 rounded-full transition-all ${step >= 2 ? "bg-blue-600" : "bg-slate-200"}`} />
-            <div className={`h-1.5 rounded-full transition-all ${step >= 3 ? "bg-blue-600" : "bg-slate-200"}`} />
-          </div>
-
-          {error && (
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-start gap-3 shadow-sm">
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {/* STAGE 1: Personal Details & Requested Role */}
-          {step === 1 && (
-            <form onSubmit={handleNextStep1} className="space-y-4 animate-in fade-in-50 duration-200">
-              <div className="text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
-                <span>Stage 1 of 3:</span>
-                <span className="text-slate-600 font-normal">Personal & Professional Identity</span>
+            <form onSubmit={handleStatusLookup} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-[#243847] mb-1">
+                  Application Request ID *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={lookupRequestId}
+                  onChange={(e) => setLookupRequestId(e.target.value)}
+                  placeholder="e.g. REQ-123456"
+                  className="w-full px-3.5 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] font-mono"
+                />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Full Legal Name (as recognized by Health Ministry) *
+                <label className="block text-xs font-semibold text-[#243847] mb-1">
+                  Registered Work Email *
                 </label>
-                <div className="relative">
-                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    placeholder="e.g. Dr. Priyantha Dissanayake"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 transition"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Official Work Email *
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="email"
-                      required
-                      value={formData.workEmail}
-                      onChange={(e) => setFormData({ ...formData, workEmail: e.target.value })}
-                      placeholder="priyantha@health.gov.lk"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 transition"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Direct Contact Phone *
-                  </label>
-                  <div className="relative">
-                    <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type="tel"
-                      required
-                      value={formData.contactPhone}
-                      onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                      placeholder="077-1234567"
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 transition"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Hospital Staff / Payroll ID *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.employeeId}
-                    onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                    placeholder="e.g. EMP-NHSL-9042"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 transition"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Requested Healthcare Role *
-                  </label>
-                  <select
-                    value={formData.requestedRole}
-                    onChange={(e) => setFormData({ ...formData, requestedRole: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                  >
-                    {roles.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <input
+                  type="email"
+                  required
+                  value={lookupEmail}
+                  onChange={(e) => setLookupEmail(e.target.value)}
+                  placeholder="doctor@hospital.lk"
+                  className="w-full px-3.5 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847]"
+                />
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow text-sm mt-3"
+                disabled={lookupLoading}
+                className="w-full py-3 bg-[#108B83] hover:bg-[#08786F] text-white font-bold rounded-xl text-xs transition"
               >
-                <span>Continue to Facility & Credentials</span>
-                <ArrowRight className="w-4 h-4" />
+                {lookupLoading ? "Checking..." : "Look Up Status"}
               </button>
             </form>
-          )}
+          </div>
+        )}
 
-          {/* STAGE 2: Facility Assignment & Professional Council */}
-          {step === 2 && (
-            <form onSubmit={handleNextStep2} className="space-y-4 animate-in fade-in-50 duration-200">
-              <div className="text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
-                <span>Stage 2 of 3:</span>
-                <span className="text-slate-600 font-normal">Facility & Professional Credentials</span>
+        {/* STEP 1: Personal & Role Details */}
+        {!checkingStatus && step === 1 && (
+          <form onSubmit={handleNextStep1} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Full Professional Name *
+              </label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                <input
+                  type="text"
+                  required
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                  placeholder="e.g. Dr. Priyantha Jayasuriya"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Requested Operational Role *
+              </label>
+              <select
+                value={formData.requestedRole}
+                onChange={(e) => setFormData({ ...formData, requestedRole: e.target.value })}
+                className="w-full px-3.5 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+              >
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                  Institutional Work Email *
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                  <input
+                    type="email"
+                    required
+                    value={formData.workEmail}
+                    onChange={(e) => setFormData({ ...formData, workEmail: e.target.value })}
+                    placeholder="doctor@hospital.lk"
+                    className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Assigned Public Hospital Facility *
+                <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                  Employee / Hospital ID *
                 </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.employeeId}
+                  onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                  placeholder="e.g. EMP-99214"
+                  className="w-full px-3.5 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Official Contact Phone *
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                <input
+                  type="tel"
+                  required
+                  value={formData.contactPhone}
+                  onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
+                  placeholder="077-1234567"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3.5 bg-[#108B83] hover:bg-[#08786F] text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition"
+            >
+              <span>Continue to Facility & Credentials</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+        )}
+
+        {/* STEP 2: Facility & Registration Number */}
+        {!checkingStatus && step === 2 && (
+          <form onSubmit={handleNextStep2} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Healthcare Institution / Hospital *
+              </label>
+              <div className="relative">
+                <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
                 <select
                   value={formData.facilityId}
                   onChange={(e) => {
-                    const sel = hospitals.find(h => h.id === e.target.value);
+                    const match = hospitals.find((h) => h.id === e.target.value);
                     setFormData({
                       ...formData,
                       facilityId: e.target.value,
-                      facilityName: sel ? sel.name : formData.facilityName
+                      facilityName: match?.name || "National Healthcare Institution",
                     });
                   }}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
                 >
                   {hospitals.map((h) => (
                     <option key={h.id} value={h.id}>
@@ -360,248 +439,196 @@ export default function StaffRegisterPage() {
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Clinical Department / Ward *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    placeholder="e.g. Cardiology OPD, Ward 4"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 transition"
-                  />
-                </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Assigned Clinical Department / Ward *
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.department}
+                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                placeholder="e.g. Cardiology Outpatient Clinic or Ward 4A"
+                className="w-full px-3.5 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+              />
+            </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Designation Category *
-                  </label>
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1">
+                {selectedRoleConfig.council} Registration Number *
+              </label>
+              <input
+                type="text"
+                required={["DOCTOR", "NURSE"].includes(formData.requestedRole)}
+                value={formData.professionalRegistrationNumber}
+                onChange={(e) => setFormData({ ...formData, professionalRegistrationNumber: e.target.value })}
+                placeholder={selectedRoleConfig.placeholder}
+                className="w-full px-3.5 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847] font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83]"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="w-1/3 py-3 bg-[#E7EFF1] hover:bg-[#DDEFE9] text-[#243847] font-bold rounded-xl text-xs"
+              >
+                &larr; Back
+              </button>
+              <button
+                type="submit"
+                className="w-2/3 py-3 bg-[#108B83] hover:bg-[#08786F] text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition"
+              >
+                <span>Continue to Security</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* STEP 3: Password & Compliance Consent */}
+        {!checkingStatus && step === 3 && (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                  Account Password *
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
                   <input
-                    type="text"
+                    type={showPassword ? "text" : "password"}
                     required
-                    value={formData.professionalCategory}
-                    onChange={(e) => setFormData({ ...formData, professionalCategory: e.target.value })}
-                    placeholder="e.g. Senior Registrar, Sister"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 transition"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-9 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#698399]"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Professional Registration Number ({selectedRoleConfig.council})
+                <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                  Confirm Password *
                 </label>
-                <input
-                  type="text"
-                  value={formData.professionalRegistrationNumber}
-                  onChange={(e) => setFormData({ ...formData, professionalRegistrationNumber: e.target.value })}
-                  placeholder={selectedRoleConfig.placeholder}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 transition"
-                />
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="w-1/3 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-1 border border-slate-200"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  className="w-2/3 py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow text-sm"
-                >
-                  <span>Continue to Credentials & Security</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
-            </form>
-          )}
-
-          {/* STAGE 3: Password & Institutional Consent */}
-          {step === 3 && (
-            <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in-50 duration-200">
-              <div className="text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
-                <span>Stage 3 of 3:</span>
-                <span className="text-slate-600 font-normal">Security & Compliance Consent</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Account Security Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      required
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-slate-500" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Confirm Password *
-                  </label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      required
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4 text-slate-500" />}
-                    </button>
-                  </div>
+                <div className="relative">
+                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-9 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-sm text-[#243847]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#698399]"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
+            </div>
 
-              <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 space-y-2">
-                <span className="font-bold flex items-center gap-1.5 text-blue-800">
-                  <ShieldCheck className="w-4 h-4 text-blue-600" />
-                  Staff Governance Notice
-                </span>
-                <p className="leading-relaxed text-slate-600">
-                  Submitting this application creates an audit record for verification by the designated Hospital Administrator. Access to clinical records or prescription worklists is restricted until verification is complete.
-                </p>
-              </div>
-
-              <div className="flex items-start gap-2.5 pt-1">
+            <div className="pt-2">
+              <label className="flex items-start gap-2.5 text-xs text-[#667986] cursor-pointer">
                 <input
-                  id="staffConsentCheck"
                   type="checkbox"
                   required
                   checked={formData.complianceConsent}
                   onChange={(e) => setFormData({ ...formData, complianceConsent: e.target.checked })}
-                  className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 bg-white cursor-pointer"
+                  className="mt-0.5 rounded text-[#108B83] focus:ring-[#108B83]"
                 />
-                <label htmlFor="staffConsentCheck" className="text-xs text-slate-600 leading-relaxed cursor-pointer select-none">
-                  I certify that all credentials provided are accurate and authorized by my healthcare institution. I understand unauthorized access attempts are subject to disciplinary review.
-                </label>
+                <span>
+                  I certify that all medical and institutional credentials provided are accurate and subject to verification by the Hospital Directorate and Ministry of Health.
+                </span>
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="w-1/3 py-3.5 bg-[#E7EFF1] hover:bg-[#DDEFE9] text-[#243847] font-bold rounded-xl text-xs"
+              >
+                &larr; Back
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-2/3 py-3.5 bg-[#108B83] hover:bg-[#08786F] text-white font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition disabled:opacity-50"
+              >
+                <span>{loading ? "Submitting Application..." : "Submit Access Request"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* STEP 4: Submitted / Staff Approval Pending View */}
+        {step === 4 && (
+          <div className="space-y-5 text-center">
+            <div className="w-14 h-14 rounded-3xl bg-[#DDEFE9] text-[#08786F] flex items-center justify-center mx-auto border border-[#108B83]/30">
+              <FileCheck2 className="w-7 h-7" />
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-[#243847]">Application Submitted</h3>
+              <p className="text-xs text-[#667986] mt-1 max-w-sm mx-auto">
+                Your staff access request has been lodged in the institutional queue.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#DFEAF0] border border-[#467DA3]/30 text-xs text-left space-y-2 text-[#243847]">
+              <div className="flex justify-between font-bold">
+                <span>Application Reference:</span>
+                <span className="font-mono text-[#467DA3]">{submittedData?.requestId || "REQ-SUBMITTED"}</span>
               </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="w-1/3 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors flex items-center justify-center gap-1 border border-slate-200"
-                >
-                  <ArrowLeft className="w-3.5 h-3.5" />
-                  Back
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-2/3 py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow disabled:opacity-50 text-sm"
-                >
-                  {loading ? (
-                    <span>Submitting Application...</span>
-                  ) : (
-                    <>
-                      <span>Submit for Verification</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
+              <div className="flex justify-between">
+                <span>Facility:</span>
+                <span>{submittedData?.facility || formData.facilityName}</span>
               </div>
-            </form>
-          )}
-
-          {/* STAGE 4: Confirmation & Tracking */}
-          {step === 4 && (
-            <div className="space-y-6 animate-in fade-in-50 duration-200">
-              <div className="p-6 rounded-2xl bg-white border border-blue-200 shadow-sm space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-                  <Clock className="w-6 h-6 animate-pulse" />
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-extrabold text-[#172B4D]">Application Submitted for Review</h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Your request has been routed to the Hospital Administration Directorate.
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Application Reference:</span>
-                    <strong className="text-blue-700 font-mono">{submittedData?.requestId || "REQ-PENDING"}</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Current Status:</span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                      PENDING_APPROVAL
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Facility:</span>
-                    <span className="text-slate-800 font-medium">{submittedData?.facility || formData.facilityName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Requested Role:</span>
-                    <span className="text-[#0F766E] font-semibold">{formData.requestedRole}</span>
-                  </div>
-                </div>
-
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Upon verification of your council registration and institutional credentials, your account will be activated and you can sign in to your role-specific dashboard.
-                </p>
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <span className="font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                  PENDING APPROVAL
+                </span>
               </div>
-
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
-                <Link
-                  href="/auth/staff-login"
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold text-center transition-all shadow-sm"
-                >
-                  Return to Staff Sign In
-                </Link>
-                <Link
-                  href="/"
-                  className="w-full sm:w-auto px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold text-center transition-colors border border-slate-200"
-                >
-                  Home
-                </Link>
+              <div className="pt-2 text-[11px] text-[#667986] border-t border-[#D5E0E3]">
+                An administrator will verify your credentials against the council registry. You will receive an email once approved.
               </div>
             </div>
-          )}
 
-          {/* Footer Backlinks */}
-          <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-            <span>Hospital Employee Portal</span>
-            <Link href="/auth/staff-login" className="text-blue-600 hover:underline font-semibold">
-              Staff Sign In
-            </Link>
+            <div className="flex flex-col gap-2 pt-2">
+              <Link
+                href="/auth/staff-login"
+                className="w-full py-3 bg-[#108B83] hover:bg-[#08786F] text-white font-bold rounded-xl text-xs transition"
+              >
+                Return to Staff Login
+              </Link>
+            </div>
           </div>
+        )}
 
+        <div className="pt-4 border-t border-[#D5E0E3] text-center text-xs text-[#667986]">
+          Already have verified credentials?{" "}
+          <Link href="/auth/staff-login" className="font-bold text-[#108B83] hover:underline">
+            Sign In Here &rarr;
+          </Link>
         </div>
-      </div>
 
-    </div>
+      </div>
+    </AuthLayout>
   );
 }

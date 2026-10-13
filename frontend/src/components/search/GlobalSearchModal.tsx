@@ -111,9 +111,12 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
   // Focus input on open
   useEffect(() => {
     if (isOpen) {
-      setQuery("");
-      setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const timer = setTimeout(() => {
+        setQuery("");
+        setSelectedIndex(0);
+        inputRef.current?.focus();
+      }, 10);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

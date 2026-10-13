@@ -8,13 +8,13 @@ import {
   Heart, 
   ClipboardCheck, 
   Building2, 
-  ArrowRight,
-  ShieldCheck,
-  CheckCircle2,
-  Clock,
-  Sparkles,
-  Activity,
-  Ticket
+  ArrowRight, 
+  ShieldCheck, 
+  CheckCircle2, 
+  Clock, 
+  Sparkles, 
+  Activity, 
+  Ticket 
 } from "lucide-react";
 
 export function DashboardPreview() {
@@ -26,7 +26,7 @@ export function DashboardPreview() {
       role: "Public Citizen",
       link: "/portal/patient",
       actionText: "Launch Patient Portal",
-      color: "border-[#159B94]/40 text-[#087F79]",
+      color: "border-[#108B83]/40 text-[#08786F]",
       description: "Book hospital clinic appointments, track live digital queue tickets, and receive follow-up reminders.",
       stats: [
         { label: "Active Queue Ticket", value: "C-024", sub: "Serving: C-020 (12m wait)" },
@@ -44,7 +44,7 @@ export function DashboardPreview() {
       role: "Consultant / Medical Doctor",
       link: "/portal/doctor",
       actionText: "Launch Doctor Workspace",
-      color: "border-[#426DA9]/40 text-[#426DA9]",
+      color: "border-[#467DA3]/40 text-[#467DA3]",
       description: "Structured patient worklists, real-time consultation recorder, triage vitals review, and diagnostic lab orders.",
       stats: [
         { label: "Today's Patient Queue", value: "28 Consultations", sub: "Morning Outpatient Session" },
@@ -62,7 +62,7 @@ export function DashboardPreview() {
       role: "Staff Nurse / Triage Desk",
       link: "/portal/nurse",
       actionText: "Launch Nursing Station",
-      color: "border-[#EBE8F5] text-[#43566C]",
+      color: "border-[#E5E5F2] text-[#698399]",
       description: "Fast-track vitals measurement, acuity level triage assignment, and clinical handover coordination.",
       stats: [
         { label: "Patients Waiting Vitals", value: "6 Arrived", sub: "Station Desk A" },
@@ -80,7 +80,7 @@ export function DashboardPreview() {
       role: "Field Supervision Officer",
       link: "/portal/supervisor",
       actionText: "Launch Supervision Desk",
-      color: "border-[#159B94]/40 text-[#087F79]",
+      color: "border-[#108B83]/40 text-[#08786F]",
       description: "Institutional audit checklists, deficiency findings, and verified corrective-action tracking workflows.",
       stats: [
         { label: "Institutional Audits", value: "8 Facilities", sub: "Western & Central Province" },
@@ -98,7 +98,7 @@ export function DashboardPreview() {
       role: "Executive Hospital Administrator",
       link: "/portal/admin",
       actionText: "Launch Admin Dashboard",
-      color: "border-[#426DA9]/40 text-[#426DA9]",
+      color: "border-[#467DA3]/40 text-[#467DA3]",
       description: "Clinic session quota management, medical staff verification approval, and operational throughput monitoring.",
       stats: [
         { label: "Facility Attendance", value: "439 Patients", sub: "84% Daily Quota Utilized" },
@@ -116,24 +116,24 @@ export function DashboardPreview() {
   const active = previews[activeTab];
 
   return (
-    <section className="py-24 bg-[#E8F0F4] text-[#364A5D] relative overflow-hidden border-t border-[#D9E3E9]">
+    <section className="py-24 bg-[#E7EFF1] text-[#3C5262] relative overflow-hidden border-t border-[#D5E0E3]">
       
       {/* Ambient Lighting */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#426DA9]/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[#159B94]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-[#467DA3]/6 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-[#108B83]/6 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#087F79] bg-[#DFEFEC] border border-[#159B94]/30 px-3.5 py-1 rounded-full shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-[#087F79]" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#08786F] bg-[#DDEFE9] border border-[#108B83]/30 px-3.5 py-1 rounded-full shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#108B83]" />
             Interactive Platform Preview
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#20364C] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#243847] tracking-tight">
             Tailored Workspaces for Every Healthcare Role
           </h2>
-          <p className="text-[#43566C] text-base sm:text-lg">
+          <p className="text-[#667986] text-base sm:text-lg">
             Experience how HealthNexus LK connects citizens, clinicians, and hospital administrators through unified role-based dashboards.
           </p>
         </div>
@@ -153,13 +153,13 @@ export function DashboardPreview() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 border ${
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-semibold transition-all duration-200 border ${
                   isCurrent
-                    ? "bg-[#F8F7F3] text-[#20364C] border-[#159B94] shadow-sm ring-1 ring-[#159B94]/30 font-bold"
-                    : "bg-[#F0F4F7] text-[#43566C] hover:text-[#20364C] border-[#D9E3E9]"
+                    ? "bg-[#FAFBFA] text-[#243847] border-[#108B83] shadow-xs ring-1 ring-[#108B83]/30 font-bold"
+                    : "bg-[#EDF2F4] text-[#698399] hover:text-[#243847] border-[#D5E0E3]"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isCurrent ? "text-[#087F79]" : "text-[#43566C]"}`} />
+                <Icon className={`w-4 h-4 ${isCurrent ? "text-[#108B83]" : "text-[#698399]"}`} />
                 {tab.label}
               </button>
             );
@@ -167,30 +167,30 @@ export function DashboardPreview() {
         </div>
 
         {/* Preview Container */}
-        <div className="rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] p-6 sm:p-10 shadow-sm space-y-8 animate-in fade-in-50 duration-200">
+        <div className="rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 sm:p-10 shadow-xs space-y-8 animate-in fade-in-50 duration-200">
           
           {/* Header Info */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#D9E3E9] pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#D5E0E3] pb-6">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#087F79]">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#108B83]">
                   {active.role}
                 </span>
-                <span className="px-2.5 py-0.5 rounded text-[10px] font-semibold bg-[#E8F0F4] text-[#43566C] border border-[#D9E3E9]">
+                <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-semibold bg-[#E7EFF1] text-[#698399] border border-[#D5E0E3]">
                   Demonstration Preview
                 </span>
               </div>
-              <h3 className="text-2xl font-bold text-[#20364C] tracking-tight">
+              <h3 className="text-2xl font-bold text-[#243847] tracking-tight">
                 {active.title}
               </h3>
-              <p className="text-xs sm:text-sm text-[#43566C] mt-1 max-w-2xl">
+              <p className="text-xs sm:text-sm text-[#667986] mt-1 max-w-2xl">
                 {active.description}
               </p>
             </div>
 
             <Link
               href={active.link}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#087F79] hover:bg-[#159B94] text-white text-xs sm:text-sm font-bold transition-all shadow-sm self-start md:self-auto"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#108B83] hover:bg-[#08786F] text-white text-xs sm:text-sm font-bold transition-all shadow-xs self-start md:self-auto"
             >
               <span>{active.actionText}</span>
               <ArrowRight className="w-4 h-4" />
@@ -202,24 +202,24 @@ export function DashboardPreview() {
             {active.stats.map((stat, idx) => (
               <div
                 key={idx}
-                className="p-5 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] space-y-1 shadow-xs"
+                className="p-5 rounded-2xl bg-[#F6F9F8] border border-[#D5E0E3] space-y-1 shadow-2xs"
               >
-                <span className="text-xs font-semibold text-[#43566C]">{stat.label}</span>
-                <div className="text-2xl font-extrabold text-[#20364C] mt-1">{stat.value}</div>
-                <span className="text-[11px] text-[#087F79] font-medium block">{stat.sub}</span>
+                <span className="text-xs font-semibold text-[#698399]">{stat.label}</span>
+                <div className="text-2xl font-extrabold text-[#243847] mt-1">{stat.value}</div>
+                <span className="text-[11px] text-[#108B83] font-semibold block">{stat.sub}</span>
               </div>
             ))}
           </div>
 
           {/* Highlights Checklist */}
-          <div className="p-5 rounded-xl bg-[#DFEFEC] border border-[#159B94]/30">
-            <span className="text-xs font-bold text-[#087F79] uppercase tracking-wider block mb-3">
-              Standard Clinical & Governance Capabilities
+          <div className="p-5 rounded-2xl bg-[#DDEFE9] border border-[#108B83]/30">
+            <span className="text-xs font-bold text-[#08786F] uppercase tracking-wider block mb-3">
+              Standard Clinical &amp; Governance Capabilities
             </span>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-[#20364C]">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-[#243847]">
               {active.highlights.map((h, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#087F79] shrink-0 mt-0.5" />
+                  <CheckCircle2 className="w-4 h-4 text-[#108B83] shrink-0 mt-0.5" />
                   <span>{h}</span>
                 </div>
               ))}

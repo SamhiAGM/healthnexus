@@ -1,27 +1,36 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.lankacare.me"),
   title: {
-    default: "HealthNexus | Connected healthcare for Sri Lanka",
-    template: "%s | HealthNexus",
+    default: "HealthNexus | Connected Care. Better Healthcare. For Sri Lanka.",
+    template: "%s | HealthNexus LankaCare.me",
   },
-  description: "Discover healthcare institutions and manage a more connected digital healthcare journey with HealthNexus.",
+  description: "A smarter digital healthcare experience connecting patients, hospitals, and healthcare professionals across Sri Lanka.",
+  keywords: [
+    "Sri Lanka healthcare",
+    "HealthNexus",
+    "LankaCare",
+    "hospital directory",
+    "doctor consultation",
+    "clinic appointments",
+    "digital queue ticket",
+    "Base Hospital Kinniya",
+    "Ministry of Health Sri Lanka",
+  ],
+  authors: [{ name: "HealthNexus LK Team" }],
   openGraph: {
-    title: "HealthNexus | Connected healthcare for Sri Lanka",
-    description: "Discover healthcare institutions and manage a more connected digital healthcare journey.",
+    title: "HealthNexus | Connected Care. Better Healthcare. For Sri Lanka.",
+    description: "A smarter digital healthcare experience connecting patients, hospitals, and healthcare professionals across Sri Lanka.",
     url: "https://www.lankacare.me",
     siteName: "HealthNexus",
     locale: "en_LK",
@@ -29,13 +38,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
+      className={`${plusJakarta.variable} font-sans h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#EDF2F4] text-[#3C5262]">{children}</body>
     </html>
   );
 }

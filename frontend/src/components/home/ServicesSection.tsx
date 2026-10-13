@@ -26,7 +26,7 @@ export function ServicesSection() {
       icon: Building2,
       badge: "Public Access",
       href: "/hospitals",
-      color: "from-[#DFEFEC] to-[#E8F0F4] text-[#087F79] border-[#159B94]/30",
+      color: "from-[#DDEFE9] to-[#DFEAF0] text-[#08786F] border-[#108B83]/30",
     },
     {
       id: "appointments",
@@ -35,7 +35,7 @@ export function ServicesSection() {
       icon: Calendar,
       badge: "Patient Portal",
       href: "/auth/patient-register",
-      color: "from-[#E8F0F4] to-[#DFEFEC] text-[#426DA9] border-[#426DA9]/30",
+      color: "from-[#DFEAF0] to-[#DDEFE9] text-[#467DA3] border-[#467DA3]/30",
     },
     {
       id: "queues",
@@ -44,7 +44,7 @@ export function ServicesSection() {
       icon: Activity,
       badge: "Real-Time Tracking",
       href: "/auth/patient-login",
-      color: "from-[#DFEFEC] to-[#F8F7F3] text-[#087F79] border-[#159B94]/30",
+      color: "from-[#DDEFE9] to-[#FAFBFA] text-[#08786F] border-[#108B83]/30",
     },
     {
       id: "clinical",
@@ -53,7 +53,7 @@ export function ServicesSection() {
       icon: Stethoscope,
       badge: "Physicians & Consultants",
       href: "/auth/staff-login",
-      color: "from-[#E8F0F4] to-[#EBE8F5] text-[#426DA9] border-[#426DA9]/30",
+      color: "from-[#DFEAF0] to-[#E5E5F2] text-[#467DA3] border-[#467DA3]/30",
     },
     {
       id: "nursing-reception",
@@ -62,7 +62,7 @@ export function ServicesSection() {
       icon: UserCheck,
       badge: "Staff Desk & Station",
       href: "/auth/staff-login",
-      color: "from-[#EBE8F5] to-[#E8F0F4] text-[#43566C] border-[#D9E3E9]",
+      color: "from-[#E5E5F2] to-[#DFEAF0] text-[#698399] border-[#D5E0E3]",
     },
     {
       id: "supervision",
@@ -71,7 +71,7 @@ export function ServicesSection() {
       icon: ClipboardCheck,
       badge: "Supervisors & Quality",
       href: "/auth/staff-login",
-      color: "from-[#F8F7F3] to-[#DFEFEC] text-[#087F79] border-[#159B94]/30",
+      color: "from-[#FAFBFA] to-[#DDEFE9] text-[#08786F] border-[#108B83]/30",
     },
     {
       id: "pharmacy-lab",
@@ -80,7 +80,7 @@ export function ServicesSection() {
       icon: Pill,
       badge: "Ancillary Healthcare",
       href: "/auth/staff-login",
-      color: "from-[#DFEFEC] to-[#E8F0F4] text-[#159B94] border-[#159B94]/30",
+      color: "from-[#DDEFE9] to-[#DFEAF0] text-[#108B83] border-[#108B83]/30",
     },
     {
       id: "issues",
@@ -89,55 +89,55 @@ export function ServicesSection() {
       icon: FileText,
       badge: "Facility Support",
       href: "#contact",
-      color: "from-[#E8F0F4] to-[#F8FAFB] text-[#43566C] border-[#D9E3E9]",
+      color: "from-[#DFEAF0] to-[#FAFBFA] text-[#698399] border-[#D5E0E3]",
     },
   ];
 
   return (
-    <section id="services" className="py-24 bg-[#F0F4F7] text-[#364A5D] relative overflow-hidden">
+    <section id="services" className="py-24 bg-[#EDF2F4] text-[#3C5262] relative overflow-hidden">
       
       {/* Background Lighting Accents */}
-      <div className="absolute top-1/2 left-0 w-96 h-96 bg-[#159B94]/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#426DA9]/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-0 w-96 h-96 bg-[#108B83]/6 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#467DA3]/6 rounded-full blur-3xl pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#087F79] bg-[#DFEFEC] border border-[#159B94]/30 px-3.5 py-1 rounded-full shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-[#087F79]" />
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#08786F] bg-[#DDEFE9] border border-[#108B83]/30 px-3.5 py-1 rounded-full shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[#108B83]" />
             Comprehensive Healthcare Services
           </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#20364C] tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#243847] tracking-tight">
             Designed for Every Stakeholder in Sri Lankan Healthcare
           </h2>
-          <p className="text-[#43566C] text-base sm:text-lg">
+          <p className="text-[#667986] text-base sm:text-lg">
             From rural outpatient clinics to major teaching hospitals, HealthNexus LK connects citizens with dedicated healthcare teams.
           </p>
         </div>
 
-        {/* Highlight Feature Showcase Card with Hospital Photography */}
-        <div className="mb-14 rounded-2xl bg-[#F8FAFB] border border-[#D9E3E9] p-6 sm:p-8 shadow-sm overflow-hidden">
+        {/* Highlight Feature Showcase Card with Generated Doctor Consultation Photography */}
+        <div className="mb-14 rounded-3xl bg-[#FAFBFA] border border-[#D5E0E3] p-6 sm:p-8 shadow-xs overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             <div className="lg:col-span-7 space-y-5">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#DFEFEC] border border-[#159B94]/30 text-xs font-semibold text-[#087F79]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#087F79]" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#DDEFE9] border border-[#108B83]/30 text-xs font-semibold text-[#08786F]">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#108B83]" />
                 Collaborative Clinical Workflows
               </div>
 
-              <h3 className="text-2xl sm:text-3xl font-bold text-[#20364C] tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-bold text-[#243847] tracking-tight">
                 Streamlined Doctor-Patient Consultations & Hospital Triage
               </h3>
 
-              <p className="text-sm text-[#364A5D] leading-relaxed">
+              <p className="text-sm text-[#3C5262] leading-relaxed">
                 Empowering healthcare practitioners with instant visibility into patient queue tickets, logged vital measurements, medication dispenses, and specialized departmental referrals.
               </p>
 
               <div className="flex flex-wrap items-center gap-4 pt-2">
                 <Link
                   href="/auth/staff-login"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#087F79] hover:bg-[#159B94] text-white text-xs font-bold transition-all shadow-sm"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#108B83] hover:bg-[#08786F] text-white text-xs font-bold transition-all shadow-xs"
                 >
                   Enter Clinician Workspace
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -145,62 +145,62 @@ export function ServicesSection() {
 
                 <Link
                   href="/auth/patient-register"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E8F0F4] hover:bg-[#DFEFEC] text-[#20364C] text-xs font-semibold border border-[#D9E3E9] transition-colors"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#E7EFF1] hover:bg-[#DDEFE9] text-[#243847] text-xs font-semibold border border-[#D5E0E3] transition-colors"
                 >
                   Patient Online Registration
                 </Link>
               </div>
             </div>
 
-            <div className="lg:col-span-5 relative h-64 sm:h-72 rounded-xl overflow-hidden border border-[#D9E3E9] shadow-sm">
+            <div className="lg:col-span-5 relative h-64 sm:h-72 rounded-2xl overflow-hidden border border-[#D5E0E3] shadow-xs">
               <Image
-                src="/images/doctor_consult_card.jpg"
-                alt="Healthcare Professionals Collaborating in Clinical Workspace"
+                src="/images/doctor_consultation.jpg"
+                alt="Sri Lankan Doctor in Empathetic Consultation with Patient Using HealthNexus Tablet"
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover object-center filter brightness-[0.95] contrast-[1.05] hover:scale-105 transition-transform duration-500"
+                className="object-cover object-center filter brightness-[0.98] contrast-[1.02] hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#20364C]/70 via-transparent to-transparent pointer-events-none" />
-              <div className="absolute bottom-3 left-3 right-3 text-[11px] font-medium text-[#20364C] bg-[#F8FAFB]/95 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#D9E3E9] shadow-xs">
-                Connected Clinical Station &bull; Teaching & Base Hospitals
+              <div className="absolute inset-0 bg-gradient-to-t from-[#243847]/70 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-3 left-3 right-3 text-[11px] font-medium text-[#243847] bg-[#FAFBFA]/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-[#D5E0E3] shadow-xs">
+                Connected Clinical Station &bull; Teaching &amp; Base Hospitals
               </div>
             </div>
 
           </div>
         </div>
 
-        {/* Service Cards Grid with Refined Micro-Elevations */}
+        {/* Service Cards Grid with Balanced Palette */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((item) => {
             const Icon = item.icon;
             return (
               <div
                 key={item.id}
-                className="group relative rounded-2xl bg-[#F8FAFB] hover:bg-[#F8F7F3] border border-[#D9E3E9] hover:border-[#159B94] p-6 flex flex-col justify-between transition-all duration-300 shadow-xs hover:shadow-md hover:-translate-y-1"
+                className="group relative rounded-2xl bg-[#FAFBFA] hover:bg-[#F6F9F8] border border-[#D5E0E3] hover:border-[#108B83] p-6 flex flex-col justify-between transition-all duration-300 shadow-2xs hover:shadow-md hover:-translate-y-1"
               >
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${item.color} border flex items-center justify-center transform group-hover:scale-105 transition-transform`}>
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#43566C] bg-[#E8F0F4] px-2.5 py-0.5 rounded border border-[#D9E3E9]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#698399] bg-[#E7EFF1] px-2.5 py-0.5 rounded-lg border border-[#D5E0E3]">
                       {item.badge}
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-[#20364C] group-hover:text-[#087F79] transition-colors">
+                  <h3 className="text-lg font-bold text-[#243847] group-hover:text-[#108B83] transition-colors">
                     {item.title}
                   </h3>
 
-                  <p className="text-xs sm:text-sm text-[#364A5D] leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[#3C5262] leading-relaxed">
                     {item.description}
                   </p>
                 </div>
 
-                <div className="pt-6 mt-4 border-t border-[#D9E3E9]">
+                <div className="pt-6 mt-4 border-t border-[#D5E0E3]">
                   <Link
                     href={item.href}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#087F79] group-hover:text-[#159B94] transition-colors"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#108B83] group-hover:text-[#08786F] transition-colors"
                   >
                     <span>Open Service</span>
                     <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1.5 transition-transform" />
