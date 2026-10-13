@@ -47,8 +47,12 @@ public class AdminStaffController {
             @RequestBody(required = false) Map<String, String> body,
             Authentication authentication
     ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized: administrative authentication required."));
+        }
         try {
-            String adminId = authentication != null ? authentication.getName() : "ADMIN_USER";
+            String adminId = authentication.getName();
             String adminName = "Authorized Administrator";
             String notes = body != null ? body.get("notes") : "Approved after institutional verification.";
 
@@ -74,8 +78,12 @@ public class AdminStaffController {
             @RequestBody(required = false) Map<String, String> body,
             Authentication authentication
     ) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized: administrative authentication required."));
+        }
         try {
-            String adminId = authentication != null ? authentication.getName() : "ADMIN_USER";
+            String adminId = authentication.getName();
             String adminName = "Authorized Administrator";
             String reason = body != null ? body.get("reason") : "Application rejected by administrator.";
 

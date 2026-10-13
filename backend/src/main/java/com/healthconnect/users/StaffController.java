@@ -39,19 +39,26 @@ public class StaffController {
     }
 
     /**
-     * Check status of a staff access request by email.
+     * Secure status lookup of a staff access request requiring both requestId and matching email.
+     * Prevents unauthenticated applicant PII enumeration.
      */
     @GetMapping("/access-requests/status")
-    public ResponseEntity<?> checkRequestStatus(@RequestParam String email) {
-        return staffService.getRequestByEmail(email)
+    public ResponseEntity<?> checkRequestStatus(
+            @RequestParam String requestId,
+            @RequestParam String email
+    ) {
+        if (requestId == null || requestId.isBlank() || email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Both requestId and email are required to check application status."));
+        }
+        return staffService.getRequestById(requestId.trim())
+                .filter(r -> r.getWorkEmail().equalsIgnoreCase(email.trim()))
                 .map(r -> ResponseEntity.ok(Map.of(
                         "requestId", r.getId(),
-                        "fullName", r.getFullName(),
                         "status", r.getStatus().name(),
                         "facility", r.getFacilityName(),
                         "requestedRole", r.getRequestedRole().name(),
                         "createdAt", r.getCreatedAt().toString()
                 )))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "No access request found for email: " + email)));
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "No matching access request found.")));
     }
 }

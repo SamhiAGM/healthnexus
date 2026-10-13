@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/brand/Logo";
+import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   ClipboardCheck, 
   Building2, 
@@ -11,15 +11,29 @@ import {
   CheckCircle2, 
   Calendar, 
   MapPin, 
-  LogOut, 
   FileCheck,
-  ChevronRight,
-  TrendingUp,
-  Download,
+  TrendingUp, 
   RefreshCw,
-  XCircle,
-  Loader2
+  PlusCircle,
+  Clock,
+  ShieldCheck,
+  Search
 } from "lucide-react";
+import { 
+  PremiumStatCard, 
+  ChartCard, 
+  StatusIndicator, 
+  EmptyState 
+} from "@/components/portal/DashboardComponents";
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer, 
+  CartesianGrid 
+} from "recharts";
 
 interface InspectionFinding {
   id: string;
@@ -31,8 +45,18 @@ interface InspectionFinding {
   deadline: string;
 }
 
+const FACILITY_COMPLIANCE_DATA = [
+  { facility: "NHSL Colombo", rate: 94 },
+  { facility: "Kandy Hospital", rate: 88 },
+  { facility: "BH Kinniya", rate: 92 },
+  { facility: "TH Karapitiya", rate: 85 },
+  { facility: "TH Jaffna", rate: 90 },
+];
+
 export default function SupervisorDashboard() {
   const router = useRouter();
+  const [userName, setUserName] = useState("Senior Field Quality Supervisor");
+  const [facilityName, setFacilityName] = useState("Western & Eastern Regional Directorate");
 
   const [findings, setFindings] = useState<InspectionFinding[]>([
     {
@@ -62,6 +86,15 @@ export default function SupervisorDashboard() {
       status: "VERIFIED_CLOSED",
       deadline: "10 Oct 2026",
     },
+    {
+      id: "FND-304",
+      facility: "Base Hospital Kinniya",
+      category: "Emergency Drug Stocks",
+      description: "Laboratory reagent storage inventory verified according to MoH guidelines.",
+      severity: "LOW",
+      status: "VERIFIED_CLOSED",
+      deadline: "25 Oct 2026",
+    },
   ]);
 
   // Form for New Finding / Corrective Action
@@ -75,56 +108,55 @@ export default function SupervisorDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch live findings from Spring Boot backend
   const fetchLiveFindings = async () => {
     setLoading(true);
     setActionError(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/supervisor/findings", {
-        headers,
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: InspectionFinding[] = data.map((d: any, idx: number) => ({
-            id: d.findingCode || d.id || `FND-${300 + idx}`,
-            facility: d.facility || "Government Base Hospital",
-            category: d.category || "General Safety",
-            description: d.description || "",
-            severity: d.severity || "MODERATE",
-            status: d.status || "OPEN",
-            deadline: d.deadline || "30 Oct 2026",
-          }));
-          setFindings(mapped);
-        }
+      const data = await apiFetch<any[]>("/api/supervisor/findings");
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped: InspectionFinding[] = data.map((d: any, idx: number) => ({
+          id: d.findingCode || d.id || `FND-${300 + idx}`,
+          facility: d.facility || "Government Base Hospital",
+          category: d.category || "General Safety",
+          description: d.description || "",
+          severity: d.severity || "MODERATE",
+          status: d.status || "OPEN",
+          deadline: d.deadline || "30 Oct 2026",
+        }));
+        setFindings(mapped);
       }
     } catch (e) {
-      // Graceful fallback to initial findings if offline
+      // Retain fallback list
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLiveFindings();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["FIELD_SUPERVISOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
+      }
+      if (user?.fullName) setUserName(user.fullName);
+      fetchLiveFindings();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleCreateFinding = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
     setActionError(null);
     setActionSuccess(null);
-
-    const token = localStorage.getItem("hc_token");
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
 
     const payload = {
       facility: newFacility,
@@ -135,53 +167,31 @@ export default function SupervisorDashboard() {
     };
 
     try {
-      const res = await fetch("http://localhost:8080/api/supervisor/findings", {
+      const data = await apiFetch<any>("/api/supervisor/findings", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        const created: InspectionFinding = {
-          id: data.findingCode || data.id,
-          facility: data.facility,
-          category: data.category,
-          description: data.description,
-          severity: data.severity,
-          status: data.status,
-          deadline: data.deadline,
-        };
-        setFindings((prev) => [created, ...prev.filter(f => f.id !== created.id)]);
-        setActionSuccess(`Finding ${created.id} dispatched to ${created.facility} administrators!`);
-        setNewDescription("");
-      } else {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to dispatch finding");
-      }
-    } catch (err: any) {
-      // Graceful offline fallback creation
-      const fallbackId = `FND-${Math.floor(400 + Math.random() * 500)}`;
       const created: InspectionFinding = {
-        id: fallbackId,
-        facility: newFacility,
-        category: newCategory,
-        description: newDescription,
-        severity: newSeverity,
-        status: "OPEN",
-        deadline: newDeadline,
+        id: data.findingCode || data.id,
+        facility: data.facility,
+        category: data.category,
+        description: data.description,
+        severity: data.severity,
+        status: data.status,
+        deadline: data.deadline,
       };
-      setFindings((prev) => [created, ...prev]);
-      setActionSuccess(`Finding ${fallbackId} logged locally.`);
+      setFindings((prev) => [created, ...prev.filter(f => f.id !== created.id)]);
+      setActionSuccess(`Finding ${created.id} dispatched to ${created.facility} administrators!`);
       setNewDescription("");
+    } catch (err: any) {
+      setActionError(err.message || "Failed to dispatch finding.");
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleStatusToggle = async (id: string) => {
-    // Optimistic local update
     setFindings((prev) =>
       prev.map((f) => {
         if (f.id === id) {
@@ -198,207 +208,129 @@ export default function SupervisorDashboard() {
     );
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      await fetch(`http://localhost:8080/api/supervisor/findings/${id}/cycle-status`, {
+      await apiFetch(`/api/supervisor/findings/${id}/cycle-status`, {
         method: "POST",
-        headers,
-        credentials: "include",
       });
-    } catch (e) {
-      // Retain optimistic state
-    }
+    } catch (e) {}
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("hc_staff_user");
-    localStorage.removeItem("hc_token");
-    router.push("/auth/staff-login");
-  };
+  const navItems = [
+    { label: "Supervision Audits", href: "/portal/supervisor", icon: ClipboardCheck, active: true },
+    { label: "Public Health Officers", href: "/portal/public-health", icon: Building2 },
+    { label: "Hospital Directory", href: "/hospitals", icon: MapPin },
+  ];
 
-  const uniqueFacilities = new Set(findings.map((f) => f.facility)).size;
-  const activeCount = findings.filter((f) => f.status !== "VERIFIED_CLOSED").length;
-  const closedCount = findings.filter((f) => f.status === "VERIFIED_CLOSED").length;
+  const closedCount = findings.filter(f => f.status === "VERIFIED_CLOSED").length;
+  const inProgressCount = findings.filter(f => f.status === "IN_PROGRESS").length;
+
+  const filteredFindings = findings.filter(f =>
+    f.facility.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    f.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-[#081225] text-slate-100 flex flex-col selection:bg-rose-500 selection:text-white">
-      {/* Header */}
-      <header className="bg-[#0B1730] border-b border-slate-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Logo variant="light" size="sm" />
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-950/60 text-rose-400 border border-rose-800/40">
-                Digital Field Supervision
-              </span>
-              <span className="hidden md:inline-block text-xs text-slate-400">
-                Ministry Institutional Quality Inspection Desk
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={fetchLiveFindings}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 transition-colors"
-              title="Refresh Findings"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 text-rose-400 ${loading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-white">Supervisory Officer N. Bandara</div>
-              <div className="text-[10px] text-teal-400">Western & Central Provinces</div>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full space-y-8">
+    <PortalShell
+      role="FIELD_SUPERVISOR"
+      roleTitle="Field Supervision Officer"
+      pageTitle="Facility Quality & Standards Supervision"
+      department="Quality Governance & Audit Directorate"
+      facility={facilityName}
+      userName={userName}
+      navItems={navItems}
+      breadcrumbs={[
+        { label: "Portal", href: "/portal/supervisor" },
+        { label: "Field Supervision" }
+      ]}
+      headerActions={
+        <button
+          onClick={fetchLiveFindings}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0F4F7] hover:bg-[#E8F0F4] border border-[#D9E3E9] text-xs font-bold text-[#087F79] transition"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <span>Refresh Audits</span>
+        </button>
+      }
+    >
+      <div className="space-y-6">
         
-        {/* Metric Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <div className="p-6 rounded-2xl bg-[#0F1E36] border border-slate-700/60 shadow-lg">
-            <span className="text-xs text-slate-400 uppercase font-semibold">Active Findings</span>
-            <div className="text-3xl font-extrabold text-white mt-1">
-              {activeCount}
-            </div>
-            <span className="text-xs text-amber-400 mt-2 block">Requires facility verification</span>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-[#0F1E36] border border-slate-700/60 shadow-lg">
-            <span className="text-xs text-slate-400 uppercase font-semibold">Verified Closed</span>
-            <div className="text-3xl font-extrabold text-emerald-400 mt-1">
-              {closedCount}
-            </div>
-            <span className="text-xs text-slate-400 mt-2 block">100% audit trail logged</span>
-          </div>
-
-          <div className="p-6 rounded-2xl bg-[#0F1E36] border border-slate-700/60 shadow-lg">
-            <span className="text-xs text-slate-400 uppercase font-semibold">Facilities Monitored</span>
-            <div className="text-3xl font-extrabold text-blue-400 mt-1">{uniqueFacilities} Facilities</div>
-            <span className="text-xs text-teal-400 mt-2 block">Provincial Audit Cycle 2026</span>
-          </div>
+        {/* Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <PremiumStatCard
+            label="Inspected Facilities"
+            value="14 Hospitals"
+            subValue="Across 3 Provinces"
+            icon={Building2}
+            colorScheme="teal"
+            badge="MoH Audit"
+          />
+          <PremiumStatCard
+            label="Verified Closed"
+            value={`${closedCount} Actions`}
+            subValue={`${inProgressCount} currently in progress`}
+            trend={{ value: "92% closure rate", positive: true }}
+            icon={CheckCircle2}
+            colorScheme="teal"
+          />
+          <PremiumStatCard
+            label="Active Findings"
+            value={`${findings.length - closedCount} Open`}
+            subValue="Actionable items assigned"
+            icon={AlertTriangle}
+            colorScheme="coral"
+          />
+          <PremiumStatCard
+            label="Average Resolution"
+            value="4.2 Days"
+            subValue="From report to closeout"
+            icon={Clock}
+            colorScheme="blue"
+          />
         </div>
 
-        {/* Audit Findings & Action Form */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Supervision Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Left Column: Corrective Actions List */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center justify-between">
+          {/* Left Column: Register New Finding Form */}
+          <div className="lg:col-span-5 space-y-6">
+            <div className="bg-[#F8FAFB] border border-[#D9E3E9] rounded-2xl p-6 shadow-xs space-y-5">
               <div>
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <ClipboardCheck className="w-4 h-4 text-rose-400" />
-                  Institutional Findings & Corrective-Action Lifecycle
+                <h3 className="text-base font-bold text-[#20364C] flex items-center gap-2">
+                  <ClipboardCheck className="w-4 h-4 text-[#087F79]" />
+                  Log Institutional Finding
                 </h3>
-                <p className="text-xs text-slate-400">Click status badge to advance verification state</p>
-              </div>
-
-              <div className="text-xs text-slate-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-                <span>Active Registry</span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {findings.map((f) => (
-                <div
-                  key={f.id}
-                  className="p-5 rounded-xl bg-[#0F1E36] border border-slate-700/70 hover:border-slate-600 space-y-3 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-black text-rose-400">{f.id}</span>
-                      <span className="text-xs font-bold text-white">{f.facility}</span>
-                    </div>
-
-                    <button
-                      onClick={() => handleStatusToggle(f.id)}
-                      className={`text-[11px] font-bold px-2.5 py-1 rounded transition-colors cursor-pointer ${
-                        f.status === "VERIFIED_CLOSED"
-                          ? "bg-emerald-950/60 text-emerald-400 border border-emerald-800/40"
-                          : f.status === "IN_PROGRESS"
-                          ? "bg-amber-950/60 text-amber-400 border border-amber-800/40"
-                          : "bg-rose-950/60 text-rose-400 border border-rose-800/40"
-                      }`}
-                      title="Click to cycle status"
-                    >
-                      {f.status.replace("_", " ")}
-                    </button>
-                  </div>
-
-                  <p className="text-xs text-slate-300">{f.description}</p>
-
-                  <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800">
-                    <span>Category: <strong className="text-slate-200">{f.category}</strong></span>
-                    <span>Deadline: <strong className="text-slate-200">{f.deadline}</strong></span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right Column: Log New Field Inspection Finding */}
-          <div className="lg:col-span-5">
-            <div className="bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-6 sm:p-8 space-y-5 shadow-2xl">
-              <div>
-                <h3 className="text-lg font-bold text-white">Log Field Inspection Finding</h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Assign actionable corrective measures to hospital administrators.
+                <p className="text-xs text-[#43566C] mt-0.5">
+                  Record corrective action requirements during hospital facility inspection.
                 </p>
               </div>
 
               {actionSuccess && (
-                <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-xs sm:text-sm flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                    <span>{actionSuccess}</span>
-                  </div>
-                  <button onClick={() => setActionSuccess(null)} className="text-emerald-400 hover:text-white">
-                    <XCircle className="w-4 h-4" />
-                  </button>
+                <div className="p-3.5 rounded-xl bg-[#DFEFEC] border border-[#159B94]/40 text-[#087F79] text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-[#087F79] shrink-0" />
+                  <span className="font-bold">{actionSuccess}</span>
                 </div>
               )}
 
               {actionError && (
-                <div className="p-4 rounded-xl bg-rose-950/60 border border-rose-800/60 text-rose-300 text-xs sm:text-sm flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
-                    <span>{actionError}</span>
-                  </div>
-                  <button onClick={() => setActionError(null)} className="text-rose-400 hover:text-white">
-                    <XCircle className="w-4 h-4" />
-                  </button>
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>{actionError}</span>
                 </div>
               )}
 
               <form onSubmit={handleCreateFinding} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Inspected Facility *
+                  <label className="block text-xs font-semibold text-[#20364C] mb-1">
+                    Healthcare Facility *
                   </label>
                   <select
                     value={newFacility}
                     onChange={(e) => setNewFacility(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="w-full px-4 py-2.5 bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] text-sm focus:outline-none focus:ring-2 focus:ring-[#159B94]"
                   >
                     <option value="National Hospital of Sri Lanka (NHSL)">National Hospital of Sri Lanka (NHSL)</option>
-                    <option value="Castle Street Hospital for Women">Castle Street Hospital for Women</option>
-                    <option value="National Hospital Kandy">National Hospital Kandy</option>
+                    <option value="Base Hospital Kinniya">Base Hospital Kinniya</option>
                     <option value="Base Hospital Homagama">Base Hospital Homagama</option>
                     <option value="District General Hospital Gampaha">District General Hospital Gampaha</option>
                     <option value="Provincial General Hospital Badulla">Provincial General Hospital Badulla</option>
@@ -406,87 +338,152 @@ export default function SupervisorDashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  <label className="block text-xs font-semibold text-[#20364C] mb-1">
                     Inspection Category *
                   </label>
                   <select
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    className="w-full px-4 py-2.5 bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] text-sm focus:outline-none focus:ring-2 focus:ring-[#159B94]"
                   >
-                    <option value="Sanitation & Sterilization">Sanitation & Sterilization</option>
-                    <option value="Cold Chain Storage">Cold Chain Storage</option>
+                    <option value="Cold Chain Storage">Cold Chain &amp; Vaccine Storage</option>
+                    <option value="Sanitation & Sterilization">Sanitation &amp; Sterilization</option>
                     <option value="Emergency Drug Stocks">Emergency Drug Stocks</option>
-                    <option value="Fire Safety">Fire Safety</option>
+                    <option value="Fire Safety & Evacuation">Fire Safety &amp; Evacuation</option>
+                    <option value="Waste Disposal Protocols">Clinical Waste Disposal</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Finding & Corrective Directive *
+                  <label className="block text-xs font-semibold text-[#20364C] mb-1">
+                    Severity Level *
+                  </label>
+                  <select
+                    value={newSeverity}
+                    onChange={(e) => setNewSeverity(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] text-sm focus:outline-none focus:ring-2 focus:ring-[#159B94]"
+                  >
+                    <option value="LOW">Low (Monitor on regular cycle)</option>
+                    <option value="MODERATE">Moderate (Corrective action in 14 days)</option>
+                    <option value="CRITICAL">Critical (Immediate escalation required)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#20364C] mb-1">
+                    Deficiency Description *
                   </label>
                   <textarea
                     rows={3}
                     required
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
-                    placeholder="Specify the deficiency observed and required remedial actions..."
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                    placeholder="Specific findings, calibration requirements, or physical facility observations..."
+                    className="w-full px-4 py-2.5 bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#159B94] transition"
                   />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Severity Level
-                    </label>
-                    <select
-                      value={newSeverity}
-                      onChange={(e) => setNewSeverity(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
-                    >
-                      <option value="CRITICAL">CRITICAL</option>
-                      <option value="MODERATE">MODERATE</option>
-                      <option value="LOW">LOW</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Remediation Deadline
-                    </label>
-                    <input
-                      type="text"
-                      value={newDeadline}
-                      onChange={(e) => setNewDeadline(e.target.value)}
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
-                    />
-                  </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3 px-6 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md disabled:opacity-50"
+                  className="w-full py-3.5 px-4 bg-[#087F79] hover:bg-[#159B94] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-50"
                 >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Dispatching Directive...
-                    </>
-                  ) : (
-                    <>
-                      <FileCheck className="w-4 h-4" />
-                      Dispatch Corrective Action
-                    </>
-                  )}
+                  <PlusCircle className="w-4 h-4" />
+                  <span>{submitting ? "Transmitting..." : "Log & Dispatch Corrective Action"}</span>
                 </button>
               </form>
+            </div>
+
+            {/* Compliance Chart */}
+            <ChartCard title="Facility Compliance Performance" subtitle="Verified corrective action percentage" badge="2026">
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={FACILITY_COMPLIANCE_DATA}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#D9E3E9" />
+                    <XAxis dataKey="facility" stroke="#43566C" fontSize={10} />
+                    <YAxis stroke="#43566C" fontSize={11} domain={[0, 100]} />
+                    <Tooltip contentStyle={{ backgroundColor: "#F8FAFB", borderColor: "#D9E3E9", borderRadius: "12px", color: "#20364C" }} />
+                    <Bar dataKey="rate" fill="#087F79" radius={[6, 6, 0, 0]} name="Compliance %" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
+          </div>
+
+          {/* Right Column: Inspection Findings List */}
+          <div className="lg:col-span-7">
+            <div className="bg-[#F8FAFB] border border-[#D9E3E9] rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D9E3E9] pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-[#20364C]">Institutional Inspection Ledgers</h3>
+                  <p className="text-xs text-[#43566C]">Active corrective actions and compliance tracking</p>
+                </div>
+
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#43566C]" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search findings or facility..."
+                    className="pl-8 pr-3 py-1.5 text-xs bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] focus:outline-none focus:ring-1 focus:ring-[#159B94]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {filteredFindings.map((finding) => (
+                  <div
+                    key={finding.id}
+                    className="p-4 rounded-2xl bg-[#F0F4F7] border border-[#D9E3E9] hover:border-[#159B94] transition-all space-y-2.5"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-[#087F79]">{finding.id}</span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            finding.severity === "CRITICAL" ? "bg-rose-100 text-rose-800" :
+                            finding.severity === "MODERATE" ? "bg-amber-100 text-amber-800" :
+                            "bg-[#DFEFEC] text-[#087F79]"
+                          }`}>
+                            {finding.severity}
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-bold text-[#20364C] mt-1">{finding.facility}</h4>
+                        <span className="text-[11px] text-[#426DA9] font-medium">{finding.category}</span>
+                      </div>
+
+                      <div className="text-right space-y-1.5">
+                        <StatusIndicator status={finding.status} />
+                        <button
+                          onClick={() => handleStatusToggle(finding.id)}
+                          className="block text-[11px] font-bold text-[#087F79] hover:underline"
+                        >
+                          Cycle Lifecycle Status &rarr;
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-[#364A5D] leading-relaxed">
+                      {finding.description}
+                    </p>
+
+                    <div className="pt-2 border-t border-[#D9E3E9] flex items-center justify-between text-[11px] text-[#43566C]">
+                      <span>Target Resolution: {finding.deadline}</span>
+                      <span className="text-[#087F79] font-semibold flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        Audited by Field Directorate
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
         </div>
-      </main>
-    </div>
+
+      </div>
+    </PortalShell>
   );
 }

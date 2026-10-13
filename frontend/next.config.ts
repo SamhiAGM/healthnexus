@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -14,15 +13,15 @@ const nextConfig: NextConfig = {
     },
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_INTERNAL_URL || "http://localhost:8080";
+    const rawBackendUrl = process.env.BACKEND_INTERNAL_URL || "https://api.lankacare.me";
+    const backendUrl = rawBackendUrl.replace(/\/+$/, "");
     return [
       {
-        source: "/api/:path*",
-        destination: `${backendUrl}/api/:path*`,
+        source: "/actuator/:path*",
+        destination: `${backendUrl}/actuator/:path*`,
       },
     ];
   },
 };
 
 export default nextConfig;
-

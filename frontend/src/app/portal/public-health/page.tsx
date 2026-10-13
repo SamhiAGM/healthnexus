@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   ShieldCheck, 
   MapPin, 
@@ -60,24 +62,21 @@ export default function PublicHealthPortalPage() {
   const [selectedActivity, setSelectedActivity] = useState<PublicHealthActivityItem | null>(null);
   const [notesInput, setNotesInput] = useState("");
 
+  const router = useRouter();
+  const [actionError, setActionError] = useState<string | null>(null);
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const [actRes, sumRes] = await Promise.all([
-        fetch("http://localhost:8080/api/public-health/activities", { headers }),
-        fetch("http://localhost:8080/api/public-health/summary", { headers })
+      const [actData, sumData] = await Promise.all([
+        apiFetch<any[]>("/api/public-health/activities").catch(() => null),
+        apiFetch<any>("/api/public-health/summary").catch(() => null)
       ]);
 
-      if (actRes.ok) {
-        const data = await actRes.json();
-        setActivities(data);
+      if (Array.isArray(actData)) {
+        setActivities(actData);
       }
-      if (sumRes.ok) {
-        const sumData = await sumRes.json();
+      if (sumData) {
         setSummary(sumData);
       }
     } catch (err) {
@@ -88,16 +87,26 @@ export default function PublicHealthPortalPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["PUBLIC_HEALTH_OFFICER", "FIELD_SUPERVISOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
+      }
+      fetchData();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
       const payload = {
         title: newTitle,
         category: newCategory,
@@ -106,45 +115,38 @@ export default function PublicHealthPortalPage() {
         officerName: newOfficer
       };
 
-      const res = await fetch("http://localhost:8080/api/public-health/activities", {
+      await apiFetch("/api/public-health/activities", {
         method: "POST",
-        headers,
         body: JSON.stringify(payload)
       });
 
-      if (res.ok) {
-        setActionSuccess(`New Public Health campaign "${newTitle}" created successfully.`);
-        setNewTitle("");
-        setActiveTab("ACTIVITIES");
-        fetchData();
-        setTimeout(() => setActionSuccess(null), 4000);
-      }
-    } catch (err) {
-      console.error("Error creating campaign:", err);
+      setActionSuccess(`New Public Health campaign "${newTitle}" created successfully.`);
+      setNewTitle("");
+      setActiveTab("ACTIVITIES");
+      fetchData();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setActionError(err.message || "Error creating campaign.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
   const handleUpdateStatus = async (id: string, newStatus: string, observations?: string) => {
+    setActionError(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/public-health/activities/${id}/status`, {
+      await apiFetch(`/api/public-health/activities/${id}/status`, {
         method: "PATCH",
-        headers,
         body: JSON.stringify({ status: newStatus, observations: observations || "" })
       });
 
-      if (res.ok) {
-        setActionSuccess(`Activity status successfully marked as ${newStatus}.`);
-        setSelectedActivity(null);
-        setNotesInput("");
-        fetchData();
-        setTimeout(() => setActionSuccess(null), 4000);
-      }
-    } catch (err) {
-      console.error("Error updating activity:", err);
+      setActionSuccess(`Activity status successfully marked as ${newStatus}.`);
+      setSelectedActivity(null);
+      setNotesInput("");
+      fetchData();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setActionError(err.message || "Error updating activity.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 

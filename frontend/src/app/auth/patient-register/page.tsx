@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/brand/Logo";
+import { AuthLayout } from "@/components/auth/AuthLayout";
+import { apiFetch } from "@/lib/api";
 import { 
   User, 
   CreditCard, 
@@ -12,15 +13,15 @@ import {
   Calendar, 
   Lock, 
   CheckCircle, 
-  AlertCircle,
-  ShieldCheck,
-  ArrowRight,
-  Eye,
-  EyeOff,
-  FileCheck2,
-  HeartPulse,
-  Clock,
-  Sparkles
+  AlertCircle, 
+  ShieldCheck, 
+  ArrowRight, 
+  Eye, 
+  EyeOff, 
+  Building2, 
+  CalendarCheck, 
+  CheckCircle2, 
+  UserPlus 
 } from "lucide-react";
 
 type IdentificationType = "NIC" | "PASSPORT" | "ASSISTED_GUARDIAN";
@@ -51,7 +52,6 @@ export default function PatientRegisterPage() {
     return /^([0-9]{9}[vVxX]|[0-9]{12})$/.test(val.trim());
   };
 
-  // Generic ID validator based on selected type
   const validateIdentification = () => {
     const trimmed = idNumber.trim();
     if (!trimmed) return "Please enter your identification number.";
@@ -83,7 +83,7 @@ export default function PatientRegisterPage() {
     }
 
     if (!phone.trim() || phone.trim().length < 9) {
-      setError("Please provide a valid Sri Lankan mobile phone number (e.g. 0771234567).");
+      setError("Please provide a valid Sri Lankan mobile phone number (e.g. 0771234567 or 0712345678).");
       return;
     }
 
@@ -105,389 +105,322 @@ export default function PatientRegisterPage() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8080/api/auth/patients/register", {
+      const trimmedEmail = email.trim().toLowerCase();
+      const trimmedId = idNumber.trim().toUpperCase();
+
+      await apiFetch<any>("/api/auth/patients/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // Captures HttpOnly session cookie
         body: JSON.stringify({
-          fullName,
+          fullName: fullName.trim(),
           identificationType: idType,
-          idNumber: idNumber.trim().toUpperCase(),
-          nic: idType === "NIC" ? idNumber.trim().toUpperCase() : undefined,
+          idNumber: trimmedId,
+          nic: idType === "NIC" ? trimmedId : undefined,
           phone: phone.trim(),
-          email: email.trim() || undefined,
+          email: trimmedEmail,
           dateOfBirth,
           password,
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const detailedMsg = errorData.error || errorData.message || (errorData.errors && errorData.errors[0]?.defaultMessage) || "Registration could not be completed. Please verify your details.";
-        throw new Error(detailedMsg);
+      // Clear any stale local auth tokens
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("hc_user");
+        localStorage.removeItem("hc_token");
+      }
+      setSuccess(true);
+
+      if (trimmedEmail) {
+        try {
+          await apiFetch("/api/auth/email/send-otp", {
+            method: "POST",
+            body: JSON.stringify({ email: trimmedEmail }),
+          });
+          setTimeout(() => {
+            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&registered=1&id=${encodeURIComponent(trimmedId)}`);
+          }, 1200);
+          return;
+        } catch {
+          setTimeout(() => {
+            router.push(`/auth/verify-email?email=${encodeURIComponent(trimmedEmail)}&error=send_failed&id=${encodeURIComponent(trimmedId)}`);
+          }, 1200);
+          return;
+        }
       }
 
-      const data = await response.json();
-      // Store non-sensitive metadata for client routing & UI display
-      localStorage.setItem("hc_token", data.token);
-      localStorage.setItem("hc_user", JSON.stringify(data));
-      setSuccess(true);
-      setTimeout(() => router.push("/portal/patient"), 1200);
+      setTimeout(() => {
+        router.push(`/auth/patient-login?registered=1&id=${encodeURIComponent(trimmedId)}`);
+      }, 1200);
 
     } catch (err: any) {
-      if (err.message && err.message.includes("Failed to fetch")) {
-        // Graceful standalone preview fallback if backend isn't reached
-        localStorage.setItem("hc_user", JSON.stringify({
-          fullName: fullName || "Registered Citizen",
-          roles: ["PATIENT"],
-          phone: phone
-        }));
-        setSuccess(true);
-        setTimeout(() => router.push("/portal/patient"), 1200);
-      } else {
-        setError(err.message || "An unexpected error occurred during patient registration.");
-      }
+      setError(err.message || "Registration could not be completed. Please verify your details.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#070F1E] text-slate-100 flex selection:bg-teal-500 selection:text-white">
-      
-      {/* LEFT COLUMN: Cinematic Healthcare Visual & Platform Assurance (Desktop 50%) */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden bg-gradient-to-br from-[#0B1730] via-[#091529] to-[#040A14] border-r border-slate-800/80">
-        {/* Glow Spheres */}
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
-
-        {/* Top Header / Brand */}
-        <div className="relative z-10">
-          <Logo variant="light" size="lg" />
-          <div className="mt-6 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-950/60 border border-teal-500/30 text-teal-300 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-teal-400" />
-            National Digital Healthcare Initiative
+    <AuthLayout
+      badgeText="Citizen Registration"
+      badgeIcon={UserPlus}
+      badgeVariant="teal"
+      imageSrc="/images/hospital_reception.jpg"
+      imageAlt="Modern Sri Lankan Hospital Registration Reception"
+      headline="Your Digital Healthcare Passport for Sri Lanka."
+      headlineDescription="Create a verified citizen account to request clinic consultations, receive automated queue tokens, and access medical records across the public hospital network."
+      featureCards={[
+        {
+          icon: CalendarCheck,
+          title: "Outpatient Queue Tokens",
+          desc: "Schedule specialist hospital clinics with real-time wait countdowns.",
+          iconColor: "text-teal-200",
+        },
+        {
+          icon: ShieldCheck,
+          title: "Government Privacy Standards",
+          desc: "NIC records protected with irreversible cryptographic hashes.",
+          iconColor: "text-blue-200",
+        },
+      ]}
+      title="Create Patient Account"
+      subtitle="Register with your Sri Lankan National Identity Card (NIC) or Passport."
+      backHref="/"
+      backLabel="Back to Home"
+    >
+      <div className="space-y-5">
+        
+        {error && (
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-start gap-3 shadow-2xs">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <span>{error}</span>
           </div>
-        </div>
+        )}
 
-        {/* Center Presentation Info */}
-        <div className="relative z-10 max-w-lg space-y-6">
-          <h1 className="text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-tight">
-            Seamless Healthcare Access For Every Sri Lankan Citizen.
-          </h1>
-          <p className="text-sm xl:text-base text-slate-300 leading-relaxed">
-            Create your unified patient profile to skip crowded waiting lines, book government hospital clinic sessions, and monitor live consultation tokens right from your phone.
-          </p>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
-              <Clock className="w-5 h-5 text-teal-400 mb-2" />
-              <div className="text-sm font-bold text-white">Live Queue Tracking</div>
-              <div className="text-xs text-slate-400 mt-1">Real-time token updates across NHSL, Kandy, and Karapitiya.</div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md">
-              <ShieldCheck className="w-5 h-5 text-blue-400 mb-2" />
-              <div className="text-sm font-bold text-white">Cryptographic Privacy</div>
-              <div className="text-xs text-slate-400 mt-1">Salted SHA-256 identity hashing & secure HttpOnly credentials.</div>
-            </div>
+        {success && (
+          <div className="p-4 rounded-2xl bg-[#DDEFE9] border border-[#108B83]/40 text-[#08786F] text-xs sm:text-sm flex items-center gap-3 shadow-2xs">
+            <CheckCircle className="w-5 h-5 text-[#108B83] shrink-0" />
+            <span>Registration successful! Directing to email verification...</span>
           </div>
-        </div>
+        )}
 
-        {/* Bottom Hospital Partnership Trust Badge */}
-        <div className="relative z-10 pt-6 border-t border-slate-800/70 flex items-center justify-between text-xs text-slate-400">
-          <div className="flex items-center gap-2">
-            <HeartPulse className="w-4 h-4 text-rose-400" />
-            <span>Ministry of Health Integrated Partner Network</span>
-          </div>
-          <span>SL-CERT Compliant</span>
-        </div>
-      </div>
-
-      {/* RIGHT COLUMN: Interactive Registration Form (Desktop 50%, Full Mobile) */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto">
-        <div className="w-full max-w-xl space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           
-          {/* Header Mobile Brand */}
-          <div className="lg:hidden flex justify-between items-center pb-2 border-b border-slate-800">
-            <Logo variant="light" size="sm" />
-            <Link href="/" className="text-xs font-semibold text-teal-400 hover:text-teal-300">
-              ← Back to Home
-            </Link>
-          </div>
-
+          {/* Identification Document Type Toggle */}
           <div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              Create Patient Account
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
-              Join HealthConnect LK with your verified national identity document.
-            </p>
+            <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+              Identity Verification Document *
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { type: "NIC", label: "National ID (NIC)" },
+                { type: "PASSPORT", label: "Passport" },
+                { type: "ASSISTED_GUARDIAN", label: "Guardian" },
+              ].map((opt) => (
+                <button
+                  key={opt.type}
+                  type="button"
+                  onClick={() => {
+                    setIdType(opt.type as IdentificationType);
+                    setIdNumber("");
+                  }}
+                  className={`py-2 px-2 text-xs font-bold rounded-xl transition border text-center ${
+                    idType === opt.type
+                      ? "bg-[#DDEFE9] text-[#08786F] border-[#108B83]"
+                      : "bg-[#F6F9F8] text-[#698399] border-[#D5E0E3] hover:text-[#243847]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Feedback Messages */}
-          {error && (
-            <div className="p-4 rounded-xl bg-rose-950/70 border border-rose-800/70 text-rose-200 text-xs sm:text-sm flex items-start gap-3 shadow-lg">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="p-4 rounded-xl bg-emerald-950/70 border border-emerald-800/70 text-emerald-200 text-xs sm:text-sm flex items-center gap-3 shadow-lg">
-              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span>Account created successfully! Securely routing to patient portal...</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            
-            {/* Identification Type Selector Tabs */}
-            <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300">
-                Identification Method *
-              </label>
-              <div className="grid grid-cols-3 gap-2 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => { setIdType("NIC"); setError(null); }}
-                  className={`py-2 px-2 text-xs font-medium rounded-lg transition-all ${
-                    idType === "NIC"
-                      ? "bg-teal-600 text-white shadow-sm font-semibold"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  Sri Lankan NIC
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setIdType("PASSPORT"); setError(null); }}
-                  className={`py-2 px-2 text-xs font-medium rounded-lg transition-all ${
-                    idType === "PASSPORT"
-                      ? "bg-teal-600 text-white shadow-sm font-semibold"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  Passport
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setIdType("ASSISTED_GUARDIAN"); setError(null); }}
-                  className={`py-2 px-2 text-xs font-medium rounded-lg transition-all ${
-                    idType === "ASSISTED_GUARDIAN"
-                      ? "bg-teal-600 text-white shadow-sm font-semibold"
-                      : "text-slate-400 hover:text-slate-200"
-                  }`}
-                >
-                  Assisted / Guardian
-                </button>
-              </div>
-            </div>
-
-            {/* Full Legal Name */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Full Name (as stated on identity document) *
-              </label>
-              <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Kasun Chamara Perera"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
-                />
-              </div>
-            </div>
-
-            {/* Dynamic ID Input */}
-            <div>
-              <div className="flex justify-between items-center mb-1">
-                <label className="text-xs font-semibold text-slate-300">
-                  {idType === "NIC" && "National Identity Card (NIC) *"}
-                  {idType === "PASSPORT" && "Passport Number *"}
-                  {idType === "ASSISTED_GUARDIAN" && "Guardian NIC / Reference ID *"}
-                </label>
-                <span className="text-[10px] text-teal-400 font-medium">
-                  {idType === "NIC" && "Supports 9-digit (V/X) & modern 12-digit"}
-                  {idType === "PASSPORT" && "International / Sri Lankan Travel Document"}
-                  {idType === "ASSISTED_GUARDIAN" && "For pediatric or dependent registration"}
-                </span>
-              </div>
-              <div className="relative">
-                <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="text"
-                  required
-                  value={idNumber}
-                  onChange={(e) => setIdNumber(e.target.value)}
-                  placeholder={
-                    idType === "NIC" ? "199512345678 or 951234567V" :
-                    idType === "PASSPORT" ? "N1234567" : "Guardian's NIC / Reg No"
-                  }
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm uppercase focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
-                />
-              </div>
-              <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-teal-400 shrink-0" />
-                Salted SHA-256 hash stored. Raw identity documents remain encrypted.
-              </p>
-            </div>
-
-            {/* Mobile & Date of Birth */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Mobile Number (SMS Alerts) *
-                </label>
-                <div className="relative">
-                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="0771234567"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Date of Birth *
-                </label>
-                <div className="relative">
-                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type="date"
-                    required
-                    value={dateOfBirth}
-                    onChange={(e) => setDateOfBirth(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 text-slate-200"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Optional Email */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1">
-                Email Address (Optional for digital receipts)
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="kasun.perera@example.lk"
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 placeholder:text-slate-500"
-                />
-              </div>
-            </div>
-
-            {/* Password with Eye Toggle */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Password (min 8 chars) *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
-                    aria-label="Toggle password visibility"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Confirm Password *
-                </label>
-                <div className="relative">
-                  <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <input
-                    type={showConfirmPassword ? "text" : "password"}
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-700/80 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 focus:outline-none"
-                    aria-label="Toggle confirm password visibility"
-                  >
-                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Privacy Checkbox */}
-            <div className="flex items-start gap-2.5 pt-1">
+          {/* Full Name */}
+          <div>
+            <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+              Full Legal Name *
+            </label>
+            <div className="relative">
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
               <input
-                id="consentCheck"
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="e.g. Kasun Chamara Perera"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] placeholder:text-[#698399]/50 transition"
+              />
+            </div>
+          </div>
+
+          {/* Identification Number */}
+          <div>
+            <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+              {idType === "NIC"
+                ? "Sri Lankan NIC Number *"
+                : idType === "PASSPORT"
+                ? "Passport Number *"
+                : "Guardian Verified NIC *"}
+            </label>
+            <div className="relative">
+              <CreditCard className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+              <input
+                type="text"
+                required
+                value={idNumber}
+                onChange={(e) => setIdNumber(e.target.value)}
+                placeholder={idType === "NIC" ? "e.g. 199512345678 or 951234567V" : "e.g. N1234567"}
+                className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] placeholder:text-[#698399]/50 font-mono transition"
+              />
+            </div>
+          </div>
+
+          {/* Phone & Date of Birth */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Mobile Number *
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                <input
+                  type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="0771234567"
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] placeholder:text-[#698399]/50 transition"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Date of Birth *
+              </label>
+              <div className="relative">
+                <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                <input
+                  type="date"
+                  required
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] transition"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Email Address */}
+          <div>
+            <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+              Email Address (For Verification OTP) *
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="kasun.perera@example.lk"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] placeholder:text-[#698399]/50 transition"
+              />
+            </div>
+          </div>
+
+          {/* Password & Confirm */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Password (min 8 chars) *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-9 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] transition"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#698399] hover:text-[#243847]"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#243847] mb-1.5">
+                Confirm Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-9 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] transition"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#698399] hover:text-[#243847]"
+                  aria-label="Toggle confirm password visibility"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Consent Checkbox */}
+          <div className="pt-2">
+            <label className="flex items-start gap-2.5 text-xs text-[#667986] cursor-pointer">
+              <input
                 type="checkbox"
                 required
                 checked={consentAgreed}
                 onChange={(e) => setConsentAgreed(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-slate-700 text-teal-600 focus:ring-teal-500 bg-slate-900 cursor-pointer"
+                className="mt-0.5 rounded text-[#108B83] focus:ring-[#108B83]"
               />
-              <label htmlFor="consentCheck" className="text-xs text-slate-400 leading-relaxed cursor-pointer select-none">
-                I agree to the HealthConnect LK privacy policy and give consent for verified identification to be used for hospital appointment scheduling and real-time live queue management.
-              </label>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 px-6 bg-teal-600 hover:bg-teal-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg hover:shadow-teal-500/25 disabled:opacity-50 text-sm mt-3"
-            >
-              {loading ? (
-                <span>Registering Citizen Profile...</span>
-              ) : (
-                <>
-                  <span>Create Patient Account</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Footer Navigation */}
-          <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
-            <span>Already have an account?</span>
-            <Link 
-              href="/auth/patient-login" 
-              className="font-semibold text-teal-400 hover:text-teal-300 transition-colors"
-            >
-              Sign In to Patient Portal →
-            </Link>
+              <span>
+                I consent to the processing of my healthcare identification under Sri Lankan data privacy standards for clinic appointment scheduling.
+              </span>
+            </label>
           </div>
 
-        </div>
-      </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 px-6 bg-[#108B83] hover:bg-[#08786F] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg disabled:opacity-50 text-sm mt-3 transform hover:-translate-y-0.5 active:translate-y-0"
+          >
+            {loading ? (
+              <span>Creating Account...</span>
+            ) : (
+              <>
+                <span>Complete Registration & Verify Email</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
+          </button>
+        </form>
 
-    </div>
+        <div className="pt-4 border-t border-[#D5E0E3] text-center text-xs text-[#667986]">
+          Already have a patient profile?{" "}
+          <Link href="/auth/patient-login" className="font-bold text-[#108B83] hover:underline">
+            Sign In Here &rarr;
+          </Link>
+        </div>
+
+      </div>
+    </AuthLayout>
   );
 }

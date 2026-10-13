@@ -3,46 +3,62 @@ import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/home/Hero";
 import { ServicesSection } from "@/components/home/ServicesSection";
 import { HowItWorks } from "@/components/home/HowItWorks";
+import { PatientExperience } from "@/components/home/PatientExperience";
+import { ClinicalExperience } from "@/components/home/ClinicalExperience";
 import { FacilityDirectory } from "@/components/home/FacilityDirectory";
-import { OperationalMetrics } from "@/components/home/OperationalMetrics";
+import { TechnologySection } from "@/components/home/TechnologySection";
 import { DashboardPreview } from "@/components/home/DashboardPreview";
+import { OperationalMetrics } from "@/components/home/OperationalMetrics";
+import { SecurityOverview } from "@/components/home/SecurityOverview";
 import { FAQSection } from "@/components/home/FAQSection";
 import { ContactSection } from "@/components/home/ContactSection";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#0B1730] text-slate-100 selection:bg-teal-500 selection:text-white">
+    <div className="min-h-screen flex flex-col bg-[#EDF2F4] text-[#3C5262] selection:bg-[#108B83] selection:text-white">
       {/* Sticky Responsive Navigation Bar */}
       <Navbar />
 
       {/* Main Cinematic Landing Page */}
       <main className="flex-grow">
-        {/* Cinematic Hero */}
+        {/* 1. Cinematic Healthcare Hero */}
         <Hero />
 
-        {/* Healthcare Services Explorer */}
+        {/* 2. Comprehensive Healthcare Services Explorer */}
         <ServicesSection />
 
-        {/* Visual Timeline of Patient Journey */}
+        {/* 3. Visual Journey: How HealthNexus Works */}
         <HowItWorks />
 
-        {/* Hospital & Active Clinics Directory */}
+        {/* 4. Citizen & Patient Experience Showcase */}
+        <PatientExperience />
+
+        {/* 5. Healthcare Professional & Clinical Experience */}
+        <ClinicalExperience />
+
+        {/* 6. Featured Sri Lankan Hospitals & MoH Directory */}
         <FacilityDirectory />
 
-        {/* Interactive Multi-Role Platform Preview */}
+        {/* 7. National Healthcare Technology & Telemetry */}
+        <TechnologySection />
+
+        {/* 8. Interactive Multi-Role Platform Previews */}
         <DashboardPreview />
 
-        {/* Real-time Data Visualization & Operational Charts */}
+        {/* 9. Operational Intelligence & Analytics Visualizations */}
         <OperationalMetrics />
 
-        {/* Frequently Asked Questions */}
+        {/* 10. Privacy, Security & Compliance Overview */}
+        <SecurityOverview />
+
+        {/* 11. Frequently Asked Questions */}
         <FAQSection />
 
-        {/* Inquiries & Emergency Escalation */}
+        {/* 12. Hospital Liaison, Inquiries & Emergency Escalation */}
         <ContactSection />
       </main>
 
-      {/* Comprehensive Footer */}
+      {/* 13. Comprehensive Footer */}
       <Footer />
     </div>
   );

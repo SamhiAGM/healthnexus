@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@SuppressWarnings("null")
 public class ClinicCoordinatorService {
 
     private final ClinicSessionRepository sessionRepository;

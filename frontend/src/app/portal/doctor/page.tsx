@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Logo } from "@/components/brand/Logo";
+import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   Stethoscope, 
   Users, 
@@ -14,12 +14,29 @@ import {
   Pill, 
   Activity, 
   ChevronRight, 
-  LogOut,
-  Building2,
-  Send,
-  UserCheck,
-  RefreshCw
+  Send, 
+  RefreshCw,
+  Search,
+  Sparkles,
+  Calendar,
+  Layers
 } from "lucide-react";
+import { 
+  PremiumStatCard, 
+  ChartCard, 
+  StatusIndicator, 
+  EmptyState, 
+  LoadingSkeleton 
+} from "@/components/portal/DashboardComponents";
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer, 
+  CartesianGrid 
+} from "recharts";
 
 interface PatientQueueItem {
   id: string;
@@ -32,9 +49,19 @@ interface PatientQueueItem {
   status: "WAITING" | "CALLED" | "IN_CONSULTATION" | "COMPLETED";
 }
 
+const HOURLY_QUEUE_TREND = [
+  { time: "08:00", attended: 3, waiting: 8 },
+  { time: "09:00", attended: 9, waiting: 14 },
+  { time: "10:00", attended: 18, waiting: 12 },
+  { time: "11:00", attended: 26, waiting: 6 },
+  { time: "12:00", attended: 32, waiting: 2 },
+];
+
 export default function DoctorDashboard() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [userName, setUserName] = useState("Dr. Samantha Senanayake");
+  const [facilityName, setFacilityName] = useState("National Hospital of Sri Lanka (NHSL)");
 
   const [queue, setQueue] = useState<PatientQueueItem[]>([
     {
@@ -87,46 +114,54 @@ export default function DoctorDashboard() {
   const [prescriptions, setPrescriptions] = useState("");
   const [labOrders, setLabOrders] = useState("Resting 12-lead ECG");
   const [savedNotification, setSavedNotification] = useState(false);
+  const [isDemoData, setIsDemoData] = useState(false);
 
-  // Fetch live queue from Spring Boot backend
+  // Fetch live queue from backend
   const fetchLiveQueue = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/doctor/queue?facilityId=NHSL", {
-        headers,
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: PatientQueueItem[] = data.map((d: any, idx: number) => ({
-            id: d.id || `P-${100 + idx}`,
-            token: d.ticketNumber || `C-02${idx}`,
-            name: d.patientName || "Clinic Citizen",
-            age: d.patientAge || 40,
-            gender: (d.patientGender === "F" ? "F" : "M"),
-            complaint: d.complaint || "Cardiology follow-up consultation",
-            vitals: d.vitalsSummary || "BP: 125/82 mmHg, HR: 72 bpm",
-            status: d.status || "WAITING",
-          }));
-          setQueue(mapped);
-        }
+      const data = await apiFetch<any[]>("/api/doctor/queue?facilityId=NHSL");
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped: PatientQueueItem[] = data.map((d: any, idx: number) => ({
+          id: d.id || `P-${100 + idx}`,
+          token: d.ticketNumber || `C-02${idx}`,
+          name: d.patientName || "Clinic Citizen",
+          age: d.patientAge || 40,
+          gender: d.patientGender === "F" ? "F" : "M",
+          complaint: d.complaint || "Cardiology follow-up consultation",
+          vitals: d.vitalsSummary || "BP: 125/82 mmHg, HR: 72 bpm",
+          status: d.status || "WAITING",
+        }));
+        setQueue(mapped);
+        setIsDemoData(false);
+      } else {
+        setIsDemoData(true);
       }
     } catch (e) {
-      // Retain offline fallback
+      setIsDemoData(true);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchLiveQueue();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["DOCTOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
+      }
+      if (user?.fullName) setUserName(user.fullName);
+      if (user?.assignedFacilityId) setFacilityName(user.assignedFacilityId);
+      fetchLiveQueue();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleStatusChange = async (index: number, newStatus: PatientQueueItem["status"]) => {
     const updated = [...queue];
@@ -134,14 +169,8 @@ export default function DoctorDashboard() {
     setQueue(updated);
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      await fetch("http://localhost:8080/api/doctor/queue/status", {
+      await apiFetch("/api/doctor/queue/status", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({
           token: queue[index].token,
           status: newStatus,
@@ -154,17 +183,11 @@ export default function DoctorDashboard() {
     e.preventDefault();
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
       const prescList = prescriptions.split(",").map((s) => s.trim()).filter(Boolean);
       const labList = labOrders.split(",").map((s) => s.trim()).filter(Boolean);
 
-      await fetch("http://localhost:8080/api/doctor/consultations", {
+      await apiFetch("/api/doctor/consultations", {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({
           token: activePatient.token,
           patientId: activePatient.id,
@@ -190,229 +213,274 @@ export default function DoctorDashboard() {
     }, 1200);
   };
 
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:8080/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (e) {}
-    localStorage.removeItem("hc_staff_user");
-    localStorage.removeItem("hc_token");
-    router.push("/auth/staff-login");
-  };
+  const navItems = [
+    { label: "Consultation Queue", href: "/portal/doctor", icon: Users, active: true },
+    { label: "My Clinic Sessions", href: "/portal/doctor", icon: Calendar },
+    { label: "Diagnostic Orders", href: "/portal/laboratory", icon: Activity },
+    { label: "Pharmacy Dispatches", href: "/portal/pharmacy", icon: Pill },
+  ];
+
+  const completedCount = queue.filter(q => q.status === "COMPLETED").length;
+  const waitingCount = queue.filter(q => q.status === "WAITING" || q.status === "CALLED").length;
 
   return (
-    <div className="min-h-screen bg-[#081225] text-slate-100 flex flex-col selection:bg-blue-500 selection:text-white">
-      {/* Header */}
-      <header className="bg-[#0B1730] border-b border-slate-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Logo variant="light" size="sm" />
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-950/60 text-blue-400 border border-blue-800/40">
-                Clinician Workspace
-              </span>
-              <span className="hidden md:inline-block text-xs text-slate-400">
-                National Hospital of Sri Lanka (NHSL) • Cardiology Room 04
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-bold text-white">Dr. Samantha Senanayake, MBBS</div>
-              <div className="text-[10px] text-teal-400">SLMC Reg: 64821</div>
-            </div>
-
-            <button
-              onClick={handleLogout}
-              className="p-2 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors"
-              title="Sign Out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
+    <PortalShell
+      role="DOCTOR"
+      roleTitle="Medical Doctor / Clinician"
+      pageTitle="Clinical Consultation Desk"
+      department="Cardiology Room 04"
+      facility={facilityName}
+      userName={userName}
+      navItems={navItems}
+      breadcrumbs={[
+        { label: "Portal", href: "/portal/doctor" },
+        { label: "Doctor Workspace" }
+      ]}
+      headerActions={
+        <button
+          onClick={fetchLiveQueue}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F0F4F7] hover:bg-[#E8F0F4] border border-[#D9E3E9] text-xs font-bold text-[#087F79] transition"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <span>Refresh Queue</span>
+        </button>
+      }
+    >
+      <div className="space-y-6">
+        
+        {/* KPI Metrics */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <PremiumStatCard
+            label="Current Session"
+            value="Room 04"
+            subValue="Cardiology Outpatient Clinic"
+            icon={Stethoscope}
+            colorScheme="blue"
+            badge="Morning Quota"
+          />
+          <PremiumStatCard
+            label="In Consultation"
+            value={activePatient ? activePatient.token : "None"}
+            subValue={activePatient ? activePatient.name : "Waiting for next token"}
+            icon={Users}
+            colorScheme="teal"
+            badge="Active"
+          />
+          <PremiumStatCard
+            label="Completed Today"
+            value={`${completedCount} Patients`}
+            subValue={`${waitingCount} remaining in queue`}
+            trend={{ value: "+12% vs last week", positive: true }}
+            icon={CheckCircle2}
+            colorScheme="teal"
+          />
+          <PremiumStatCard
+            label="Diagnostic Lab Orders"
+            value="14 Dispatches"
+            subValue="Sent to NHSL central pathology"
+            icon={Activity}
+            colorScheme="slate"
+          />
         </div>
-      </header>
 
-      {/* Main Workspace */}
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        {/* Live Queue Grid and Consultation Panel */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Left Column: Today's Assigned Queue List */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-[#D9E3E9] pb-3">
               <div>
-                <h2 className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-4 h-4 text-blue-400" />
-                  Today's Clinic Queue
-                </h2>
-                <p className="text-xs text-slate-400">Morning Session • {queue.length} Patients</p>
+                <h3 className="text-base font-bold text-[#20364C] flex items-center gap-2">
+                  <Users className="w-4 h-4 text-[#426DA9]" />
+                  Assigned Patient Queue
+                </h3>
+                <p className="text-xs text-[#43566C]">{queue.length} Total Patients in Shift</p>
               </div>
-              <button
-                onClick={fetchLiveQueue}
-                disabled={loading}
-                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400 border border-slate-700 transition-colors"
-                title="Refresh Live Queue"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              </button>
+              {isDemoData && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#E8F0F4] text-[#426DA9] border border-[#426DA9]/30">
+                  Live Queue Demonstration
+                </span>
+              )}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {queue.map((patient, index) => {
-                const isActive = index === activePatientIndex;
+                const isSelected = index === activePatientIndex;
                 return (
                   <div
                     key={patient.id}
                     onClick={() => setActivePatientIndex(index)}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all ${
-                      isActive
-                        ? "bg-[#0F1E36] border-blue-500 shadow-md ring-1 ring-blue-500/50"
-                        : "bg-[#0B1730]/70 border-slate-800 hover:border-slate-700"
+                    className={`p-4 rounded-2xl border transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-[#F8FAFB] border-[#087F79] shadow-sm ring-1 ring-[#087F79]/30"
+                        : "bg-[#F8FAFB] border-[#D9E3E9] hover:border-[#159B94]/50"
                     }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-extrabold text-blue-400">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono text-base font-extrabold text-[#20364C]">
                           {patient.token}
                         </span>
-                        <span className="text-xs font-bold text-white">
-                          {patient.name}
-                        </span>
+                        <div>
+                          <div className="text-xs font-bold text-[#20364C]">{patient.name}</div>
+                          <div className="text-[11px] text-[#43566C]">
+                            Age {patient.age} &bull; {patient.gender === "M" ? "Male" : "Female"}
+                          </div>
+                        </div>
                       </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
-                        patient.status === "IN_CONSULTATION"
-                          ? "bg-teal-950/60 text-teal-400 border border-teal-800/40"
-                          : patient.status === "CALLED"
-                          ? "bg-amber-950/60 text-amber-400 border border-amber-800/40"
-                          : patient.status === "COMPLETED"
-                          ? "bg-slate-800 text-slate-400"
-                          : "bg-blue-950/60 text-blue-400 border border-blue-800/40"
-                      }`}>
-                        {patient.status.replace("_", " ")}
-                      </span>
+                      <StatusIndicator status={patient.status} />
                     </div>
 
-                    <p className="text-xs text-slate-400 line-clamp-1">{patient.complaint}</p>
-                    <div className="mt-2 text-[11px] text-slate-500 font-mono">{patient.vitals}</div>
+                    <p className="text-xs text-[#43566C] mt-2 line-clamp-1 italic">
+                      "{patient.complaint}"
+                    </p>
+
+                    <div className="mt-2.5 pt-2 border-t border-[#D9E3E9] flex items-center justify-between text-[11px] text-[#087F79]">
+                      <span className="font-mono font-medium">{patient.vitals}</span>
+                      {isSelected && <span className="font-bold flex items-center gap-1">Consulting &rarr;</span>}
+                    </div>
                   </div>
                 );
               })}
             </div>
+
+            {/* Queue Trend Mini Chart */}
+            <ChartCard title="Session Attendance Trend" subtitle="Patient tokens served per hour" badge="Today">
+              <div className="h-44 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={HOURLY_QUEUE_TREND}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#D9E3E9" />
+                    <XAxis dataKey="time" stroke="#43566C" fontSize={11} />
+                    <YAxis stroke="#43566C" fontSize={11} />
+                    <Tooltip contentStyle={{ backgroundColor: "#F8FAFB", borderColor: "#D9E3E9", borderRadius: "12px", color: "#20364C" }} />
+                    <Area type="monotone" dataKey="attended" stroke="#087F79" fill="#DFEFEC" strokeWidth={2} name="Attended" />
+                    <Area type="monotone" dataKey="waiting" stroke="#426DA9" fill="#E8F0F4" strokeWidth={2} name="Waiting" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </ChartCard>
           </div>
 
-          {/* Right Column: Active Consultation Worklist & Order Entry */}
+          {/* Right Column: Active Consultation Station */}
           <div className="lg:col-span-7">
-            <div className="bg-[#0F1E36] border border-slate-700/80 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl">
-              
-              {/* Active Patient Details Banner */}
-              <div className="border-b border-slate-800 pb-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 font-bold text-lg">
-                      {activePatient.token}
+            {activePatient ? (
+              <div className="bg-[#F8FAFB] border border-[#D9E3E9] rounded-2xl p-6 shadow-xs space-y-6">
+                
+                {/* Active Patient Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D9E3E9] pb-4">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#DFEFEC] text-[#087F79] border border-[#159B94]/30">
+                        Token {activePatient.token}
+                      </span>
+                      <StatusIndicator status={activePatient.status} />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-white">{activePatient.name}</h3>
-                      <div className="text-xs text-slate-400">
-                        {activePatient.age} yrs • {activePatient.gender === "M" ? "Male" : "Female"} • Record ID: {activePatient.id}
-                      </div>
-                    </div>
+                    <h3 className="text-xl font-extrabold text-[#20364C]">{activePatient.name}</h3>
+                    <p className="text-xs text-[#43566C]">
+                      Patient ID: {activePatient.id} &bull; Age {activePatient.age} ({activePatient.gender === "M" ? "Male" : "Female"})
+                    </p>
                   </div>
 
+                  {/* Queue Control Buttons */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleStatusChange(activePatientIndex, "CALLED")}
-                      className="px-3 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 text-xs font-semibold border border-amber-600/30 transition-colors"
+                      className="px-3 py-1.5 text-xs font-bold rounded-xl bg-[#E8F0F4] hover:bg-[#DFEFEC] text-[#426DA9] border border-[#D9E3E9] transition"
                     >
                       Call Token
                     </button>
                     <button
                       onClick={() => handleStatusChange(activePatientIndex, "IN_CONSULTATION")}
-                      className="px-3 py-1.5 rounded-lg bg-teal-600/20 hover:bg-teal-600/30 text-teal-400 text-xs font-semibold border border-teal-600/30 transition-colors"
+                      className="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-[#087F79] hover:bg-[#159B94] text-white transition shadow-sm"
                     >
-                      Consulting
+                      Begin Consult
                     </button>
                   </div>
                 </div>
 
-                {/* Vitals Box */}
-                <div className="mt-4 p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4 text-teal-400" />
-                    <span><strong>Triage Vitals:</strong> {activePatient.vitals}</span>
-                  </div>
-                  <span className="text-[10px] text-teal-400 font-semibold">Logged by Nurse</span>
+                {/* Pre-Consultation Nursing Vitals Card */}
+                <div className="p-4 rounded-xl bg-[#F0F4F7] border border-[#D9E3E9] space-y-1">
+                  <span className="text-[11px] font-bold text-[#43566C] uppercase tracking-wider block">
+                    Nursing Triage Observations &amp; Vitals
+                  </span>
+                  <div className="text-sm font-bold text-[#20364C]">{activePatient.vitals}</div>
+                  <p className="text-xs text-[#364A5D] mt-1">Chief complaint: {activePatient.complaint}</p>
                 </div>
+
+                {savedNotification && (
+                  <div className="p-3.5 rounded-xl bg-[#DFEFEC] border border-[#159B94]/40 text-[#087F79] text-xs flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-[#087F79] shrink-0" />
+                    <span className="font-bold">Consultation completed! Records and pharmacy dispatches transmitted.</span>
+                  </div>
+                )}
+
+                {/* Consultation Recorder Form */}
+                <form onSubmit={handleCompleteConsultation} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#20364C] mb-1">
+                      Clinical Observations &amp; Diagnostic Findings *
+                    </label>
+                    <textarea
+                      rows={3}
+                      required
+                      value={consultationNotes}
+                      onChange={(e) => setConsultationNotes(e.target.value)}
+                      placeholder="Enter clinical examination notes, diagnosis, and advice given to patient..."
+                      className="w-full px-4 py-2.5 bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#159B94] transition"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-[#20364C] mb-1">
+                        Prescribed Medications (Comma separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={prescriptions}
+                        onChange={(e) => setPrescriptions(e.target.value)}
+                        placeholder="e.g. Amlodipine 5mg OD, Atorvastatin 20mg Nocte"
+                        className="w-full px-4 py-2.5 bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#159B94] transition"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-[#20364C] mb-1">
+                        Diagnostic Investigations Dispatch
+                      </label>
+                      <select
+                        value={labOrders}
+                        onChange={(e) => setLabOrders(e.target.value)}
+                        className="w-full px-4 py-2.5 bg-[#F0F4F7] border border-[#D9E3E9] rounded-xl text-[#20364C] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#159B94] transition"
+                      >
+                        <option value="Resting 12-lead ECG">Resting 12-lead ECG</option>
+                        <option value="Fasting Blood Glucose & HbA1c">Fasting Blood Glucose &amp; HbA1c</option>
+                        <option value="Full Blood Count (FBC)">Full Blood Count (FBC)</option>
+                        <option value="Serum Lipid Profile">Serum Lipid Profile</option>
+                        <option value="Echocardiography Doppler">Echocardiography Doppler</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3.5 px-4 bg-[#087F79] hover:bg-[#159B94] text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Complete Consultation &amp; Dispatch to Pharmacy</span>
+                  </button>
+                </form>
+
               </div>
-
-              {savedNotification && (
-                <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 text-xs sm:text-sm flex items-center gap-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                  <span>Consultation recorded in hospital EMR ledger. Advancing queue ticket...</span>
-                </div>
-              )}
-
-              {/* Consultation Input Form */}
-              <form onSubmit={handleCompleteConsultation} className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Clinical Examination & Assessment Notes *
-                  </label>
-                  <textarea
-                    rows={4}
-                    required
-                    value={consultationNotes}
-                    onChange={(e) => setConsultationNotes(e.target.value)}
-                    placeholder="Document clinical observations, diagnosis, patient response..."
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Medication Prescriptions (Hospital Pharmacy Dispatch)
-                    </label>
-                    <input
-                      type="text"
-                      value={prescriptions}
-                      onChange={(e) => setPrescriptions(e.target.value)}
-                      placeholder="e.g. Amlodipine 5mg nocte, Atorvastatin 20mg"
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">
-                      Laboratory & Diagnostic Orders
-                    </label>
-                    <input
-                      type="text"
-                      value={labOrders}
-                      onChange={(e) => setLabOrders(e.target.value)}
-                      placeholder="e.g. Fasting Lipids, 12-lead ECG, HbA1c"
-                      className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Save & Complete Consultation
-                </button>
-              </form>
-
-            </div>
+            ) : (
+              <EmptyState title="No active consultation" message="Select a patient from the queue to start consultation." />
+            )}
           </div>
 
         </div>
-      </main>
-    </div>
+
+      </div>
+    </PortalShell>
   );
 }

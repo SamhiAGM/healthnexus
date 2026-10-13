@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@SuppressWarnings("null")
 public class LaboratoryService {
 
     private final LabOrderRepository labOrderRepository;
@@ -17,12 +18,12 @@ public class LaboratoryService {
 
     public List<LabOrder> getLabOrders(String facilityId) {
         String safeFacility = (facilityId != null && !facilityId.isBlank()) ? facilityId : "NHSL";
-        List<LabOrder> list = labOrderRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
-        if (list.isEmpty()) {
+        List<LabOrder> existing = labOrderRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
+        if (existing.isEmpty() && labOrderRepository.count() == 0) {
             initSeedLabOrders(safeFacility);
             return labOrderRepository.findByFacilityIdOrderByCreatedAtDesc(safeFacility);
         }
-        return list;
+        return existing;
     }
 
     public LabOrder collectSample(String idOrNumber) {

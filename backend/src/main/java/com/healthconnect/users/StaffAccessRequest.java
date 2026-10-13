@@ -1,5 +1,6 @@
 package com.healthconnect.users;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -53,6 +54,7 @@ public class StaffAccessRequest {
 
     private Instant reviewedAt;
 
+    @JsonIgnore
     private String passwordHash; // Stored securely until approved, then account is activated in users collection
 
     @CreatedDate

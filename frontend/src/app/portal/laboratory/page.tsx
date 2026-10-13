@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   FlaskConical, 
   TestTube2, 
@@ -37,86 +39,76 @@ export default function LaboratoryPortalPage() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const router = useRouter();
   const [resultInput, setResultInput] = useState("");
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/laboratory/orders", {
-        headers,
-        credentials: "include"
-      });
-
-      if (res.ok) {
-        const data = await res.json();
+      const data = await apiFetch<any[]>("/api/laboratory/orders");
+      if (Array.isArray(data)) {
         setOrders(data);
       }
     } catch (e) {
-      // Graceful fallback
+      // Retain fallback display
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || !user.roles?.some(r => ["LAB_TECHNICIAN", "LAB_STAFF", "DOCTOR", "HOSPITAL_ADMIN", "SYSTEM_ADMIN"].includes(r))) {
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
+      }
+      fetchOrders();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleCollectSample = async (orderId: string, orderNumber: string) => {
+    setActionError(null);
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/laboratory/orders/${orderId}/sample`, {
+      const updated = await apiFetch<any>(`/api/laboratory/orders/${orderId}/sample`, {
         method: "POST",
-        headers,
-        credentials: "include"
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
-        setActionSuccess(`Specimen for ${orderNumber} collected and barcoded.`);
-        setTimeout(() => setActionSuccess(null), 3000);
-      }
-    } catch (e) {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "SAMPLE_COLLECTED" } : o));
+      setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+      setActionSuccess(`Specimen for ${orderNumber} collected and barcoded.`);
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err: any) {
+      setActionError(err.message || `Failed to collect specimen for ${orderNumber}.`);
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
   const handleRecordResults = async (orderId: string, orderNumber: string) => {
     if (!resultInput.trim()) return;
+    setActionError(null);
 
     try {
-      const token = localStorage.getItem("hc_token");
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`http://localhost:8080/api/laboratory/orders/${orderId}/results`, {
+      const updated = await apiFetch<any>(`/api/laboratory/orders/${orderId}/results`, {
         method: "POST",
-        headers,
-        credentials: "include",
         body: JSON.stringify({ results: resultInput.trim() })
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
-        setActionSuccess(`Test report for ${orderNumber} released to physician.`);
-        setSelectedOrderId(null);
-        setResultInput("");
-        setTimeout(() => setActionSuccess(null), 3000);
-      }
-    } catch (e) {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: "RELEASED", resultsSummary: resultInput, technicianName: "T. Mendis, MLT" } : o));
+      setOrders(prev => prev.map(o => o.id === orderId ? updated : o));
+      setActionSuccess(`Test report for ${orderNumber} released to physician.`);
       setSelectedOrderId(null);
       setResultInput("");
+      setTimeout(() => setActionSuccess(null), 3000);
+    } catch (err: any) {
+      setActionError(err.message || `Failed to release test results for ${orderNumber}.`);
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
@@ -131,9 +123,9 @@ export default function LaboratoryPortalPage() {
   );
 
   const navItems = [
-    { label: "Laboratory Worklist", href: "/portal/laboratory", icon: TestTube2, active: true, badge: `${orderedCount + collectedCount} Active` },
-    { label: "Specimen Intake", href: "/portal/laboratory", icon: FlaskConical },
-    { label: "Released Reports", href: "/portal/laboratory", icon: FileCheck, badge: `${releasedCount}` },
+    { label: "Specimen Reception", href: "/portal/laboratory", icon: TestTube2, active: true, badge: `${orderedCount} Pending` },
+    { label: "Analyzer Bench", href: "/portal/laboratory", icon: Microscope, active: false, badge: `${collectedCount} In Test` },
+    { label: "Released Reports", href: "/portal/laboratory", icon: FileCheck, active: false, badge: `${releasedCount} Signed` },
   ];
 
   return (
@@ -148,70 +140,77 @@ export default function LaboratoryPortalPage() {
         <button
           onClick={fetchOrders}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700/80 hover:bg-slate-800 text-xs font-semibold text-slate-300"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-sm"
         >
-          <RefreshCw className={`w-3.5 h-3.5 text-teal-400 ${loading ? "animate-spin" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 text-[#0F766E] ${loading ? "animate-spin" : ""}`} />
           <span>Refresh</span>
         </button>
       }
     >
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="p-5 rounded-2xl bg-[#0B1730] border border-slate-800/90 shadow-xl space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider">Awaiting Specimen</span>
-            <TestTube2 className="w-4 h-4 text-amber-400" />
+            <TestTube2 className="w-4 h-4 text-amber-500" />
           </div>
-          <div className="text-3xl font-black text-amber-400">{orderedCount}</div>
-          <p className="text-[11px] text-slate-400">Arrived patients needing blood/specimen draw</p>
+          <div className="text-3xl font-black text-amber-600">{orderedCount}</div>
+          <p className="text-[11px] text-slate-500">Arrived patients needing blood/specimen draw</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0B1730] border border-slate-800/90 shadow-xl space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider">In Testing / Processing</span>
-            <Microscope className="w-4 h-4 text-cyan-400" />
+            <Microscope className="w-4 h-4 text-cyan-600" />
           </div>
-          <div className="text-3xl font-black text-cyan-400">{collectedCount}</div>
-          <p className="text-[11px] text-slate-400">Specimens currently undergoing analysis</p>
+          <div className="text-3xl font-black text-cyan-600">{collectedCount}</div>
+          <p className="text-[11px] text-slate-500">Specimens currently undergoing analysis</p>
         </div>
 
-        <div className="p-5 rounded-2xl bg-[#0B1730] border border-slate-800/90 shadow-xl space-y-2">
-          <div className="flex items-center justify-between text-slate-400">
+        <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-sm space-y-2">
+          <div className="flex items-center justify-between text-slate-500">
             <span className="text-xs font-bold uppercase tracking-wider">Released Reports</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           </div>
-          <div className="text-3xl font-black text-emerald-400">{releasedCount}</div>
-          <p className="text-[11px] text-slate-400">Validated reports accessible to doctors</p>
+          <div className="text-3xl font-black text-emerald-600">{releasedCount}</div>
+          <p className="text-[11px] text-slate-500">Validated reports accessible to doctors</p>
         </div>
       </div>
 
       {actionSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-800/70 text-emerald-300 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
           <span>{actionSuccess}</span>
         </div>
       )}
 
+      {actionError && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
       {/* Main Order Manifest */}
-      <div className="rounded-2xl bg-[#0B1730] border border-slate-800/90 p-6 space-y-6 shadow-xl">
+      <div className="rounded-2xl bg-white border border-slate-200/90 p-6 space-y-6 shadow-sm">
         
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <FlaskConical className="w-4 h-4 text-purple-400" />
+            <h2 className="text-base font-bold text-[#172B4D] flex items-center gap-2">
+              <FlaskConical className="w-4 h-4 text-purple-600" />
               Diagnostic Investigation Manifest
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Automated test tubes tracking, analyzer results input, and electronic signing</p>
+            <p className="text-xs text-slate-500 mt-0.5">Automated test tubes tracking, analyzer results input, and electronic signing</p>
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
+            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search patient, order, test..."
-              className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-teal-500"
+              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0F766E]"
             />
           </div>
         </div>
@@ -230,31 +229,31 @@ export default function LaboratoryPortalPage() {
               return (
                 <div
                   key={order.id}
-                  className="p-5 rounded-xl bg-[#0F1E36] border border-slate-700/60 hover:border-slate-600 space-y-3 transition-all"
+                  className="p-5 rounded-xl bg-slate-50/70 border border-slate-200/90 hover:border-slate-300 space-y-3 transition-all"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-purple-400">{order.orderNumber}</span>
-                        <span className="text-xs font-bold text-white">{order.patientName}</span>
-                        <span className="text-[10px] text-slate-400 font-mono">({order.patientNic || "NIC VERIFIED"})</span>
+                        <span className="text-sm font-black text-purple-700">{order.orderNumber}</span>
+                        <span className="text-xs font-bold text-slate-900">{order.patientName}</span>
+                        <span className="text-[10px] text-slate-500 font-mono">({order.patientNic || "NIC VERIFIED"})</span>
                       </div>
-                      <div className="text-xs font-semibold text-slate-200 mt-1 flex items-center gap-1.5">
-                        <Dna className="w-3.5 h-3.5 text-teal-400" />
+                      <div className="text-xs font-semibold text-slate-800 mt-1 flex items-center gap-1.5">
+                        <Dna className="w-3.5 h-3.5 text-[#0F766E]" />
                         <span>{order.testType}</span>
                       </div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        Ordered by {order.doctorName}
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Ordered by <span className="text-slate-700 font-semibold">{order.doctorName}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3">
                       <span className={`text-[11px] font-bold px-2.5 py-1 rounded-md border ${
                         isOrdered
-                          ? "bg-amber-950/60 text-amber-400 border-amber-800/40"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
                           : isCollected
-                          ? "bg-cyan-950/60 text-cyan-400 border-cyan-800/40"
-                          : "bg-emerald-950/60 text-emerald-400 border-emerald-800/40"
+                          ? "bg-cyan-50 text-cyan-700 border-cyan-200"
+                          : "bg-emerald-50 text-emerald-700 border-emerald-200"
                       }`}>
                         {order.status.replace("_", " ")}
                       </span>
@@ -262,7 +261,7 @@ export default function LaboratoryPortalPage() {
                       {isOrdered && (
                         <button
                           onClick={() => handleCollectSample(order.id, order.orderNumber)}
-                          className="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-md transition-all"
+                          className="px-3.5 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
                         >
                           <TestTube2 className="w-3.5 h-3.5" />
                           Draw Specimen
@@ -272,7 +271,7 @@ export default function LaboratoryPortalPage() {
                       {isCollected && (
                         <button
                           onClick={() => setSelectedOrderId(selectedOrderId === order.id ? null : order.id)}
-                          className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-md transition-all"
+                          className="px-3.5 py-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
                         >
                           <Microscope className="w-3.5 h-3.5" />
                           Enter Results
@@ -282,15 +281,15 @@ export default function LaboratoryPortalPage() {
                   </div>
 
                   {order.normalRange && (
-                    <div className="text-[11px] text-slate-400 bg-slate-900/40 px-3 py-1.5 rounded-lg border border-slate-800">
-                      Standard Reference Range: <span className="text-slate-300 font-medium">{order.normalRange}</span>
+                    <div className="text-[11px] text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200/80">
+                      Standard Reference Range: <span className="text-slate-800 font-semibold">{order.normalRange}</span>
                     </div>
                   )}
 
-                  {/* Results Input Modal/Drawer */}
+                  {/* Results Input Drawer */}
                   {selectedOrderId === order.id && (
-                    <div className="p-4 rounded-xl bg-slate-900/90 border border-purple-800/50 space-y-3">
-                      <label className="block text-xs font-bold text-white">
+                    <div className="p-4 rounded-xl bg-purple-50/50 border border-purple-200 space-y-3">
+                      <label className="block text-xs font-bold text-slate-800">
                         Enter Lab Analyzer Observations & Values *
                       </label>
                       <textarea
@@ -298,18 +297,18 @@ export default function LaboratoryPortalPage() {
                         value={resultInput}
                         onChange={e => setResultInput(e.target.value)}
                         placeholder="e.g. Fasting Blood Glucose: 92 mg/dL (Normal). HbA1c: 5.4%."
-                        className="w-full px-3 py-2 bg-[#0F1E36] border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+                        className="w-full px-3 py-2 bg-white border border-purple-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setSelectedOrderId(null)}
-                          className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-semibold"
+                          className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold"
                         >
                           Cancel
                         </button>
                         <button
                           onClick={() => handleRecordResults(order.id, order.orderNumber)}
-                          className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5"
+                          className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
                         >
                           <FileCheck className="w-3.5 h-3.5" />
                           Sign & Release Report
@@ -319,14 +318,14 @@ export default function LaboratoryPortalPage() {
                   )}
 
                   {isReleased && order.resultsSummary && (
-                    <div className="p-3.5 rounded-lg bg-emerald-950/30 border border-emerald-800/40 space-y-1">
-                      <div className="text-xs font-bold text-emerald-300">
+                    <div className="p-3.5 rounded-lg bg-emerald-50/70 border border-emerald-200 space-y-1">
+                      <div className="text-xs font-bold text-emerald-800">
                         Released Clinical Findings:
                       </div>
-                      <div className="text-xs text-white">
+                      <div className="text-xs text-slate-800">
                         {order.resultsSummary}
                       </div>
-                      <div className="text-[10px] text-slate-400 pt-1">
+                      <div className="text-[10px] text-slate-500 pt-1">
                         Validated by {order.technicianName || "T. Mendis, MLT"} • Transmitted to Doctor Consultation Record
                       </div>
                     </div>

@@ -1,5 +1,6 @@
 package com.healthconnect.users;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -25,12 +26,14 @@ public class User {
     private String phone;
 
     // Salted hash of NIC (never store plaintext NIC)
+    @JsonIgnore
     @Indexed(unique = true, sparse = true)
     private String nicHash;
 
     // Masked display representation of NIC (e.g. 1990*****123 or 85*****12V)
     private String maskedNic;
 
+    @JsonIgnore
     private String passwordHash;
 
     private Set<Role> roles = new HashSet<>();
@@ -38,6 +41,8 @@ public class User {
     private boolean enabled = true;
 
     private boolean verified = false;
+
+    private boolean emailVerified = false;
 
     // Optional assigned hospital facility identifier for staff roles
     private String assignedFacilityId;
@@ -92,6 +97,9 @@ public class User {
 
     public boolean isVerified() { return verified; }
     public void setVerified(boolean verified) { this.verified = verified; }
+
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
     public String getAssignedFacilityId() { return assignedFacilityId; }
     public void setAssignedFacilityId(String assignedFacilityId) { this.assignedFacilityId = assignedFacilityId; }

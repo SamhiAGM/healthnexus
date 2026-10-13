@@ -2,25 +2,30 @@
 
 @layer base {
   :root {
-    /* Brand Color Tokens */
-    --color-primary-navy: #0B1730;
-    --color-medical-teal: #0D9488;
-    --color-royal-blue: #2563EB;
-    --color-light-bg: #F8FAFC;
-    --color-white-surface: #FFFFFF;
-    --color-accent-amber: #F59E0B;
-    --color-success-green: #16A34A;
-    --color-error-red: #DC2626;
-    --color-text-dark: #0F172A;
-    --color-text-muted: #64748B;
-    --color-border-subtle: #E2E8F0;
+    /* Balanced Color Palette Tokens (Section 3 Master Specification) */
+    --color-bg-main: #EDF2F4;
+    --color-bg-secondary: #E7EFF1;
+    --color-surface-premium: #F6F9F8;
+    --color-surface-card: #FAFBFA;
+    --color-mist-blue: #DFEAF0;
+    --color-soft-mint: #DDEFE9;
+    --color-primary-teal: #108B83;
+    --color-deep-teal: #08786F;
+    --color-medical-blue: #467DA3;
+    --color-slate-blue: #698399;
+    --color-accent-lavender: #E5E5F2;
+    --color-muted-coral: #C97972;
+    --color-primary-heading: #243847;
+    --color-main-body: #3C5262;
+    --color-secondary-text: #667986;
+    --color-border: #D5E0E3;
 
-    /* Theme Tokens */
-    --background: #F8FAFC;
-    --foreground: #0F172A;
-    --card: #FFFFFF;
-    --card-foreground: #0F172A;
-    --border: #E2E8F0;
+    /* Theme Aliases */
+    --background: #EDF2F4;
+    --foreground: #243847;
+    --card: #FAFBFA;
+    --card-foreground: #3C5262;
+    --border: #D5E0E3;
   }
 }
 
@@ -29,17 +34,77 @@ html {
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: var(--color-bg-main);
+  color: var(--color-main-body);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Custom Balanced Utility Classes matching Section 3 Tokens */
+.bg-nexus-main { background-color: #EDF2F4; }
+.bg-nexus-secondary { background-color: #E7EFF1; }
+.bg-nexus-surface { background-color: #F6F9F8; }
+.bg-nexus-card { background-color: #FAFBFA; }
+.bg-nexus-mist { background-color: #DFEAF0; }
+.bg-nexus-mint { background-color: #DDEFE9; }
+.bg-nexus-lavender { background-color: #E5E5F2; }
+
+.text-nexus-heading { color: #243847; }
+.text-nexus-body { color: #3C5262; }
+.text-nexus-secondary { color: #667986; }
+.text-nexus-teal { color: #108B83; }
+.text-nexus-deep-teal { color: #08786F; }
+.text-nexus-blue { color: #467DA3; }
+.text-nexus-slate { color: #698399; }
+.text-nexus-coral { color: #C97972; }
+
+.border-nexus { border-color: #D5E0E3; }
+
+/* Subtle Ambient Gradient Backgrounds */
+.bg-mesh-subtle {
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(223, 234, 240, 0.7) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(221, 239, 233, 0.6) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(229, 229, 242, 0.4) 0px, transparent 50%);
+}
+
+.bg-hero-cinematic {
+  background-image: 
+    linear-gradient(135deg, rgba(237, 242, 244, 0.95) 0%, rgba(231, 239, 241, 0.92) 50%, rgba(223, 234, 240, 0.95) 100%);
+}
+
 /* Accessible focus ring standards */
 :focus-visible {
-  outline: 2px solid #0D9488;
+  outline: 2px solid #108B83;
   outline-offset: 2px;
+}
+
+/* Custom subtle scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #E7EFF1;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Ken Burns Subtle Motion Effect for Cinematic Imagery */
+@keyframes kenburns {
+  0% { transform: scale(1) translate(0, 0); }
+  50% { transform: scale(1.04) translate(-0.5%, -0.5%); }
+  100% { transform: scale(1) translate(0, 0); }
+}
+
+.animate-kenburns {
+  animation: kenburns 24s ease-in-out infinite alternate;
 }
 
 /* Reduced motion preference */
@@ -49,5 +114,8 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .animate-kenburns {
+    animation: none !important;
   }
 }

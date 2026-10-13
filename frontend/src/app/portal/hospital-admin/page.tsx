@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PortalShell } from "@/components/portal/PortalShell";
+import { apiFetch, getCurrentUser } from "@/lib/api";
 import { 
   Building2, 
   Users, 
@@ -67,25 +69,23 @@ export default function HospitalAdminPortalPage() {
   // New Broadcast Form
   const [annTitle, setAnnTitle] = useState("");
   const [annContent, setAnnContent] = useState("");
+  const router = useRouter();
   const [annDept, setAnnDept] = useState("ALL");
   const [annPriority, setAnnPriority] = useState("ROUTINE");
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const [deptRes, annRes, overRes] = await Promise.all([
-        fetch("http://localhost:8080/api/hospital-admin/departments", { headers }),
-        fetch("http://localhost:8080/api/hospital-admin/announcements", { headers }),
-        fetch("http://localhost:8080/api/hospital-admin/overview", { headers })
+      const [deptData, annData, overData] = await Promise.all([
+        apiFetch<any[]>("/api/hospital-admin/departments").catch(() => null),
+        apiFetch<any[]>("/api/hospital-admin/announcements").catch(() => null),
+        apiFetch<any>("/api/hospital-admin/overview").catch(() => null)
       ]);
 
-      if (deptRes.ok) setDepartments(await deptRes.json());
-      if (annRes.ok) setAnnouncements(await annRes.json());
-      if (overRes.ok) setOverview(await overRes.json());
+      if (Array.isArray(deptData)) setDepartments(deptData);
+      if (Array.isArray(annData)) setAnnouncements(annData);
+      if (overData) setOverview(overData);
     } catch (err) {
       console.error("Failed to load hospital admin data:", err);
     } finally {
@@ -94,19 +94,28 @@ export default function HospitalAdminPortalPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    let isMounted = true;
+    getCurrentUser().then((user) => {
+      if (!isMounted) return;
+      if (!user || (!user.roles?.includes("HOSPITAL_ADMIN") && !user.roles?.includes("SYSTEM_ADMIN"))) {
+        if (process.env.NODE_ENV === "production") {
+          router.push("/auth/staff-login");
+          return;
+        }
+      }
+      fetchData();
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleCreateDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/hospital-admin/departments", {
+      await apiFetch("/api/hospital-admin/departments", {
         method: "POST",
-        headers,
         body: JSON.stringify({
           name: deptName,
           code: deptCode,
@@ -118,30 +127,25 @@ export default function HospitalAdminPortalPage() {
         })
       });
 
-      if (res.ok) {
-        setActionSuccess(`Department "${deptName}" successfully registered.`);
-        setDeptName("");
-        setDeptCode("");
-        setDeptHOD("");
-        setActiveTab("DEPARTMENTS");
-        fetchData();
-        setTimeout(() => setActionSuccess(null), 4000);
-      }
-    } catch (err) {
-      console.error("Error creating department:", err);
+      setActionSuccess(`Department "${deptName}" successfully registered.`);
+      setDeptName("");
+      setDeptCode("");
+      setDeptHOD("");
+      setActiveTab("DEPARTMENTS");
+      fetchData();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setActionError(err.message || "Error creating department.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
   const handleCreateBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
+    setActionError(null);
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("hc_token") : null;
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch("http://localhost:8080/api/hospital-admin/announcements", {
+      await apiFetch("/api/hospital-admin/announcements", {
         method: "POST",
-        headers,
         body: JSON.stringify({
           title: annTitle,
           content: annContent,
@@ -151,15 +155,14 @@ export default function HospitalAdminPortalPage() {
         })
       });
 
-      if (res.ok) {
-        setActionSuccess(`Internal broadcast published across ${annDept} units.`);
-        setAnnTitle("");
-        setAnnContent("");
-        fetchData();
-        setTimeout(() => setActionSuccess(null), 4000);
-      }
-    } catch (err) {
-      console.error("Error publishing broadcast:", err);
+      setActionSuccess(`Internal broadcast published across ${annDept} units.`);
+      setAnnTitle("");
+      setAnnContent("");
+      fetchData();
+      setTimeout(() => setActionSuccess(null), 4000);
+    } catch (err: any) {
+      setActionError(err.message || "Error publishing broadcast.");
+      setTimeout(() => setActionError(null), 4000);
     }
   };
 
