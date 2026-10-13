@@ -28,7 +28,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("null")
+@SuppressWarnings({"null", "unused"})
 class AuthServiceTest {
 
     @Mock
@@ -98,7 +98,8 @@ class AuthServiceTest {
         request.setPhone("0771234567");
         request.setPassword("Password123!");
 
-        assertThrows(IllegalArgumentException.class, () -> authService.registerPatient(request));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.registerPatient(request));
+        assertTrue(ex.getMessage().contains("Invalid Sri Lankan NIC format"));
         verify(userRepository, never()).save(any());
     }
 
@@ -117,7 +118,8 @@ class AuthServiceTest {
         when(userRepository.existsByEmail("unique@example.com")).thenReturn(false);
         when(userRepository.existsByPhone("0771234567")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> authService.registerPatient(request));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.registerPatient(request));
+        assertTrue(ex.getMessage().contains("mobile phone number already exists"));
         verify(userRepository, never()).save(any());
     }
 
@@ -161,7 +163,8 @@ class AuthServiceTest {
         when(userRepository.findByPhone("0771234567")).thenReturn(Optional.of(patient));
         when(passwordEncoder.matches("WrongPassword!", "hashed_pass")).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> authService.login(request));
+        assertEquals("Invalid login credentials.", ex.getMessage());
     }
 
     @Test

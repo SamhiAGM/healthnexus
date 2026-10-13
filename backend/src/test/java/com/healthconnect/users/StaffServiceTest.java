@@ -18,7 +18,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("null")
+@SuppressWarnings({"null", "unused"})
 class StaffServiceTest {
 
     @Mock
@@ -90,7 +90,8 @@ class StaffServiceTest {
         when(userRepository.existsByEmail(anyString())).thenReturn(false);
         when(staffAccessRequestRepository.existsByWorkEmail(anyString())).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> staffService.submitAccessRequest(dto));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> staffService.submitAccessRequest(dto));
+        assertTrue(ex.getMessage().contains("registration number is required"));
         verify(staffAccessRequestRepository, never()).save(any());
     }
 
