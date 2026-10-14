@@ -17,6 +17,8 @@ import java.io.UnsupportedEncodingException;
 public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private static final String INVALID_PROVIDER_MESSAGE =
+            "Email provider configuration is invalid. Supported providers are 'gmail' or 'azure'.";
 
     private final JavaMailSender mailSender;
     private final AzureEmailSender azureEmailSender;
@@ -47,7 +49,11 @@ public class EmailService {
      * Checks if outbound email delivery is configured in the current environment.
      */
     public boolean isConfigured() {
-        if (isAzureProvider()) {
+        EmailProvider provider = resolveProvider();
+        if (provider == null) {
+            return false;
+        }
+        if (provider == EmailProvider.AZURE) {
             return azureEmailSender != null && azureEmailSender.isConfigured();
         }
         return mailPassword != null && !mailPassword.trim().isBlank();
@@ -57,6 +63,12 @@ public class EmailService {
      * Dispatches an account verification OTP email with responsive HealthNexus HTML branding.
      */
     public void sendVerificationOtp(String toEmail, String recipientName, String otp) {
+        EmailProvider provider = resolveProvider();
+        if (provider == null) {
+            log.warn("Attempted to send verification email with unsupported provider configuration.");
+            throw new IllegalStateException(INVALID_PROVIDER_MESSAGE);
+        }
+
         if (!isConfigured()) {
             log.warn("Attempted to send verification email, but the selected email provider is unconfigured.");
             throw new IllegalStateException("Email delivery service is currently unconfigured. Please contact support or try again later.");
@@ -65,7 +77,7 @@ public class EmailService {
         String htmlBody = buildOtpHtmlTemplate(recipientName, otp);
         String plainText = buildOtpPlainText(recipientName, otp);
 
-        if (isAzureProvider()) {
+        if (provider == EmailProvider.AZURE) {
             azureEmailSender.send(toEmail, "Verify Your HealthNexus Account", plainText, htmlBody);
             return;
         }
@@ -88,8 +100,15 @@ public class EmailService {
         }
     }
 
-    private boolean isAzureProvider() {
-        return "azure".equalsIgnoreCase(emailProvider);
+    private EmailProvider resolveProvider() {
+        if (emailProvider == null) {
+            return null;
+        }
+        return switch (emailProvider.trim().toLowerCase()) {
+            case "gmail" -> EmailProvider.GMAIL;
+            case "azure" -> EmailProvider.AZURE;
+            default -> null;
+        };
     }
 
     private String buildOtpPlainText(String recipientName, String otp) {
@@ -183,7 +202,7 @@ public class EmailService {
                   <tr>
                     <td class="footer">
                       <p style="margin: 0 0 8px 0;">This is an automated system notification. Please do not reply directly to this email.</p>
-                      <p style="margin: 0;">&copy; 2026 HealthNexus Lanka. All rights reserved. • Ministry of Health Compliant</p>
+                      <p style="margin: 0;">&copy; 2026 HealthNexus Lanka. All rights reserved.</p>
                     </td>
                   </tr>
                 </table>
@@ -200,5 +219,9 @@ public class EmailService {
                    .replace(">", "&gt;")
                    .replace("\"", "&quot;")
                    .replace("'", "&#39;");
+    }
+
+    private enum EmailProvider {
+        GMAIL, AZURE
     }
 }

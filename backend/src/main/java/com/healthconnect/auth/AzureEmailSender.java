@@ -75,8 +75,9 @@ public class AzureEmailSender {
         } catch (IllegalStateException e) {
             throw e;
         } catch (RuntimeException e) {
-            log.error("Azure email delivery failed for recipient domain {}.", getEmailDomain(toEmail));
-            throw new IllegalStateException("Unable to deliver verification code through Azure. Please try again shortly.", e);
+            log.error("Azure email delivery failed for recipient domain {}. Error type: {}",
+                    getEmailDomain(toEmail), e.getClass().getSimpleName());
+            throw new IllegalStateException("Unable to deliver verification code through Azure. Please try again shortly.");
         }
     }
 

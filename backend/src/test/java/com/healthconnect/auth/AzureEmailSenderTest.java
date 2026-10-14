@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -66,5 +66,21 @@ class AzureEmailSenderTest {
         assertThrows(IllegalStateException.class, () ->
                 sender.send("patient@example.com", "Subject", "OTP", "<p>OTP</p>")
         );
+    }
+
+    @Test
+    @DisplayName("Azure email: runtime errors return sanitized exception without propagating cause")
+    void runtimeErrorsAreSanitized() {
+        EmailClient client = mock(EmailClient.class);
+        when(client.beginSend(any())).thenThrow(new RuntimeException("secret=abc123 otp=123456"));
+
+        AzureEmailSender sender = new AzureEmailSender(client, "DoNotReply@notify.lankacare.me", Duration.ofSeconds(30));
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+                sender.send("patient@example.com", "Subject", "123456", "<p>123456</p>")
+        );
+
+        assertEquals("Unable to deliver verification code through Azure. Please try again shortly.", ex.getMessage());
+        assertNull(ex.getCause());
     }
 }
