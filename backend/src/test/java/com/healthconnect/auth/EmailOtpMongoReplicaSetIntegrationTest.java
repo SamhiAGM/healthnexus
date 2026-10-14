@@ -61,12 +61,7 @@ class EmailOtpMongoReplicaSetIntegrationTest {
     }
 
     private static String isolatedMongoUri() {
-        String replicaSetUrl = MONGO.getReplicaSetUrl();
-        int queryIndex = replicaSetUrl.indexOf('?');
-        int databaseSeparator = replicaSetUrl.lastIndexOf('/', queryIndex);
-        return replicaSetUrl.substring(0, databaseSeparator + 1)
-                + DATABASE
-                + replicaSetUrl.substring(queryIndex);
+        return MONGO.getReplicaSetUrl(DATABASE);
     }
 
     @Autowired
