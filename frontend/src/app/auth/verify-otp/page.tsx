@@ -43,7 +43,7 @@ function VerifyOtpContent() {
   const [resending, setResending] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(
     initialError === "send_failed"
-      ? "Verification code could not be automatically dispatched. Email delivery requires SPRING_MAIL_PASSWORD to be configured in Azure App Service."
+      ? "Verification code delivery could not be confirmed. Please request a new code."
       : null
   );
   const [success, setSuccess] = useState<boolean>(false);
@@ -240,8 +240,8 @@ function VerifyOtpContent() {
       securityNote="HealthNexus Zero-Trust Perimeter &bull; Sri Lanka MoH 2026 Compliant"
       title="Enter Verification Code"
       subtitle="Input the 6-digit passcode delivered to your registered email address."
-      backHref="/auth/patient-login"
-      backLabel="Back to Sign In"
+      backHref="/auth/patient-register"
+      backLabel="Back to Registration"
     >
       <div className="space-y-6">
         {/* Error Alert */}
@@ -250,21 +250,9 @@ function VerifyOtpContent() {
             <div className="flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <span className="font-bold text-amber-950 block">Verification Dispatch Notice</span>
+                <span className="font-bold text-amber-950 block">Verification Error</span>
                 <span className="leading-relaxed text-amber-800">{error}</span>
               </div>
-            </div>
-            <div className="pt-2 border-t border-amber-200/80 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-              <span className="text-[11px] text-amber-700">
-                You can proceed directly to sign in with your ID:
-              </span>
-              <Link
-                href={`/auth/patient-login?registered=1&id=${encodeURIComponent(targetId || email)}`}
-                className="px-3.5 py-1.5 rounded-xl bg-[#108B83] hover:bg-[#08786F] text-white font-bold text-xs text-center transition shadow-xs inline-flex items-center justify-center gap-1.5"
-              >
-                <span>Proceed to Sign In</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
             </div>
           </div>
         )}
@@ -396,12 +384,10 @@ function VerifyOtpContent() {
 
         {/* Bottom Nav Links */}
         <div className="pt-4 border-t border-[#D5E0E3] flex items-center justify-between text-xs text-[#667986]">
-          <Link href="/auth/patient-login" className="hover:text-[#243847] font-medium transition">
-            &larr; Patient Sign In
+          <Link href="/auth/patient-register" className="hover:text-[#243847] font-medium transition">
+            &larr; Back to Registration
           </Link>
-          <Link href="/auth/staff-login" className="text-[#108B83] hover:text-[#08786F] font-bold transition">
-            Staff Portal Sign In &rarr;
-          </Link>
+          <span className="text-[#667986]">Verification is required before sign in.</span>
         </div>
       </div>
     </AuthLayout>

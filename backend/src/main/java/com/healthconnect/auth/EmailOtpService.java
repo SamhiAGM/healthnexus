@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HexFormat;
 import java.util.Optional;
+import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -63,7 +64,7 @@ public class EmailOtpService {
      */
     public void sendEmailOtp(RequestEmailOtpRequest request) {
         requireHmacSecret();
-        String email = request.getEmail().trim().toLowerCase();
+        String email = normalizeEmail(request.getEmail());
         Instant now = Instant.now();
 
         Optional<EmailVerificationToken> existingOpt = tokenRepository.findByEmail(email);
@@ -113,7 +114,7 @@ public class EmailOtpService {
         // Determine recipient display name if not explicitly passed
         String recipientName = request.getRecipientName();
         if (recipientName == null || recipientName.isBlank()) {
-            recipientName = userRepository.findByEmail(email)
+            recipientName = userRepository.findByEmailIgnoreCase(email)
                     .map(User::getFullName)
                     .orElse(null);
         }
@@ -133,12 +134,16 @@ public class EmailOtpService {
      */
     public boolean verifyEmailOtp(VerifyEmailOtpRequest request) {
         requireHmacSecret();
-        String email = request.getEmail().trim().toLowerCase();
+        String email = normalizeEmail(request.getEmail());
         String code = request.getCode().trim();
         Instant now = Instant.now();
 
         EmailVerificationToken token = tokenRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Verification code has expired or was not requested."));
+                .or(() -> tokenRepository.findByEmailIgnoreCase(email))
+                .orElseThrow(() -> {
+                    log.warn("Email verification rejected: no active token was found.");
+                    return new IllegalArgumentException("Verification code has expired or was not requested.");
+                });
 
         // Expiration check (5 minutes)
         if (token.getExpiresAt() == null || now.isAfter(token.getExpiresAt())) {
@@ -166,16 +171,24 @@ public class EmailOtpService {
             }
         }
 
-        // One-time use enforcement: invalidate code immediately upon successful validation
+        // Confirm the account before consuming a valid code. Missing user and missing token
+        // deliberately share the same public response to avoid account enumeration.
+        User user = userRepository.findByEmail(email)
+                .or(() -> userRepository.findByEmailIgnoreCase(email))
+                .orElseThrow(() -> {
+                    log.warn("Email verification rejected: token matched but no registered user was found.");
+                    return new IllegalArgumentException("Verification code has expired or was not requested.");
+                });
+
+        // One-time use enforcement: invalidate code only after the account is confirmed.
+        token.setVerified(true);
         tokenRepository.delete(token);
 
         // Mark user email verified in database
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Verification code has expired or was not requested."));
         user.setEmailVerified(true);
         user.setVerified(true);
         userRepository.save(user);
-        log.info("Email address verified for account.");
+        log.info("Email verification completed and token consumed.");
 
         return true;
     }
@@ -188,7 +201,7 @@ public class EmailOtpService {
             requireHmacSecret();
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(otpHmacSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            String combined = email.trim().toLowerCase() + ":" + otp.trim();
+            String combined = normalizeEmail(email) + ":" + otp.trim();
             return HexFormat.of().formatHex(mac.doFinal(combined.getBytes(StandardCharsets.UTF_8)));
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException("Error computing OTP hash", e);
@@ -199,5 +212,9 @@ public class EmailOtpService {
         if (otpHmacSecret == null || otpHmacSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
             throw new IllegalStateException("Email verification is unavailable because OTP_HMAC_SECRET is not configured.");
         }
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }
 }

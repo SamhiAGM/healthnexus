@@ -67,6 +67,19 @@ class EmailOtpServiceTest {
     }
 
     @Test
+    @DisplayName("Email OTP: Persists and retrieves a canonical lowercase email key")
+    void testEmailNormalization_IsConsistentForPersistenceAndVerification() {
+        RequestEmailOtpRequest request = new RequestEmailOtpRequest("  Citizen@HealthNexus.LK ", "Kasun Perera");
+        when(tokenRepository.findByEmail("citizen@healthnexus.lk")).thenReturn(Optional.empty());
+
+        emailOtpService.sendEmailOtp(request);
+
+        ArgumentCaptor<EmailVerificationToken> tokenCaptor = ArgumentCaptor.forClass(EmailVerificationToken.class);
+        verify(tokenRepository).save(tokenCaptor.capture());
+        assertEquals("citizen@healthnexus.lk", tokenCaptor.getValue().getEmail());
+    }
+
+    @Test
     @DisplayName("Email OTP: Does not persist a cooldown token when SMTP dispatch fails")
     void testSendEmailOtp_DeliveryFailure_DoesNotPersistToken() {
         RequestEmailOtpRequest request = new RequestEmailOtpRequest("citizen@healthnexus.lk", "Kasun Perera");
@@ -144,6 +157,30 @@ class EmailOtpServiceTest {
         verify(tokenRepository).delete(token); // One-time use: token deleted
         assertTrue(user.isEmailVerified(), "User emailVerified flag must be set to true");
         verify(userRepository).save(user);
+    }
+
+    @Test
+    @DisplayName("Verification: Missing registered user does not consume a valid token")
+    void testVerifyEmailOtp_MissingUser_DoesNotConsumeToken() {
+        String email = "citizen@healthnexus.lk";
+        String plainOtp = "654321";
+        EmailVerificationToken token = new EmailVerificationToken(
+                email,
+                emailOtpService.hashOtp(email, plainOtp),
+                Instant.now().plus(5, ChronoUnit.MINUTES)
+        );
+
+        when(tokenRepository.findByEmail(email)).thenReturn(Optional.of(token));
+        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase(email)).thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+                emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, plainOtp))
+        );
+
+        assertEquals("Verification code has expired or was not requested.", ex.getMessage());
+        verify(tokenRepository, never()).delete(any(EmailVerificationToken.class));
+        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test

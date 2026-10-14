@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Locale;
 
 @Document(collection = "email_verification_tokens")
 public class EmailVerificationToken {
@@ -41,7 +42,7 @@ public class EmailVerificationToken {
     public EmailVerificationToken() {}
 
     public EmailVerificationToken(String email, String otpHash, Instant expiresAt) {
-        this.email = email.trim().toLowerCase();
+        setEmail(email);
         this.otpHash = otpHash;
         this.expiresAt = expiresAt;
         this.lastSentAt = Instant.now();
@@ -55,7 +56,9 @@ public class EmailVerificationToken {
     public void setId(String id) { this.id = id; }
 
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) {
+        this.email = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+    }
 
     public String getOtpHash() { return otpHash; }
     public void setOtpHash(String otpHash) { this.otpHash = otpHash; }
