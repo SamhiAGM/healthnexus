@@ -32,7 +32,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 
 @Testcontainers
@@ -42,6 +41,7 @@ import static org.mockito.Mockito.doThrow;
         "lankacare.seed.enabled=false",
         "lankacare.otp.hmac-secret=HealthNexusReplicaSetIntegrationSecret2026!"
 })
+@SuppressWarnings({"unused", "removal"})
 class EmailOtpMongoReplicaSetIntegrationTest {
 
     private static final String HMAC_SECRET = "HealthNexusReplicaSetIntegrationSecret2026!";
@@ -118,8 +118,8 @@ class EmailOtpMongoReplicaSetIntegrationTest {
         doThrow(new IllegalStateException("simulated user persistence failure"))
                 .when(userRepositorySpy).save(any(User.class));
 
-        assertThrows(IllegalStateException.class,
-                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, otp)));
+        assertNotNull(assertThrows(IllegalStateException.class,
+                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, otp))));
 
         User rolledBackUser = userRepository.findByEmail(email).orElseThrow();
         assertFalse(rolledBackUser.isEmailVerified());
@@ -165,14 +165,14 @@ class EmailOtpMongoReplicaSetIntegrationTest {
         saveToken(email, otp, 0);
 
         for (int i = 0; i < 5; i++) {
-            assertThrows(IllegalArgumentException.class,
-                    () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, "999999")));
+            assertNotNull(assertThrows(IllegalArgumentException.class,
+                    () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, "999999"))));
         }
 
         EmailVerificationToken exhausted = tokenRepository.findByEmail(email).orElseThrow();
         assertEquals(5, exhausted.getAttempts());
-        assertThrows(IllegalArgumentException.class,
-                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, otp)));
+        assertNotNull(assertThrows(IllegalArgumentException.class,
+                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, otp))));
     }
 
     @Test
@@ -184,11 +184,11 @@ class EmailOtpMongoReplicaSetIntegrationTest {
         doThrow(new org.springframework.data.mongodb.MongoTransactionException("simulated transient failure"))
                 .doCallRealMethod().when(tokenRepositorySpy).findByEmail(email);
 
-        assertThrows(IllegalArgumentException.class,
-                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, "999999")));
+        assertNotNull(assertThrows(IllegalArgumentException.class,
+                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, "999999"))));
         assertEquals(5, tokenRepository.findByEmail(email).orElseThrow().getAttempts());
-        assertThrows(IllegalArgumentException.class,
-                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, otp)));
+        assertNotNull(assertThrows(IllegalArgumentException.class,
+                () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, otp))));
     }
 
     private User saveUser(String email) {
