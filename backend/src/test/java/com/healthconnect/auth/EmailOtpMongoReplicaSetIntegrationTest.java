@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -22,6 +24,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -187,7 +190,13 @@ class EmailOtpMongoReplicaSetIntegrationTest {
         saveUser(email);
         saveToken(email, otp, 4);
         doThrow(new org.springframework.data.mongodb.MongoTransactionException("simulated transient failure"))
-                .doCallRealMethod().when(tokenRepositorySpy).findByEmail(email);
+                .doAnswer(invocation -> Optional.ofNullable(
+                        mongoTemplate.findOne(
+                                Query.query(Criteria.where("email").is(invocation.getArgument(0, String.class))),
+                                EmailVerificationToken.class
+                        )
+                ))
+                .when(tokenRepositorySpy).findByEmail(email);
 
         assertNotNull(assertThrows(IllegalArgumentException.class,
                 () -> emailOtpService.verifyEmailOtp(new VerifyEmailOtpRequest(email, "999999"))));
