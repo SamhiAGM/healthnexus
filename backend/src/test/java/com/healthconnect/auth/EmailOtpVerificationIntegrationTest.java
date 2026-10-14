@@ -5,7 +5,6 @@ import com.healthconnect.TestRepositoryConfig;
 import com.healthconnect.auth.dto.VerifyEmailOtpRequest;
 import com.healthconnect.users.User;
 import com.healthconnect.users.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +19,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestRepositoryConfig.class)
 class EmailOtpVerificationIntegrationTest {
 
+    @SuppressWarnings("unused")
     @org.springframework.test.context.DynamicPropertySource
     static void registerTestProperties(org.springframework.test.context.DynamicPropertyRegistry registry) {
         registry.add("OTP_HMAC_SECRET", () -> "HealthConnectLKTestOtpHmacSecretMustBeAtLeast32Chars2026!");
@@ -50,14 +51,10 @@ class EmailOtpVerificationIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @BeforeEach
-    void resetRepositories() {
-        reset(tokenRepository, userRepository);
-    }
-
     @Test
     @DisplayName("HTTP verification: synthetic registered user and persisted OTP are verified once")
     void verifiesSyntheticRegisteredUserThroughAuthController() throws Exception {
+        reset(tokenRepository, userRepository);
         String email = "synthetic.patient@healthnexus.lk";
         String otp = "654321";
         EmailVerificationToken token = new EmailVerificationToken(
@@ -80,12 +77,13 @@ class EmailOtpVerificationIntegrationTest {
         verify(tokenRepository).delete(token);
         verify(userRepository).save(user);
         verify(userRepository, never()).findByEmailIgnoreCase(anyString());
-        assert user.isEmailVerified();
+        assertTrue(user.isEmailVerified());
     }
 
     @Test
     @DisplayName("HTTP verification: missing registered user keeps the token unconsumed")
     void hidesMissingUserBehindGenericVerificationFailure() throws Exception {
+        reset(tokenRepository, userRepository);
         String email = "missing.user@healthnexus.lk";
         String otp = "654321";
         EmailVerificationToken token = new EmailVerificationToken(
