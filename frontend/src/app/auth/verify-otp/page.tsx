@@ -269,7 +269,7 @@ function VerifyOtpContent() {
         {success && (
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm flex items-center gap-3 shadow-xs">
             <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span className="font-medium">Verification verified successfully! Securely directing to sign in...</span>
+            <span className="font-medium">Email verified successfully! Securely directing to sign in...</span>
           </div>
         )}
 

@@ -23,6 +23,15 @@ import java.util.Optional;
 import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.data.mongodb.MongoTransactionException;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @Service
 @SuppressWarnings("null")
@@ -38,24 +47,29 @@ public class EmailOtpService {
     private final EmailVerificationTokenRepository tokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final MongoTemplate mongoTemplate;
     private final SecureRandom secureRandom = new SecureRandom();
     private final String otpHmacSecret;
+    private final TransactionTemplate transactionTemplate;
 
     @Autowired
     public EmailOtpService(
             EmailVerificationTokenRepository tokenRepository,
             UserRepository userRepository,
             EmailService emailService,
-            @Value("${lankacare.otp.hmac-secret:}") String otpHmacSecret
+            MongoTemplate mongoTemplate,
+            @Value("${lankacare.otp.hmac-secret:}") String otpHmacSecret,
+            @Qualifier("mongoTransactionManager") PlatformTransactionManager transactionManager
     ) {
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
         this.emailService = emailService;
+        this.mongoTemplate = mongoTemplate;
         this.otpHmacSecret = otpHmacSecret;
-    }
-
-    EmailOtpService(EmailVerificationTokenRepository tokenRepository, UserRepository userRepository, EmailService emailService) {
-        this(tokenRepository, userRepository, emailService, "unit-test-only-hmac-key-not-for-production");
+        if (transactionManager == null) {
+            throw new IllegalStateException("Mongo transaction manager is required for OTP verification");
+        }
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
     }
 
     /**
@@ -69,9 +83,14 @@ public class EmailOtpService {
 
         Optional<EmailVerificationToken> existingOpt = tokenRepository.findByEmail(email);
         EmailVerificationToken token;
+        EmailVerificationToken previousToken = null;
 
         if (existingOpt.isPresent()) {
             token = existingOpt.get();
+            if (token.isVerified()) {
+                throw new IllegalStateException("Email is already verified.");
+            }
+            previousToken = copyToken(token);
 
             // Check 60-second cooldown
             if (token.getLastSentAt() != null) {
@@ -119,12 +138,92 @@ public class EmailOtpService {
                     .orElse(null);
         }
 
-        // Transmit HTML email
-        emailService.sendVerificationOtp(email, recipientName, otp);
+        // Save first so a successful response can never claim delivery for an
+        // unpersisted token. @Version prevents a stale concurrent resend from
+        // overwriting a newer code.
+        EmailVerificationToken persistedToken = persistOtp(token, previousToken);
+        if (persistedToken == null) {
+            // Spring Data returns the saved entity; this fallback also keeps
+            // repository test doubles faithful to the service contract.
+            persistedToken = token;
+        }
+        try {
+            emailService.sendVerificationOtp(email, recipientName, otp);
+        } catch (RuntimeException deliveryFailure) {
+            // Best-effort compensation. The hash predicate prevents an older
+            // failed delivery from deleting a newer code for the same address.
+            if (previousToken != null && previousToken.isVerified()
+                    && persistedToken.getId() != null && persistedToken.getOtpHash() != null) {
+                tokenRepository.deleteByIdAndOtpHash(persistedToken.getId(), persistedToken.getOtpHash());
+            } else if (previousToken != null && persistedToken.getId() != null && persistedToken.getOtpHash() != null) {
+                restorePreviousTokenIfStillCurrent(persistedToken, previousToken);
+            } else if (persistedToken.getId() != null && persistedToken.getOtpHash() != null) {
+                tokenRepository.deleteByIdAndOtpHash(persistedToken.getId(), persistedToken.getOtpHash());
+            } else {
+                // A real Mongo save assigns an id. This branch is only for
+                // repository implementations/test doubles that do not assign one.
+                tokenRepository.delete(persistedToken);
+            }
+            throw deliveryFailure;
+        }
+    }
 
-        // Persist the token only after SMTP accepts the message. If dispatch fails,
-        // the user can retry immediately instead of being blocked by a stale cooldown.
-        tokenRepository.save(token);
+    private EmailVerificationToken persistOtp(EmailVerificationToken token, EmailVerificationToken previousToken) {
+        if (previousToken == null || token.getId() == null || previousToken.getOtpHash() == null) {
+            return tokenRepository.save(token);
+        }
+        Update update = new Update()
+                .set("otpHash", token.getOtpHash())
+                .set("expiresAt", token.getExpiresAt())
+                .set("lastSentAt", token.getLastSentAt())
+                .set("attempts", token.getAttempts())
+                .set("sendCount", token.getSendCount())
+                .set("windowStartTime", token.getWindowStartTime())
+                .set("verified", false)
+                .inc("version", 1);
+        long updated = mongoTemplate.updateFirst(currentTokenQuery(token.getId(), previousToken.getOtpHash()),
+                update, EmailVerificationToken.class).getModifiedCount();
+        if (updated != 1) {
+            throw new org.springframework.dao.OptimisticLockingFailureException("OTP was changed by another request");
+        }
+        return token;
+    }
+
+    private void restorePreviousTokenIfStillCurrent(EmailVerificationToken failedToken, EmailVerificationToken previousToken) {
+        Update restore = new Update()
+                .set("otpHash", previousToken.getOtpHash())
+                .set("expiresAt", previousToken.getExpiresAt())
+                // Preserve the failed request's cooldown and hourly count;
+                // only restore the prior OTP payload and attempt state.
+                .set("lastSentAt", failedToken.getLastSentAt())
+                .set("attempts", previousToken.getAttempts())
+                .set("sendCount", failedToken.getSendCount())
+                .set("windowStartTime", failedToken.getWindowStartTime())
+                .set("verified", previousToken.isVerified())
+                .inc("version", 1);
+        mongoTemplate.updateFirst(currentTokenQuery(failedToken.getId(), failedToken.getOtpHash()),
+                restore, EmailVerificationToken.class);
+    }
+
+    private Query currentTokenQuery(String id, String otpHash) {
+        return Query.query(Criteria.where("_id").is(id).and("otpHash").is(otpHash));
+    }
+
+    private EmailVerificationToken copyToken(EmailVerificationToken source) {
+        EmailVerificationToken copy = new EmailVerificationToken();
+        copy.setId(source.getId());
+        copy.setVersion(source.getVersion());
+        copy.setEmail(source.getEmail());
+        copy.setOtpHash(source.getOtpHash());
+        copy.setExpiresAt(source.getExpiresAt());
+        copy.setLastSentAt(source.getLastSentAt());
+        copy.setAttempts(source.getAttempts());
+        copy.setSendCount(source.getSendCount());
+        copy.setWindowStartTime(source.getWindowStartTime());
+        copy.setVerified(source.isVerified());
+        copy.setCreatedAt(source.getCreatedAt());
+        copy.setUpdatedAt(source.getUpdatedAt());
+        return copy;
     }
 
     /**
@@ -136,61 +235,124 @@ public class EmailOtpService {
         requireHmacSecret();
         String email = normalizeEmail(request.getEmail());
         String code = request.getCode().trim();
+        if (code.length() != 6 || !code.chars().allMatch(Character::isDigit)) {
+            throw new IllegalArgumentException("Invalid verification code.");
+        }
+
+        boolean retriedAfterTransientFailure = false;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                VerificationResult result = transactionTemplate.execute(status ->
+                        verifyEmailOtpInTransaction(email, code));
+                if (result == null) {
+                    throw new IllegalStateException("Verification transaction returned no outcome.");
+                }
+                return handleVerificationOutcome(result, retriedAfterTransientFailure);
+            } catch (MongoTransactionException | TransientDataAccessException e) {
+                if (attempt == 3) {
+                    throw new IllegalStateException("Verification could not be completed. Please try again.", e);
+                }
+                retriedAfterTransientFailure = true;
+                log.warn("Transient OTP verification conflict; retrying attempt {}", attempt + 1);
+            }
+        }
+        throw new IllegalStateException("Verification could not be completed. Please try again.");
+    }
+
+    private boolean handleVerificationOutcome(VerificationResult result, boolean retriedAfterTransientFailure) {
+        return switch (result.outcome()) {
+            case SUCCESS -> true;
+            case INVALID, MAX_ATTEMPTS, EXPIRED, MISSING_USER -> throw new IllegalArgumentException(result.message());
+            case MISSING_TOKEN -> {
+                if (retriedAfterTransientFailure) {
+                    throw new IllegalStateException("Verification state changed while processing the code. Please try again.");
+                }
+                throw new IllegalArgumentException(result.message());
+            }
+        };
+    }
+
+    private enum VerificationOutcome {
+        SUCCESS, INVALID, MAX_ATTEMPTS, EXPIRED, MISSING_USER, MISSING_TOKEN
+    }
+
+    private record VerificationResult(VerificationOutcome outcome, String message) {}
+
+    private VerificationResult verifyEmailOtpInTransaction(String email, String code) {
         Instant now = Instant.now();
 
         EmailVerificationToken token = tokenRepository.findByEmail(email)
                 .or(() -> tokenRepository.findByEmailIgnoreCase(email))
-                .orElseThrow(() -> {
-                    log.warn("Email verification rejected: no active token was found.");
-                    return new IllegalArgumentException("Verification code has expired or was not requested.");
-                });
+                .orElse(null);
+        if (token == null) {
+            log.warn("Email verification rejected: no active token was found.");
+            return new VerificationResult(VerificationOutcome.MISSING_TOKEN, "Verification code has expired or was not requested.");
+        }
 
         // Expiration check (5 minutes)
         if (token.getExpiresAt() == null || now.isAfter(token.getExpiresAt())) {
             tokenRepository.delete(token);
-            throw new IllegalArgumentException("Verification code has expired. Please request a new code.");
+            return new VerificationResult(VerificationOutcome.EXPIRED, "Verification code has expired. Please request a new code.");
         }
 
         // Max attempt check (5 attempts)
         if (token.getAttempts() >= MAX_ATTEMPTS) {
             tokenRepository.delete(token);
-            throw new IllegalArgumentException("Maximum verification attempts exceeded. Please request a new code.");
+            return new VerificationResult(VerificationOutcome.MAX_ATTEMPTS, "Maximum verification attempts exceeded. Please request a new code.");
         }
 
         token.setAttempts(token.getAttempts() + 1);
 
         String inputHash = hashOtp(email, code);
         if (!MessageDigest.isEqual(inputHash.getBytes(StandardCharsets.US_ASCII), token.getOtpHash().getBytes(StandardCharsets.US_ASCII))) {
-            tokenRepository.save(token);
-            int remaining = MAX_ATTEMPTS - token.getAttempts();
-            if (remaining > 0) {
-                throw new IllegalArgumentException("Invalid verification code. " + remaining + " attempt(s) remaining.");
-            } else {
-                tokenRepository.delete(token);
-                throw new IllegalArgumentException("Maximum verification attempts exceeded. Please request a new code.");
-            }
+            EmailVerificationToken updatedToken = recordInvalidAttempt(token);
+            int remaining = MAX_ATTEMPTS - updatedToken.getAttempts();
+            return remaining > 0
+                    ? new VerificationResult(VerificationOutcome.INVALID, "Invalid verification code. " + remaining + " attempt(s) remaining.")
+                    : new VerificationResult(VerificationOutcome.MAX_ATTEMPTS, "Maximum verification attempts exceeded. Please request a new code.");
         }
 
         // Confirm the account before consuming a valid code. Missing user and missing token
         // deliberately share the same public response to avoid account enumeration.
         User user = userRepository.findByEmail(email)
                 .or(() -> userRepository.findByEmailIgnoreCase(email))
-                .orElseThrow(() -> {
-                    log.warn("Email verification rejected: token matched but no registered user was found.");
-                    return new IllegalArgumentException("Verification code has expired or was not requested.");
-                });
+                .orElse(null);
+        if (user == null) {
+            log.warn("Email verification rejected: token matched but no registered user was found.");
+            return new VerificationResult(VerificationOutcome.MISSING_USER, "Verification code has expired or was not requested.");
+        }
 
         // One-time use enforcement: invalidate code only after the account is confirmed.
-        token.setVerified(true);
-        tokenRepository.delete(token);
-
-        // Mark user email verified in database
         user.setEmailVerified(true);
         user.setVerified(true);
         userRepository.save(user);
+
+        // Consume only after the user write has succeeded. Both writes are in
+        // the same Mongo transaction in production, so either both commit or
+        // both roll back. A concurrent transaction conflicts on this delete.
+        token.setVerified(true);
+        tokenRepository.delete(token);
         log.info("Email verification completed and token consumed.");
 
-        return true;
+        return new VerificationResult(VerificationOutcome.SUCCESS, "");
+    }
+
+    private EmailVerificationToken recordInvalidAttempt(EmailVerificationToken token) {
+        if (token.getId() == null || token.getOtpHash() == null) {
+            EmailVerificationToken saved = tokenRepository.save(token);
+            return saved == null ? token : saved;
+        }
+        Query attemptQuery = currentTokenQuery(token.getId(), token.getOtpHash());
+        attemptQuery.addCriteria(Criteria.where("attempts").is(token.getAttempts() - 1));
+        EmailVerificationToken updated = mongoTemplate.findAndModify(
+                attemptQuery,
+                new Update().inc("attempts", 1),
+                org.springframework.data.mongodb.core.FindAndModifyOptions.options().returnNew(true),
+                EmailVerificationToken.class);
+        if (updated == null) {
+            throw new org.springframework.dao.OptimisticLockingFailureException("OTP attempt was changed by another request");
+        }
+        return updated;
     }
 
     /**

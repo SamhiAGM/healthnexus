@@ -24,7 +24,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = "OTP_HMAC_SECRET=HealthConnectLKTestOtpHmacSecretMustBeAtLeast32Chars2026!")
+@SpringBootTest(properties = {
+        "OTP_HMAC_SECRET=HealthConnectLKTestOtpHmacSecretMustBeAtLeast32Chars2026!"
+})
 @AutoConfigureMockMvc
 @Import(TestRepositoryConfig.class)
 class EmailOtpVerificationIntegrationTest {

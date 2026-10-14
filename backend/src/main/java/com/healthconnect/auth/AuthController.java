@@ -51,7 +51,9 @@ public class AuthController {
             emailOtpService.sendEmailOtp(request);
             return ResponseEntity.ok(Map.of(
                     "success", true,
-                    "message", "Verification code sent to your email address. Please check your inbox."
+                    "message", "Verification code sent to your email address. Please check your inbox.",
+                    "cooldownSeconds", 60,
+                    "expiresInSeconds", 300
             ));
         } catch (IllegalStateException e) {
             boolean throttled = e.getMessage() != null && (e.getMessage().startsWith("Please wait")
