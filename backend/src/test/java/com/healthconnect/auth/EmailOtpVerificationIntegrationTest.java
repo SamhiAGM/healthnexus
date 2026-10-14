@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc
 @Import(TestRepositoryConfig.class)
+@SuppressWarnings("unused")
 class EmailOtpVerificationIntegrationTest {
 
     @SuppressWarnings("unused")
