@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -63,6 +65,9 @@ class EmailOtpMongoReplicaSetIntegrationTest {
     private static String isolatedMongoUri() {
         return MONGO.getReplicaSetUrl(DATABASE);
     }
+
+    @MockitoBean
+    private JavaMailSender javaMailSender;
 
     @Autowired
     private EmailOtpService emailOtpService;
