@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("unused")
 class AzureEmailSenderTest {
 
     @Test
@@ -53,9 +54,9 @@ class AzureEmailSenderTest {
 
         AzureEmailSender sender = new AzureEmailSender(client, "DoNotReply@notify.lankacare.me", Duration.ofSeconds(30));
 
-        assertThrows(IllegalStateException.class, () ->
+        assertNotNull(assertThrows(IllegalStateException.class, () ->
                 sender.send("patient@example.com", "Subject", "OTP", "<p>OTP</p>")
-        );
+        ));
     }
 
     @Test
@@ -63,8 +64,13 @@ class AzureEmailSenderTest {
     void rejectsMissingConfiguration() {
         AzureEmailSender sender = new AzureEmailSender("", "", 30);
 
-        assertThrows(IllegalStateException.class, () ->
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
                 sender.send("patient@example.com", "Subject", "OTP", "<p>OTP</p>")
+        );
+
+        assertEquals(
+                "Azure email delivery is currently unconfigured. Set AZURE_COMMUNICATION_CONNECTION_STRING and AZURE_EMAIL_SENDER_ADDRESS.",
+                exception.getMessage()
         );
     }
 

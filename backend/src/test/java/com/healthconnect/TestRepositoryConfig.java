@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @TestConfiguration
 public class TestRepositoryConfig {
@@ -36,4 +37,10 @@ public class TestRepositoryConfig {
     @Bean @Primary public AppointmentRepository appointmentRepository() { return Mockito.mock(AppointmentRepository.class); }
     @Bean @Primary public com.healthconnect.auth.EmailVerificationTokenRepository emailVerificationTokenRepository() { return Mockito.mock(com.healthconnect.auth.EmailVerificationTokenRepository.class); }
     @Bean @Primary public org.springframework.mail.javamail.JavaMailSender javaMailSender() { return Mockito.mock(org.springframework.mail.javamail.JavaMailSender.class); }
+    @Bean @Primary public org.springframework.data.mongodb.core.MongoTemplate mongoTemplate() { return Mockito.mock(org.springframework.data.mongodb.core.MongoTemplate.class); }
+    @Bean(name = "mongoTransactionManager") @Primary public PlatformTransactionManager transactionManager() {
+        PlatformTransactionManager manager = Mockito.mock(PlatformTransactionManager.class);
+        Mockito.when(manager.getTransaction(Mockito.any())).thenReturn(Mockito.mock(org.springframework.transaction.TransactionStatus.class));
+        return manager;
+    }
 }

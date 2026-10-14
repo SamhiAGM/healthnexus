@@ -3,16 +3,21 @@ package com.healthconnect.auth;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.Locale;
 
 @Document(collection = "email_verification_tokens")
 public class EmailVerificationToken {
 
     @Id
     private String id;
+
+    @Version
+    private Long version;
 
     @Indexed(unique = true)
     private String email;
@@ -41,7 +46,7 @@ public class EmailVerificationToken {
     public EmailVerificationToken() {}
 
     public EmailVerificationToken(String email, String otpHash, Instant expiresAt) {
-        this.email = email.trim().toLowerCase();
+        setEmail(email);
         this.otpHash = otpHash;
         this.expiresAt = expiresAt;
         this.lastSentAt = Instant.now();
@@ -54,8 +59,13 @@ public class EmailVerificationToken {
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) {
+        this.email = email == null ? null : email.trim().toLowerCase(Locale.ROOT);
+    }
 
     public String getOtpHash() { return otpHash; }
     public void setOtpHash(String otpHash) { this.otpHash = otpHash; }

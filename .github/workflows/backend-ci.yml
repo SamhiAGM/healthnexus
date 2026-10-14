@@ -35,5 +35,8 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Compile and run tests
-        run: mvn --batch-mode --errors test
+      - name: Compile and run backend unit and context tests
+        run: mvn --batch-mode --errors "-Dtest=!EmailOtpMongoReplicaSetIntegrationTest" test
+
+      - name: Run MongoDB replica-set integration tests
+        run: mvn --batch-mode --errors -Dtest=EmailOtpMongoReplicaSetIntegrationTest test
