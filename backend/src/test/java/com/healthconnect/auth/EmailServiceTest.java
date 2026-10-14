@@ -48,6 +48,7 @@ class EmailServiceTest {
         assertTrue(html.contains("Security Warning:"), "Must include security warning not to share code");
         assertTrue(html.contains("HealthNexus Support Team"), "Must include HealthNexus Support Team signature");
         assertTrue(html.contains("automated system notification"), "Must state this is an automated message");
+        assertFalse(html.contains("Ministry of Health Compliant"), "Must not include unsupported compliance claims");
     }
 
     @Test
@@ -98,6 +99,20 @@ class EmailServiceTest {
 
         assertTrue(ex.getMessage().contains("Email delivery service is currently unconfigured"));
         verify(azureEmailSender, never()).send(anyString(), anyString(), anyString(), anyString());
+        verifyNoInteractions(mailSender);
+    }
+
+    @Test
+    @DisplayName("Email Provider: invalid provider value fails safely")
+    void testSendVerificationOtp_InvalidProviderFailsSafely() {
+        ReflectionTestUtils.setField(emailService, "emailProvider", "ses");
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+                emailService.sendVerificationOtp("patient@example.com", "Patient", "123456")
+        );
+
+        assertTrue(ex.getMessage().contains("Email provider configuration is invalid"));
+        verifyNoInteractions(azureEmailSender);
         verifyNoInteractions(mailSender);
     }
 }
