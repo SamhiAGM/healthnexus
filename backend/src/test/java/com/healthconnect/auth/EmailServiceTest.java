@@ -21,14 +21,18 @@ class EmailServiceTest {
     @Mock
     private JavaMailSender mailSender;
 
+    @Mock
+    private AzureEmailSender azureEmailSender;
+
     private EmailService emailService;
 
     @BeforeEach
     void setUp() {
-        emailService = new EmailService(mailSender);
+        emailService = new EmailService(mailSender, azureEmailSender);
         ReflectionTestUtils.setField(emailService, "senderName", "HealthNexus Support");
         ReflectionTestUtils.setField(emailService, "fromAddress", "Healthnexus.support@gmail.com");
         ReflectionTestUtils.setField(emailService, "mailPassword", "test_smtp_pass");
+        ReflectionTestUtils.setField(emailService, "emailProvider", "gmail");
     }
 
     @Test
@@ -68,5 +72,32 @@ class EmailServiceTest {
 
         assertTrue(ex.getMessage().contains("Email delivery service is currently unconfigured"));
         verify(mailSender, never()).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("Email Provider: Azure selection delegates to the Azure sender")
+    void testSendVerificationOtp_AzureProvider() {
+        ReflectionTestUtils.setField(emailService, "emailProvider", "azure");
+        when(azureEmailSender.isConfigured()).thenReturn(true);
+
+        emailService.sendVerificationOtp("patient@example.com", "Patient", "123456");
+
+        verify(azureEmailSender).send(eq("patient@example.com"), eq("Verify Your HealthNexus Account"), anyString(), contains("123456"));
+        verifyNoInteractions(mailSender);
+    }
+
+    @Test
+    @DisplayName("Email Provider: Azure selection fails when Azure configuration is missing")
+    void testSendVerificationOtp_AzureProviderMissingConfiguration() {
+        ReflectionTestUtils.setField(emailService, "emailProvider", "azure");
+        when(azureEmailSender.isConfigured()).thenReturn(false);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+                emailService.sendVerificationOtp("patient@example.com", "Patient", "123456")
+        );
+
+        assertTrue(ex.getMessage().contains("Email delivery service is currently unconfigured"));
+        verify(azureEmailSender, never()).send(anyString(), anyString(), anyString(), anyString());
+        verifyNoInteractions(mailSender);
     }
 }

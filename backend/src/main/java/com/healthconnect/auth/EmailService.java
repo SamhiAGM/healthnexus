@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -18,6 +19,10 @@ public class EmailService {
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     private final JavaMailSender mailSender;
+    private final AzureEmailSender azureEmailSender;
+
+    @Value("${healthnexus.mail.provider:gmail}")
+    private String emailProvider;
 
     @Value("${healthnexus.mail.sender-name:HealthNexus Support}")
     private String senderName;
@@ -29,13 +34,22 @@ public class EmailService {
     private String mailPassword;
 
     public EmailService(JavaMailSender mailSender) {
+        this(mailSender, null);
+    }
+
+    @Autowired
+    public EmailService(JavaMailSender mailSender, AzureEmailSender azureEmailSender) {
         this.mailSender = mailSender;
+        this.azureEmailSender = azureEmailSender;
     }
 
     /**
      * Checks if outbound email delivery is configured in the current environment.
      */
     public boolean isConfigured() {
+        if (isAzureProvider()) {
+            return azureEmailSender != null && azureEmailSender.isConfigured();
+        }
         return mailPassword != null && !mailPassword.trim().isBlank();
     }
 
@@ -44,8 +58,16 @@ public class EmailService {
      */
     public void sendVerificationOtp(String toEmail, String recipientName, String otp) {
         if (!isConfigured()) {
-            log.warn("Attempted to send verification email to recipient, but SMTP credentials are unconfigured in this environment.");
+            log.warn("Attempted to send verification email, but the selected email provider is unconfigured.");
             throw new IllegalStateException("Email delivery service is currently unconfigured. Please contact support or try again later.");
+        }
+
+        String htmlBody = buildOtpHtmlTemplate(recipientName, otp);
+        String plainText = buildOtpPlainText(recipientName, otp);
+
+        if (isAzureProvider()) {
+            azureEmailSender.send(toEmail, "Verify Your HealthNexus Account", plainText, htmlBody);
+            return;
         }
 
         try {
@@ -56,7 +78,6 @@ public class EmailService {
             helper.setTo(toEmail.trim().toLowerCase());
             helper.setSubject("Verify Your HealthNexus Account");
 
-            String htmlBody = buildOtpHtmlTemplate(recipientName, otp);
             helper.setText(buildOtpPlainText(recipientName, otp), htmlBody);
 
             mailSender.send(message);
@@ -65,6 +86,10 @@ public class EmailService {
             log.error("Failed to transmit verification email: {}", e.getMessage());
             throw new RuntimeException("Unable to deliver verification code. Please verify your email address or try again shortly.", e);
         }
+    }
+
+    private boolean isAzureProvider() {
+        return "azure".equalsIgnoreCase(emailProvider);
     }
 
     private String buildOtpPlainText(String recipientName, String otp) {
