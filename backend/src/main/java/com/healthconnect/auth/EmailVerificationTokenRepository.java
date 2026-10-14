@@ -7,5 +7,6 @@ public interface EmailVerificationTokenRepository extends MongoRepository<EmailV
     Optional<EmailVerificationToken> findByEmail(String email);
     Optional<EmailVerificationToken> findByEmailIgnoreCase(String email);
     void deleteByEmail(String email);
+    long deleteByIdAndOtpHash(String id, String otpHash);
     boolean existsByEmail(String email);
 }

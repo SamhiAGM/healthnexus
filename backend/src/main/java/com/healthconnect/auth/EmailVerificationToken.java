@@ -3,6 +3,7 @@ package com.healthconnect.auth;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.annotation.Version;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -14,6 +15,9 @@ public class EmailVerificationToken {
 
     @Id
     private String id;
+
+    @Version
+    private Long version;
 
     @Indexed(unique = true)
     private String email;
@@ -54,6 +58,9 @@ public class EmailVerificationToken {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) {
