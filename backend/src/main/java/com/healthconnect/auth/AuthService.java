@@ -217,8 +217,8 @@ public class AuthService {
             );
         }
 
-        // Standard patient authentication
-        String token = jwtService.generateToken(user.getId(), user.getEmail(), roles);
+        // Standard patient authentication with user tokenVersion
+        String token = jwtService.generateToken(user.getId(), user.getEmail(), roles, user.getTokenVersion());
         return new AuthResponse(
                 token,
                 user.getId(),

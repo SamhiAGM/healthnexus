@@ -49,6 +49,11 @@ public class User {
 
     // Optional departmental affiliation (e.g. Cardiology, OPD)
     private String department;
+    private Instant passwordChangedAt;
+
+    // Per-user token version for deterministic session invalidation upon password reset
+    private Integer tokenVersion = 0;
+
 
     @CreatedDate
     private Instant createdAt = Instant.now();
@@ -112,4 +117,11 @@ public class User {
 
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public Instant getPasswordChangedAt() { return passwordChangedAt; }
+    public void setPasswordChangedAt(Instant passwordChangedAt) { this.passwordChangedAt = passwordChangedAt; }
+
+    public Integer getTokenVersion() { return tokenVersion != null ? tokenVersion : 0; }
+    public void setTokenVersion(Integer tokenVersion) { this.tokenVersion = tokenVersion != null ? tokenVersion : 0; }
+    public void incrementTokenVersion() { this.tokenVersion = (this.tokenVersion != null ? this.tokenVersion : 0) + 1; }
 }

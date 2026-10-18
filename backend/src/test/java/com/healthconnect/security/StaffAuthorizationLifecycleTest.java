@@ -230,4 +230,36 @@ public class StaffAuthorizationLifecycleTest {
                     assertTrue(status == 401 || status == 403, "Unauthenticated request must be denied with 401 or 403");
                 });
     }
+
+    @Test
+    @DisplayName("Security Boundary: Password reset invalidates active session immediately (even in same second) and new token works")
+    void testBoundary_PasswordResetInvalidatesSession_EvenInSameSecond_AndNewTokenWorks() throws Exception {
+        User doctorUser = userRepository.findById("doc-201").orElseThrow();
+        doctorUser.setTokenVersion(0);
+        doctorUser.setPasswordChangedAt(null);
+
+        // 1. Initial token before reset accesses queue successfully
+        String initialToken = jwtService.generateToken("doc-201", "doctor@nhsl.health.gov.lk", List.of("DOCTOR"), doctorUser.getTokenVersion());
+        mockMvc.perform(get("/api/doctor/queue")
+                        .header("Authorization", "Bearer " + initialToken))
+                .andExpect(status().isOk());
+
+        // 2. Doctor resets password in the same second: tokenVersion increments to 1
+        doctorUser.incrementTokenVersion(); // 1
+        doctorUser.setPasswordChangedAt(java.time.Instant.now());
+
+        // 3. Old token is immediately denied (401 or 403)
+        mockMvc.perform(get("/api/doctor/queue")
+                        .header("Authorization", "Bearer " + initialToken))
+                .andExpect(result -> {
+                    int status = result.getResponse().getStatus();
+                    assertTrue(status == 401 || status == 403, "Old session must be rejected after password reset");
+                });
+
+        // 4. New token issued immediately in the same second works
+        String newToken = jwtService.generateToken("doc-201", "doctor@nhsl.health.gov.lk", List.of("DOCTOR"), doctorUser.getTokenVersion());
+        mockMvc.perform(get("/api/doctor/queue")
+                        .header("Authorization", "Bearer " + newToken))
+                .andExpect(status().isOk());
+    }
 }

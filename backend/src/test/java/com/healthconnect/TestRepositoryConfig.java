@@ -36,6 +36,7 @@ public class TestRepositoryConfig {
     @Bean @Primary public ConsultationRecordRepository consultationRecordRepository() { return Mockito.mock(ConsultationRecordRepository.class); }
     @Bean @Primary public AppointmentRepository appointmentRepository() { return Mockito.mock(AppointmentRepository.class); }
     @Bean @Primary public com.healthconnect.auth.EmailVerificationTokenRepository emailVerificationTokenRepository() { return Mockito.mock(com.healthconnect.auth.EmailVerificationTokenRepository.class); }
+    @Bean @Primary public com.healthconnect.auth.PasswordResetTokenRepository passwordResetTokenRepository() { return Mockito.mock(com.healthconnect.auth.PasswordResetTokenRepository.class); }
     @Bean @Primary public org.springframework.mail.javamail.JavaMailSender javaMailSender() { return Mockito.mock(org.springframework.mail.javamail.JavaMailSender.class); }
     @Bean @Primary public org.springframework.data.mongodb.core.MongoTemplate mongoTemplate() { return Mockito.mock(org.springframework.data.mongodb.core.MongoTemplate.class); }
     @Bean(name = "mongoTransactionManager") @Primary public PlatformTransactionManager transactionManager() {

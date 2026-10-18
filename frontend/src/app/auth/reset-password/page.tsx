@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AuthLayout } from "@/components/auth/AuthLayout";
@@ -16,13 +16,14 @@ import {
   CheckCircle2,
   XCircle,
   Mail,
+  RefreshCw,
 } from "lucide-react";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const queryToken = searchParams.get("token") || "";
+  const queryToken = searchParams.get("token") || searchParams.get("code") || "";
   const queryEmail = searchParams.get("email") || "";
 
   const [token, setToken] = useState(queryToken);
@@ -35,6 +36,11 @@ function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (queryToken && !token) setToken(queryToken);
+    if (queryEmail && !email) setEmail(queryEmail);
+  }, [queryToken, queryEmail]);
 
   // Password strength criteria
   const hasMinLength = newPassword.length >= 8;
@@ -50,7 +56,12 @@ function ResetPasswordForm() {
     setError(null);
 
     if (!token.trim()) {
-      setError("Please enter the recovery token received in your email.");
+      setError("Please enter the 6-digit recovery code or reset token received in your email.");
+      return;
+    }
+
+    if (!email.trim()) {
+      setError("Please enter your registered email address.");
       return;
     }
 
@@ -80,7 +91,7 @@ function ResetPasswordForm() {
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(data.error || "Password reset token is invalid or has expired. Please request a new token.");
+        throw new Error(data.error || "Password reset code is invalid or has expired. Please request a new recovery code.");
       }
 
       setSuccess(true);
@@ -88,11 +99,17 @@ function ResetPasswordForm() {
         router.push("/auth/patient-login");
       }, 2500);
     } catch (err: any) {
-      setError(err.message || "Failed to reset password. Please request a fresh reset link.");
+      setError(err.message || "Failed to reset password. Please request a fresh recovery code.");
     } finally {
       setLoading(false);
     }
   };
+
+  const isExpiredOrInvalid = error && (
+    error.toLowerCase().includes("expired") ||
+    error.toLowerCase().includes("invalid") ||
+    error.toLowerCase().includes("exceeded")
+  );
 
   return (
     <AuthLayout
@@ -117,31 +134,57 @@ function ResetPasswordForm() {
           iconColor: "text-sky-300",
         },
       ]}
-      securityNote="PBKDF2 / Argon2 Standard &bull; Instant Session Revocation &bull; MoH 2026 Ready"
+      securityNote="BCrypt Password Hashing &bull; Session Invalidation After Reset"
       title="Set New Security Password"
-      subtitle="Provide your time-limited reset token and choose a strong new password."
+      subtitle="Provide your time-limited recovery code and choose a strong new password."
       backHref="/auth/patient-login"
       backLabel="Back to Sign In"
     >
       <div className="space-y-6">
         {error && (
-          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm flex items-start gap-3 shadow-xs">
-            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-            <span className="leading-relaxed">{error}</span>
+          <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm space-y-2 shadow-xs">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <span className="leading-relaxed">{error}</span>
+            </div>
+            {isExpiredOrInvalid && (
+              <div className="pt-1 pl-8">
+                <Link
+                  href="/auth/forgot-password"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#108B83] hover:text-[#08786F] underline"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Request a new recovery code
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
-        {success && (
-          <div className="p-4 rounded-2xl bg-[#DDEFE9] border border-[#108B83]/40 text-[#08786F] text-xs sm:text-sm flex items-start gap-3 shadow-xs">
-            <CheckCircle className="w-5 h-5 text-[#08786F] shrink-0 mt-0.5" />
+        {success ? (
+          <div className="space-y-5 text-center">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-[#DDEFE9] border border-[#108B83]/30 flex items-center justify-center text-[#08786F]">
+              <CheckCircle className="w-8 h-8 text-[#08786F]" />
+            </div>
+
             <div>
-              <span className="font-bold block">Password Successfully Updated!</span>
-              <span>Your account password has been updated. Redirecting you to patient sign in...</span>
+              <h3 className="text-lg font-bold text-[#243847]">Password Successfully Updated!</h3>
+              <p className="text-xs sm:text-sm text-[#667986] mt-2 leading-relaxed">
+                Your credentials have been securely updated using BCrypt and active sessions have been invalidated.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <Link
+                href="/auth/patient-login"
+                className="w-full py-3.5 px-4 bg-[#108B83] hover:bg-[#08786F] text-white font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xs text-sm"
+              >
+                <span>Proceed to Patient Sign In</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
-        )}
-
-        {!success ? (
+        ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-[#243847] mb-1">
@@ -224,7 +267,7 @@ function ResetPasswordForm() {
                   </div>
                   <div className={`col-span-2 flex items-center gap-1.5 ${hasSpecial ? "text-[#08786F] font-semibold" : "text-[#667986]"}`}>
                     {hasSpecial ? <CheckCircle2 className="w-3.5 h-3.5 text-[#108B83]" /> : <XCircle className="w-3.5 h-3.5" />}
-                    <span>1 special symbol (!@#$%^&amp;*)</span>
+                    <span>1 special symbol (!@#$%^&*)</span>
                   </div>
                 </div>
               </div>
@@ -268,7 +311,7 @@ function ResetPasswordForm() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-        ) : null}
+        )}
 
         <div className="pt-4 border-t border-[#D5E0E3] flex items-center justify-between text-xs text-[#667986]">
           <Link href="/auth/forgot-password" className="hover:text-[#243847] font-medium transition">

@@ -139,7 +139,7 @@ class AuthServiceTest {
         when(userRepository.findByEmail("0771234567")).thenReturn(Optional.empty());
         when(userRepository.findByPhone("0771234567")).thenReturn(Optional.of(patient));
         when(passwordEncoder.matches("Secret123!", "hashed_pass")).thenReturn(true);
-        when(jwtService.generateToken("USR-PAT-002", "saman@gmail.com", List.of("PATIENT"))).thenReturn("valid_jwt");
+        when(jwtService.generateToken("USR-PAT-002", "saman@gmail.com", List.of("PATIENT"), 0)).thenReturn("valid_jwt");
 
         AuthResponse response = authService.login(request);
 
