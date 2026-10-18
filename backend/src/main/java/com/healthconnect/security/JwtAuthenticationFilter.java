@@ -67,6 +67,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     filterChain.doFilter(request, response);
                     return;
                 }
+
+                // Reliable server-side session invalidation: enforce token versioning and session validity
+                if (!jwtService.isSessionValid(jwt, user)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 // Server-side active roles prevent role escalation from outdated tokens
                 List<SimpleGrantedAuthority> authorities = user.getRoles() == null ? List.of() :
                         user.getRoles().stream()

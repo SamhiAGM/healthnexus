@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -21,13 +22,19 @@ public class AuthController {
 
     private final AuthService authService;
     private final EmailOtpService emailOtpService;
+    private final PasswordResetService passwordResetService;
 
     @Value("${lankacare.cookie.secure:true}")
     private boolean secureCookie;
 
-    public AuthController(AuthService authService, EmailOtpService emailOtpService) {
+    public AuthController(
+            AuthService authService,
+            EmailOtpService emailOtpService,
+            PasswordResetService passwordResetService
+    ) {
         this.authService = authService;
         this.emailOtpService = emailOtpService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/patients/register")
@@ -87,6 +94,46 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        try {
+            Map<String, Object> result = passwordResetService.sendRecoveryCode(request);
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException e) {
+            boolean throttled = e.getMessage() != null && (e.getMessage().startsWith("Please wait")
+                    || e.getMessage().contains("limit reached"));
+            HttpStatus status = throttled ? HttpStatus.TOO_MANY_REQUESTS : HttpStatus.SERVICE_UNAVAILABLE;
+            return ResponseEntity.status(status).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "Password recovery service is currently unavailable. Please try again shortly."));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request, HttpServletResponse response) {
+        try {
+            boolean success = passwordResetService.resetPassword(request);
+            clearSessionCookie(response);
+            return ResponseEntity.ok(Map.of(
+                    "success", success,
+                    "message", "Password updated successfully. You can now log in with your new password."
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            boolean isServiceUnavailable = e.getMessage() != null &&
+                    (e.getMessage().contains("conflict") || e.getMessage().contains("unavailable") || e.getMessage().contains("transaction"));
+            HttpStatus status = isServiceUnavailable ? HttpStatus.SERVICE_UNAVAILABLE : HttpStatus.FORBIDDEN;
+            return ResponseEntity.status(status).body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "Password reset failed. Please request a new recovery code and try again."));
+        }
+    }
+
     @PostMapping("/phone/verify")
     public ResponseEntity<?> verifyPhone(@Valid @RequestBody VerifyPhoneRequest request) {
         try {
@@ -134,15 +181,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        // Clear secure HTTP-only cookie across all subdomains/paths
-        ResponseCookie deleteCookie = ResponseCookie.from("hc_session", "")
-                .httpOnly(true)
-                .secure(secureCookie)
-                .path("/")
-                .maxAge(0)
-                .sameSite("Lax")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+        clearSessionCookie(response);
         return ResponseEntity.ok(Map.of("message", "Session terminated successfully"));
     }
 
@@ -175,6 +214,19 @@ public class AuthController {
                 .sameSite("Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private void clearSessionCookie(HttpServletResponse response) {
+        for (String cookieName : List.of("hc_session", "hc_token", "hc_role")) {
+            ResponseCookie deleteCookie = ResponseCookie.from(cookieName, "")
+                    .httpOnly(true)
+                    .secure(secureCookie)
+                    .path("/")
+                    .maxAge(0)
+                    .sameSite("Lax")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+        }
     }
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)

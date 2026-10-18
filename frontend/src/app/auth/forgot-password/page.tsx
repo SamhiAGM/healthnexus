@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import {
@@ -12,6 +12,7 @@ import {
   Clock,
   ShieldCheck,
   Info,
+  RefreshCw,
 } from "lucide-react";
 
 export default function ForgotPasswordPage() {
@@ -19,9 +20,17 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const executeResetRequest = async (targetEmail: string) => {
     setError(null);
     setLoading(true);
 
@@ -29,25 +38,39 @@ export default function ForgotPasswordPage() {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ email: targetEmail.trim().toLowerCase() }),
       });
 
-      if (res.status === 429) {
-        throw new Error("Too many password reset requests. Please wait a few minutes before trying again.");
-      } else if (res.status >= 500) {
-        const errJson = await res.json().catch(() => ({}));
-        if (errJson.error && errJson.error.includes("unconfigured")) {
-          throw new Error("Outbound email delivery is currently unconfigured in this environment. Please contact your hospital system administrator.");
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (res.status === 429) {
+          throw new Error(data.error || "A password reset code was recently requested. Please wait before requesting another.");
+        } else if (res.status === 503 || (res.status >= 500 && data.error && (data.error.includes("unconfigured") || data.error.includes("email")))) {
+          throw new Error(data.error || "Outbound email delivery is currently unconfigured or unavailable. Please contact your hospital system administrator.");
+        } else {
+          throw new Error(data.error || `Unable to process password reset request (${res.status}). Please verify your email and try again.`);
         }
       }
 
-      // Safe confirmation according to security best practice
       setSubmitted(true);
+      setCooldown(60);
     } catch (err: any) {
       setError(err.message || "Unable to process password reset request. Please try again later.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    await executeResetRequest(email);
+  };
+
+  const handleResend = async () => {
+    if (cooldown > 0 || loading || !email.trim()) return;
+    await executeResetRequest(email);
   };
 
   return (
@@ -73,7 +96,7 @@ export default function ForgotPasswordPage() {
           iconColor: "text-sky-300",
         },
       ]}
-      securityNote="HealthNexus Cryptographic Perimeter &bull; Sri Lanka MoH 2026 Compliant"
+      securityNote="Secure Account Recovery &bull; Time-Limited Verification"
       title="Recover Account Password"
       subtitle="Enter your registered email address to receive password reset instructions."
       backHref="/auth/patient-login"
@@ -106,7 +129,7 @@ export default function ForgotPasswordPage() {
               </div>
               <p className="text-[11px] text-[#667986] mt-2 flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5 text-[#108B83] shrink-0" />
-                We will dispatch a time-limited 15-minute recovery token to this address.
+                We will dispatch a time-limited 15-minute recovery code to this address if registered.
               </p>
             </div>
 
@@ -128,19 +151,19 @@ export default function ForgotPasswordPage() {
             <div>
               <h3 className="text-lg font-bold text-[#243847]">Recovery Instructions Dispatched</h3>
               <p className="text-xs sm:text-sm text-[#667986] mt-2 leading-relaxed">
-                If an account associated with <strong className="text-[#243847]">{email}</strong> exists, password reset instructions with a secure time-limited token have been sent.
+                If an account associated with <strong className="text-[#243847]">{email}</strong> exists in our system, password reset instructions with a secure 15-minute recovery code have been dispatched.
               </p>
             </div>
 
             <div className="p-4 rounded-2xl bg-[#E7EFF1]/70 border border-[#D5E0E3] text-left text-xs text-[#3C5262] space-y-2">
               <span className="font-bold text-[#243847] flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-[#108B83]" />
-                What to do next:
+                Next Steps:
               </span>
               <ul className="list-disc pl-4 space-y-1 text-[#667986]">
                 <li>Check your inbox and spam folder within 15 minutes.</li>
-                <li>Enter the recovery token on the password reset page.</li>
-                <li>Never share your security reset token with anyone.</li>
+                <li>Enter the 6-digit recovery code on the password reset page.</li>
+                <li>Never share your security recovery code with anyone.</li>
               </ul>
             </div>
 
@@ -149,17 +172,32 @@ export default function ForgotPasswordPage() {
                 href={`/auth/reset-password?email=${encodeURIComponent(email)}`}
                 className="w-full py-3 px-4 bg-[#108B83] hover:bg-[#08786F] text-white text-xs font-bold rounded-2xl flex items-center justify-center gap-2 transition-all shadow-xs"
               >
-                <span>Enter Reset Token &amp; Update Password</span>
+                <span>Enter Recovery Code &amp; Reset Password</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
 
-              <button
-                type="button"
-                onClick={() => setSubmitted(false)}
-                className="text-xs text-[#667986] hover:text-[#243847] font-semibold transition"
-              >
-                Try a different email address
-              </button>
+              <div className="flex items-center justify-center gap-4 text-xs">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={cooldown > 0 || loading}
+                  className="inline-flex items-center gap-1.5 text-[#108B83] hover:text-[#08786F] font-semibold disabled:text-[#667986] disabled:cursor-not-allowed transition"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                  <span>{cooldown > 0 ? `Resend code (${cooldown}s)` : "Resend Code"}</span>
+                </button>
+                <span className="text-[#D5E0E3]">&bull;</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setError(null);
+                  }}
+                  className="text-[#667986] hover:text-[#243847] font-semibold transition"
+                >
+                  Change email address
+                </button>
+              </div>
             </div>
           </div>
         )}

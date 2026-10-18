@@ -100,6 +100,48 @@ public class EmailService {
         }
     }
 
+    /**
+     * Dispatches a secure password recovery code email with responsive HealthNexus branding.
+     * Enforces that codes, passwords, and sensitive credentials are never logged.
+     */
+    public void sendPasswordResetCode(String toEmail, String recipientName, String resetCode) {
+        EmailProvider provider = resolveProvider();
+        if (provider == null) {
+            log.warn("Attempted to send password recovery email with unsupported provider configuration.");
+            throw new IllegalStateException(INVALID_PROVIDER_MESSAGE);
+        }
+
+        if (!isConfigured()) {
+            log.warn("Attempted to send password recovery email, but the selected email provider is unconfigured.");
+            throw new IllegalStateException("Email delivery service is currently unconfigured. Please contact support or try again later.");
+        }
+
+        String htmlBody = buildPasswordResetHtmlTemplate(recipientName, resetCode);
+        String plainText = buildPasswordResetPlainText(recipientName, resetCode);
+
+        if (provider == EmailProvider.AZURE) {
+            azureEmailSender.send(toEmail, "Reset Your HealthNexus Account Password", plainText, htmlBody);
+            return;
+        }
+
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED, "UTF-8");
+
+            helper.setFrom(fromAddress, senderName);
+            helper.setTo(toEmail.trim().toLowerCase());
+            helper.setSubject("Reset Your HealthNexus Account Password");
+
+            helper.setText(plainText, htmlBody);
+
+            mailSender.send(message);
+            log.info("Password recovery code email dispatched successfully to recipient domain: {}", getEmailDomain(toEmail));
+        } catch (MessagingException | UnsupportedEncodingException e) {
+            log.error("Failed to transmit password recovery email: {}", e.getMessage());
+            throw new RuntimeException("Unable to deliver password reset code. Please verify your email address or try again shortly.", e);
+        }
+    }
+
     private EmailProvider resolveProvider() {
         if (emailProvider == null) {
             return null;
@@ -119,13 +161,24 @@ public class EmailService {
                 + "If you did not request this code, you can ignore this email.\n\nHealthNexus Support Team";
     }
 
+    private String buildPasswordResetPlainText(String recipientName, String code) {
+        String greeting = recipientName == null || recipientName.isBlank()
+                ? "Hello," : "Hello " + recipientName.trim() + ",";
+        return greeting + "\n\nWe received a request to recover and reset the password for your HealthNexus account. "
+                + "Your password recovery code is: " + code
+                + "\n\nThis recovery code expires in 15 minutes. "
+                + "For your security, never share this code with anyone.\n\n"
+                + "If you did not request a password reset, please ignore this email. Your existing password will remain unchanged.\n\n"
+                + "HealthNexus Support Team\nSri Lanka National Digital Health Perimeter";
+    }
+
     private String getEmailDomain(String email) {
         if (email == null || !email.contains("@")) return "unknown";
         return email.substring(email.indexOf("@"));
     }
 
     /**
-     * Generates responsive HTML email template using HealthNexus navy, white, and teal palette.
+     * Generates responsive HTML email template for account verification OTP.
      */
     public String buildOtpHtmlTemplate(String recipientName, String otp) {
         String greeting = (recipientName != null && !recipientName.trim().isBlank())
@@ -176,13 +229,13 @@ public class EmailService {
                       <p class="copy">
                         Thank you for using <strong>HealthNexus</strong>. To complete your account verification and secure your identity within the healthcare network, please enter the six-digit verification code below:
                       </p>
-                      
+
                       <div class="otp-card">
                         <div class="otp-label">Your One-Time Passcode</div>
                         <div class="otp-code">%s</div>
                         <div class="expiry-pill">Expires in <strong>5 minutes</strong></div>
                       </div>
-                      
+
                       <div class="security-notice">
                         <p>
                           <strong>Security Warning:</strong> For your security, never share this verification code with anyone. HealthNexus staff, clinicians, and administrators will <em>never</em> ask for your code.
@@ -210,6 +263,89 @@ public class EmailService {
             </body>
             </html>
             """.formatted(greeting, otp);
+    }
+
+    /**
+     * Generates responsive HTML email template for password recovery reset code.
+     */
+    public String buildPasswordResetHtmlTemplate(String recipientName, String code) {
+        String greeting = (recipientName != null && !recipientName.trim().isBlank())
+                ? "Hello " + escapeHtml(recipientName.trim()) + ","
+                : "Hello,";
+
+        return """
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Reset Your HealthNexus Account Password</title>
+              <style>
+                body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F6F9FC; color: #172B4D; }
+                .wrapper { width: 100%%; table-layout: fixed; background-color: #F6F9FC; padding: 40px 10px; }
+                .main { background-color: #FFFFFF; margin: 0 auto; max-width: 580px; border-radius: 16px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 10px 30px rgba(23,43,77,0.10); }
+                .header { background: #FFFFFF; padding: 32px 36px 24px 36px; border-bottom: 1px solid #E2E8F0; text-align: left; }
+                .logo-text { font-size: 24px; font-weight: 800; color: #172B4D; letter-spacing: -0.5px; text-decoration: none; }
+                .logo-highlight { color: #0F766E; }
+                .badge { display: inline-block; padding: 4px 12px; background-color: #EAFBF5; border: 1px solid #B7EEE0; border-radius: 9999px; color: #0F766E; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 10px; }
+                .content { padding: 36px; }
+                .greeting { font-size: 18px; font-weight: 700; color: #172B4D; margin: 0 0 16px 0; }
+                .copy { font-size: 14px; line-height: 24px; color: #52657F; margin: 0 0 24px 0; }
+                .otp-card { background: #F8FAFC; border: 1px solid #0F766E; border-radius: 12px; padding: 24px; text-align: center; margin: 28px 0; }
+                .otp-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #0F766E; margin-bottom: 10px; }
+                .otp-code { font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace; font-size: 38px; font-weight: 800; letter-spacing: 12px; color: #172B4D; margin: 0; padding: 8px 0; text-indent: 12px; }
+                .expiry-pill { display: inline-block; font-size: 12px; color: #52657F; background-color: #EAF5FF; padding: 4px 12px; border-radius: 6px; margin-top: 12px; font-weight: 600; }
+                .security-notice { background-color: #F8FAFC; border-left: 3px solid #0F766E; padding: 14px 16px; border-radius: 0 8px 8px 0; margin: 24px 0; }
+                .security-notice p { margin: 0; font-size: 12px; line-height: 18px; color: #52657F; }
+                .security-notice strong { color: #172B4D; }
+                .footer { background-color: #F8FAFC; padding: 24px 36px; border-top: 1px solid #E2E8F0; font-size: 12px; color: #64748B; line-height: 18px; text-align: center; }
+              </style>
+            </head>
+            <body>
+              <div class="wrapper">
+                <table class="main" width="100%%" cellpadding="0" cellspacing="0" role="presentation">
+                  <tr>
+                    <td class="header">
+                      <div class="logo-text">Health<span class="logo-highlight">Nexus</span></div>
+                      <div class="badge">Password Recovery Protocol</div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="content">
+                      <h1 class="greeting">%s</h1>
+                      <p class="copy">
+                        We received a request to recover and reset the password for your <strong>HealthNexus</strong> account. To authorize this credential update, please enter the six-digit recovery code below:
+                      </p>
+
+                      <div class="otp-card">
+                        <div class="otp-label">Secure Recovery Code</div>
+                        <div class="otp-code">%s</div>
+                        <div class="expiry-pill">Expires in <strong>15 minutes</strong></div>
+                      </div>
+
+                      <div class="security-notice">
+                        <p>
+                          <strong>Security Notice:</strong> HealthNexus administrators and clinicians will <em>never</em> ask you for this recovery code. If you did not initiate this password recovery request, your account may be subject to unauthorized attempts; you can safely disregard this email or notify your hospital IT administrator.
+                        </p>
+                      </div>
+
+                      <p class="copy" style="margin-bottom: 0; color: #94A3B8; font-size: 13px;">
+                        Regards,<br>
+                        <strong>HealthNexus Security &amp; Identity Team</strong>
+                      </p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="footer">
+                      <p style="margin: 0 0 8px 0;">This is an automated system security notification from HealthNexus LankaCare. Please do not reply directly.</p>
+                      <p style="margin: 0;">&copy; 2026 HealthNexus Lanka. All rights reserved.</p>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </body>
+            </html>
+            """.formatted(greeting, code);
     }
 
     private String escapeHtml(String text) {
