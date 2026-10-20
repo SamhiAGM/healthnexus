@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="hnBg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0B1A27" />
+      <stop offset="100%" stop-color="#040D14" />
+    </linearGradient>
+
+    <!-- Outer Border Glow -->
+    <linearGradient id="hnBorder" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00F5D4" stop-opacity="0.6" />
+      <stop offset="50%" stop-color="#00A3FF" stop-opacity="0.35" />
+      <stop offset="100%" stop-color="#108B83" stop-opacity="0.15" />
+    </linearGradient>
+
+    <!-- Core Ambient Glow -->
+    <radialGradient id="hnCoreGlow" cx="32" cy="32" r="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00F5D4" stop-opacity="0.3" />
+      <stop offset="50%" stop-color="#00A3FF" stop-opacity="0.1" />
+      <stop offset="100%" stop-color="#00A3FF" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Left Pillar Gradient (Cyan to Vibrant Teal) -->
+    <linearGradient id="hnLeft" x1="0" y1="12" x2="0" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00F5D4" />
+      <stop offset="100%" stop-color="#0D9488" />
+    </linearGradient>
+
+    <!-- Right Pillar Gradient (Electric Sky to Royal Azure) -->
+    <linearGradient id="hnRight" x1="0" y1="12" x2="0" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+
+    <!-- Diagonal Beam Gradient (Cyan to Electric Blue) -->
+    <linearGradient id="hnDiag" x1="16" y1="16" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00F5D4" />
+      <stop offset="50%" stop-color="#00D2FF" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded Tile Base -->
+  <rect width="64" height="64" rx="16" fill="url(#hnBg)" />
+  <rect x="1" y="1" width="62" height="62" rx="15" fill="none" stroke="url(#hnBorder)" stroke-width="1.5" />
+
+  <!-- Ambient Light Reflection -->
+  <circle cx="32" cy="32" r="22" fill="url(#hnCoreGlow)" />
+
+  <!-- Horizontal 'H' Bridge Arms -->
+  <line x1="16" y1="32" x2="25" y2="32" stroke="#00F5D4" stroke-width="5.5" stroke-linecap="round" />
+  <line x1="39" y1="32" x2="48" y2="32" stroke="#38BDF8" stroke-width="5.5" stroke-linecap="round" />
+
+  <!-- Bold 'N' Diagonal -->
+  <line x1="16" y1="16" x2="48" y2="48" stroke="url(#hnDiag)" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Left Stem (H / N pillar) -->
+  <line x1="16" y1="12" x2="16" y2="52" stroke="url(#hnLeft)" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Right Stem (H / N pillar) -->
+  <line x1="48" y1="12" x2="48" y2="52" stroke="url(#hnRight)" stroke-width="6" stroke-linecap="round" />
+
+  <!-- Central Nexus Core: Diamond Hub & Radiant Vitality Node -->
+  <polygon points="32,25 39,32 32,39 25,32" fill="#E6FFFA" stroke="#00F5D4" stroke-width="2" stroke-linejoin="round" />
+  <circle cx="32" cy="32" r="2" fill="#00A3FF" />
+</svg>
