@@ -80,7 +80,7 @@ function PatientLoginForm() {
         },
       ]}
       title="Patient Portal Sign In"
-      subtitle="Sign in with your Sri Lankan NIC, registered mobile number, or email."
+      subtitle="Sign in using your registered Sri Lankan NIC number and password."
       backHref="/"
       backLabel="Back to Home"
     >
@@ -125,7 +125,7 @@ function PatientLoginForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-[#243847] mb-1.5">
-              NIC / Mobile Number / Email *
+              NIC Number *
             </label>
             <div className="relative">
               <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#698399]" />
@@ -134,7 +134,7 @@ function PatientLoginForm() {
                 required
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                placeholder="e.g. 199512345678, 0771234567, or email"
+                placeholder="Enter your NIC number"
                 className="w-full pl-10 pr-4 py-2.5 bg-[#F6F9F8] border border-[#D5E0E3] rounded-xl text-[#243847] text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#108B83] placeholder:text-[#698399]/50 transition"
               />
             </div>
